@@ -1,0 +1,197 @@
+ball,row,col,net,group,kind,x_mm,y_mm
+A1,A,1,VDDIO_0,IO supply,supply,-4.225,-4.225
+A2,A,2,VSSIO_0,IO supply,supply,-3.575,-4.225
+A3,A,3,VDDIO_1,IO supply,supply,-2.925,-4.225
+A4,A,4,VSSIO_1,IO supply,supply,-2.275,-4.225
+A5,A,5,VDDIO_2,IO supply,supply,-1.625,-4.225
+A6,A,6,VSSIO_2,IO supply,supply,-0.975,-4.225
+A7,A,7,VDDIO_3,IO supply,supply,-0.325,-4.225
+A8,A,8,VSSIO_3,IO supply,supply,0.325,-4.225
+A9,A,9,VDDIO_4,IO supply,supply,0.975,-4.225
+A10,A,10,VSSIO_4,IO supply,supply,1.625,-4.225
+A11,A,11,VDDIO_5,IO supply,supply,2.275,-4.225
+A12,A,12,VSSIO_5,IO supply,supply,2.925,-4.225
+A13,A,13,VDDIO_6,IO supply,supply,3.575,-4.225
+A14,A,14,VSSIO_6,IO supply,supply,4.225,-4.225
+B1,B,1,VSSCORE_5,Core supply,supply,-4.225,-3.575
+B2,B,2,D0,Memory data,signal,-3.575,-3.575
+B3,B,3,D1,Memory data,signal,-2.925,-3.575
+B4,B,4,D2,Memory data,signal,-2.275,-3.575
+B5,B,5,D3,Memory data,signal,-1.625,-3.575
+B6,B,6,D4,Memory data,signal,-0.975,-3.575
+B7,B,7,D5,Memory data,signal,-0.325,-3.575
+B8,B,8,D6,Memory data,signal,0.325,-3.575
+B9,B,9,D7,Memory data,signal,0.975,-3.575
+B10,B,10,D8,Memory data,signal,1.625,-3.575
+B11,B,11,D9,Memory data,signal,2.275,-3.575
+B12,B,12,D10,Memory data,signal,2.925,-3.575
+B13,B,13,D11,Memory data,signal,3.575,-3.575
+B14,B,14,VDDIO_7,IO supply,supply,4.225,-3.575
+C1,C,1,VDDCORE_5,Core supply,supply,-4.225,-2.925
+C2,C,2,D12,Memory data,signal,-3.575,-2.925
+C3,C,3,D13,Memory data,signal,-2.925,-2.925
+C4,C,4,D14,Memory data,signal,-2.275,-2.925
+C5,C,5,D15,Memory data,signal,-1.625,-2.925
+C6,C,6,D16,Memory data,signal,-0.975,-2.925
+C7,C,7,D17,Memory data,signal,-0.325,-2.925
+C8,C,8,D18,Memory data,signal,0.325,-2.925
+C9,C,9,D19,Memory data,signal,0.975,-2.925
+C10,C,10,D20,Memory data,signal,1.625,-2.925
+C11,C,11,D21,Memory data,signal,2.275,-2.925
+C12,C,12,D22,Memory data,signal,2.925,-2.925
+C13,C,13,D23,Memory data,signal,3.575,-2.925
+C14,C,14,VSSIO_7,IO supply,supply,4.225,-2.925
+D1,D,1,VSSCORE_4,Core supply,supply,-4.225,-2.275
+D2,D,2,D24,Memory data,signal,-3.575,-2.275
+D3,D,3,D25,Memory data,signal,-2.925,-2.275
+D4,D,4,D26,Memory data,signal,-2.275,-2.275
+D5,D,5,D27,Memory data,signal,-1.625,-2.275
+D6,D,6,D28,Memory data,signal,-0.975,-2.275
+D7,D,7,D29,Memory data,signal,-0.325,-2.275
+D8,D,8,D30,Memory data,signal,0.325,-2.275
+D9,D,9,D31,Memory data,signal,0.975,-2.275
+D10,D,10,D32,Memory data,signal,1.625,-2.275
+D11,D,11,D33,Memory data,signal,2.275,-2.275
+D12,D,12,D34,Memory data,signal,2.925,-2.275
+D13,D,13,D35,Memory data,signal,3.575,-2.275
+D14,D,14,VDDIO_8,IO supply,supply,4.225,-2.275
+E1,E,1,VDDCORE_4,Core supply,supply,-4.225,-1.625
+E2,E,2,D36,Memory data,signal,-3.575,-1.625
+E3,E,3,D37,Memory data,signal,-2.925,-1.625
+E4,E,4,D38,Memory data,signal,-2.275,-1.625
+E5,E,5,D39,Memory data,signal,-1.625,-1.625
+E6,E,6,D40,Memory data,signal,-0.975,-1.625
+E7,E,7,D41,Memory data,signal,-0.325,-1.625
+E8,E,8,D42,Memory data,signal,0.325,-1.625
+E9,E,9,D43,Memory data,signal,0.975,-1.625
+E10,E,10,D44,Memory data,signal,1.625,-1.625
+E11,E,11,D45,Memory data,signal,2.275,-1.625
+E12,E,12,D46,Memory data,signal,2.925,-1.625
+E13,E,13,D47,Memory data,signal,3.575,-1.625
+E14,E,14,VSSIO_8,IO supply,supply,4.225,-1.625
+F1,F,1,VSSIO_19,IO supply,supply,-4.225,-0.975
+F2,F,2,D48,Memory data,signal,-3.575,-0.975
+F3,F,3,D49,Memory data,signal,-2.925,-0.975
+F4,F,4,D50,Memory data,signal,-2.275,-0.975
+F5,F,5,D51,Memory data,signal,-1.625,-0.975
+F6,F,6,D52,Memory data,signal,-0.975,-0.975
+F7,F,7,D53,Memory data,signal,-0.325,-0.975
+F8,F,8,D54,Memory data,signal,0.325,-0.975
+F9,F,9,D55,Memory data,signal,0.975,-0.975
+F10,F,10,D56,Memory data,signal,1.625,-0.975
+F11,F,11,D57,Memory data,signal,2.275,-0.975
+F12,F,12,D58,Memory data,signal,2.925,-0.975
+F13,F,13,D59,Memory data,signal,3.575,-0.975
+F14,F,14,VDDIO_9,IO supply,supply,4.225,-0.975
+G1,G,1,VDDIO_19,IO supply,supply,-4.225,-0.325
+G2,G,2,D60,Memory data,signal,-3.575,-0.325
+G3,G,3,D61,Memory data,signal,-2.925,-0.325
+G4,G,4,D62,Memory data,signal,-2.275,-0.325
+G5,G,5,D63,Memory data,signal,-1.625,-0.325
+G6,G,6,SPARE,Spare,spare,-0.975,-0.325
+G7,G,7,SPARE,Spare,spare,-0.325,-0.325
+G8,G,8,SPARE,Spare,spare,0.325,-0.325
+G9,G,9,SPARE,Spare,spare,0.975,-0.325
+G10,G,10,SPARE,Spare,spare,1.625,-0.325
+G11,G,11,SPARE,Spare,spare,2.275,-0.325
+G12,G,12,SPARE,Spare,spare,2.925,-0.325
+G13,G,13,SPARE,Spare,spare,3.575,-0.325
+G14,G,14,VSSIO_9,IO supply,supply,4.225,-0.325
+H1,H,1,VSSIO_18,IO supply,supply,-4.225,0.325
+H2,H,2,A0,Memory address,signal,-3.575,0.325
+H3,H,3,A1,Memory address,signal,-2.925,0.325
+H4,H,4,A2,Memory address,signal,-2.275,0.325
+H5,H,5,A3,Memory address,signal,-1.625,0.325
+H6,H,6,A4,Memory address,signal,-0.975,0.325
+H7,H,7,A5,Memory address,signal,-0.325,0.325
+H8,H,8,A6,Memory address,signal,0.325,0.325
+H9,H,9,A7,Memory address,signal,0.975,0.325
+H10,H,10,A8,Memory address,signal,1.625,0.325
+H11,H,11,A9,Memory address,signal,2.275,0.325
+H12,H,12,A10,Memory address,signal,2.925,0.325
+H13,H,13,A11,Memory address,signal,3.575,0.325
+H14,H,14,VDDIO_10,IO supply,supply,4.225,0.325
+I1,I,1,VDDIO_18,IO supply,supply,-4.225,0.975
+I2,I,2,A12,Memory address,signal,-3.575,0.975
+I3,I,3,BE0,Memory byte enables,signal,-2.925,0.975
+I4,I,4,BE1,Memory byte enables,signal,-2.275,0.975
+I5,I,5,BE2,Memory byte enables,signal,-1.625,0.975
+I6,I,6,BE3,Memory byte enables,signal,-0.975,0.975
+I7,I,7,BE4,Memory byte enables,signal,-0.325,0.975
+I8,I,8,BE5,Memory byte enables,signal,0.325,0.975
+I9,I,9,BE6,Memory byte enables,signal,0.975,0.975
+I10,I,10,BE7,Memory byte enables,signal,1.625,0.975
+I11,I,11,CS_N,Memory control,signal,2.275,0.975
+I12,I,12,WE_N,Memory control,signal,2.925,0.975
+I13,I,13,OE_N,Memory control,signal,3.575,0.975
+I14,I,14,VSSIO_10,IO supply,supply,4.225,0.975
+J1,J,1,VSSIO_17,IO supply,supply,-4.225,1.625
+J2,J,2,MEM_CLK,Memory control,signal,-3.575,1.625
+J3,J,3,ADV_N,Memory control,signal,-2.925,1.625
+J4,J,4,WAIT_N,Memory control,signal,-2.275,1.625
+J5,J,5,CLK_IN,Clock and reset,signal,-1.625,1.625
+J6,J,6,POR_N,Clock and reset,signal,-0.975,1.625
+J7,J,7,RESET_N,Clock and reset,signal,-0.325,1.625
+J8,J,8,PLL_BYPASS,Clock and reset,signal,0.325,1.625
+J9,J,9,BOOT0,Boot and config,signal,0.975,1.625
+J10,J,10,BOOT1,Boot and config,signal,1.625,1.625
+J11,J,11,TEST_MODE,Boot and config,signal,2.275,1.625
+J12,J,12,SCAN_EN,Boot and config,signal,2.925,1.625
+J13,J,13,TCK,JTAG,signal,3.575,1.625
+J14,J,14,VDDIO_11,IO supply,supply,4.225,1.625
+K1,K,1,VDDIO_17,IO supply,supply,-4.225,2.275
+K2,K,2,TMS,JTAG,signal,-3.575,2.275
+K3,K,3,TDI,JTAG,signal,-2.925,2.275
+K4,K,4,TDO,JTAG,signal,-2.275,2.275
+K5,K,5,TRST_N,JTAG,signal,-1.625,2.275
+K6,K,6,UART_TX,Debug UART,signal,-0.975,2.275
+K7,K,7,UART_RX,Debug UART,signal,-0.325,2.275
+K8,K,8,UART_RTS,Debug UART,signal,0.325,2.275
+K9,K,9,UART_CTS,Debug UART,signal,0.975,2.275
+K10,K,10,GPIO0,GPIO and interrupts,signal,1.625,2.275
+K11,K,11,GPIO1,GPIO and interrupts,signal,2.275,2.275
+K12,K,12,GPIO2,GPIO and interrupts,signal,2.925,2.275
+K13,K,13,GPIO3,GPIO and interrupts,signal,3.575,2.275
+K14,K,14,VSSIO_11,IO supply,supply,4.225,2.275
+L1,L,1,VSSCORE_3,Core supply,supply,-4.225,2.925
+L2,L,2,GPIO4,GPIO and interrupts,signal,-3.575,2.925
+L3,L,3,GPIO5,GPIO and interrupts,signal,-2.925,2.925
+L4,L,4,GPIO6,GPIO and interrupts,signal,-2.275,2.925
+L5,L,5,GPIO7,GPIO and interrupts,signal,-1.625,2.925
+L6,L,6,FAULT_N,Test and status,signal,-0.975,2.925
+L7,L,7,HEARTBEAT,Test and status,signal,-0.325,2.925
+L8,L,8,VDDCORE_6,Core supply,supply,0.325,2.925
+L9,L,9,VSSCORE_6,Core supply,supply,0.975,2.925
+L10,L,10,VDDCORE_7,Core supply,supply,1.625,2.925
+L11,L,11,VSSCORE_7,Core supply,supply,2.275,2.925
+L12,L,12,VDDA_0,Analog,supply,2.925,2.925
+L13,L,13,VSSA_0,Analog,supply,3.575,2.925
+L14,L,14,VDDIO_12,IO supply,supply,4.225,2.925
+M1,M,1,VDDCORE_3,Core supply,supply,-4.225,3.575
+M2,M,2,VDDA_1,Analog,supply,-3.575,3.575
+M3,M,3,VSSA_1,Analog,supply,-2.925,3.575
+M4,M,4,SPARE,Spare,spare,-2.275,3.575
+M5,M,5,SPARE,Spare,spare,-1.625,3.575
+M6,M,6,SPARE,Spare,spare,-0.975,3.575
+M7,M,7,SPARE,Spare,spare,-0.325,3.575
+M8,M,8,SPARE,Spare,spare,0.325,3.575
+M9,M,9,SPARE,Spare,spare,0.975,3.575
+M10,M,10,SPARE,Spare,spare,1.625,3.575
+M11,M,11,SPARE,Spare,spare,2.275,3.575
+M12,M,12,SPARE,Spare,spare,2.925,3.575
+M13,M,13,SPARE,Spare,spare,3.575,3.575
+M14,M,14,VSSIO_12,IO supply,supply,4.225,3.575
+N1,N,1,VSSCORE_2,Core supply,supply,-4.225,4.225
+N2,N,2,VDDCORE_2,Core supply,supply,-3.575,4.225
+N3,N,3,VSSCORE_1,Core supply,supply,-2.925,4.225
+N4,N,4,VDDCORE_1,Core supply,supply,-2.275,4.225
+N5,N,5,VSSCORE_0,Core supply,supply,-1.625,4.225
+N6,N,6,VDDCORE_0,Core supply,supply,-0.975,4.225
+N7,N,7,VSSIO_16,IO supply,supply,-0.325,4.225
+N8,N,8,VDDIO_16,IO supply,supply,0.325,4.225
+N9,N,9,VSSIO_15,IO supply,supply,0.975,4.225
+N10,N,10,VDDIO_15,IO supply,supply,1.625,4.225
+N11,N,11,VSSIO_14,IO supply,supply,2.275,4.225
+N12,N,12,VDDIO_14,IO supply,supply,2.925,4.225
+N13,N,13,VSSIO_13,IO supply,supply,3.575,4.225
+N14,N,14,VDDIO_13,IO supply,supply,4.225,4.225

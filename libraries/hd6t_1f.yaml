@@ -1,0 +1,13 @@
+id: hd6t_1f
+label: "6T / single-fin / SDB / COAG (high density)"
+tech: grx12f.yaml
+tracks: 6
+base_fins: 1
+isolation: SDB
+coag: true
+mbff_bits: [1, 2, 4]
+role: recommended_gpu
+notes: >-
+  Density play for GRXGPU/PTA: 4 usable M2 tracks per cell, so pin access and
+  wire RC become the limits rather than cell height. Needs pin-density-aware
+  placement and a careful look at long-wire drive.

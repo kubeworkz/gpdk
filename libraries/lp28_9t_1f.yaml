@@ -1,0 +1,13 @@
+id: lp28_9t_1f
+label: "28nm 9T / 1-finger / DDB (baseline)"
+tech: grx28.yaml
+tracks: 9
+base_fins: 1
+isolation: DDB
+coag: false
+mbff_bits: [1, 2, 4]
+role: baseline
+notes: >-
+  Conservative 28 nm planar library: 9 tracks, one gate finger per device,
+  double diffusion break. A series stack uses the second finger slot, which is
+  why 9T is the safe baseline. Every GRX28 DTCO delta is measured here.

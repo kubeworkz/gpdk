@@ -1,0 +1,114 @@
+# GRX930 -- quad-core RISC-V compute chiplet with dual NPUs.
+#
+# The `as_built` block is MEASURED data from the existing RISC-V test chip:
+# 4 x RV64IMAC, 2 NPUs, operand banks, 96 KB on-chip SRAM. Everything outside
+# that block is the GRX28 projection and its planning assumptions, which are
+# marked as such.
+name: GRX930
+description: >-
+  Four RV64IMAC cores with 8 KB L1 per core, 64 KB shared L2, two NPUs and
+  operand banks, re-targeted from the measured legacy-node test chip to GRX28.
+  A small, latency-oriented control chip: 1.35M NAND2-equivalent gates and
+  96 KB of on-chip SRAM.
+tech: grx28.yaml
+library: lp28_7t5_1f
+
+# Derived from the measured 1.35M total NAND2-equivalent: 67,007 flip-flops at
+# ~6 NAND2-equivalent each is 0.402M, leaving 0.948M combinational. That works
+# out at 7.5 NAND2-equivalent per LUT4 (125,735 LUT4), which is a normal mux-based
+# LUT cost. ff_ratio is 67,007 / 948,000.
+gates_m: 0.948
+ff_ratio: 0.0707
+
+sram_mb: 0.09375      # 96 KB on-chip = 32 KB L1 + 64 KB L2
+io_mm2: 0.0           # pad ring is modelled separately under `pads`
+logic_depth_fo4: 20   # ASSUMPTION: plausible RV64 pipeline stage, not measured
+activity: 0.12
+target_freq_ghz: 0.025  # measured 40 ns clock; the design, not the node, sets it
+vdd: 0.90
+mbff_bits: 2
+upsize_fins: 1
+pin_aware: true
+
+# Pin budget derived from the measured interfaces: 64 data bits from 8 B/cycle,
+# 13 address bits from 64 KB / 8 B words, 8 byte enables and 6 control signals.
+# The fixed groups (JTAG, UART, boot, GPIO) are bring-up engineering choices, not
+# measured. Supplies are derived from supply_ratio, not counted by hand.
+pads:
+  pitch_um: 150        # wire-bond pad pitch
+  rows: 2              # staggered perimeter rows
+  corner_allowance: 0.08
+
+pins:
+  supply_ratio: 6      # signal pads per IO supply/ground pair
+  core_pairs: 8
+  analog_pads: 4       # PLL supply and reference
+  fixed_groups:
+    - {name: Clock and reset, signals: 4, note: "ref clk, por, reset, pll_bypass"}
+    - {name: Boot and config, signals: 4, note: "boot_mode[1:0], test_mode, scan_en"}
+    - {name: JTAG, signals: 5, note: "TCK/TMS/TDI/TDO/TRST"}
+    - {name: Debug UART, signals: 4, note: "TX/RX/RTS/CTS"}
+    - {name: GPIO and interrupts, signals: 8, note: "bring-up and IRQ"}
+    - {name: Test and status, signals: 2, note: "fault, heartbeat"}
+  variants:
+    as_built:
+      label: 64-bit off-chip memory (measured interface)
+      memory: {data: 64, address: 13, byte_enables: 8, control: 6}
+    narrow_ddr:
+      label: 16-bit DDR at 50 MHz (200 MB/s), memory still off-chip
+      memory: {data: 16, address: 15, byte_enables: 2, control: 6, dqs: 2}
+    integrated:
+      label: 64 KB on-die, no external memory bus
+      memory: null
+  selected: as_built
+  # Pad-ring plan: every signal group is assigned to exactly one side, and the
+  # supply pairs are placed explicitly so the totals match the 60-pad budget.
+  padring:
+    sides:
+      south:
+        signals: [["Memory data", 32]]
+        supply_pairs: {io: 6, core: 0, analog: 0}
+      east:
+        signals: [["Memory data", 32]]
+        supply_pairs: {io: 6, core: 0, analog: 0}
+      north:
+        signals: [["Memory address", 13], ["Memory byte enables", 8], ["Memory control", 6]]
+        supply_pairs: {io: 5, core: 4, analog: 0}
+      west:
+        signals: [["Clock and reset", 4], ["Boot and config", 4], ["JTAG", 5], ["Debug UART", 4], ["GPIO and interrupts", 8], ["Test and status", 2]]
+        supply_pairs: {io: 3, core: 4, analog: 2}
+
+as_built:
+  label: RISC-V test chip (measured silicon)
+  node_note: >-
+    Node not disclosed in the source data. The implied 34 um2/NAND2 and
+    51 um2/SRAM bit are consistent with a 0.5 um-class or rad-hard process,
+    roughly one hundred times less dense than GRX28.
+  die_mm2: 165.0
+  die_xy_mm: [12.9, 12.9]
+  core_mm2: 140.6
+  content_mm2: 86.4
+  logic_mm2: 46.2
+  sram_mm2: 40.2
+  sram_kb: 96
+  sram_macros: 192
+  sram_macro_mm2: 0.2094
+  nand2_eq_m: 1.35
+  comb_nand2_eq_m: 1.006
+  ff_count: 67007
+  clock_mhz: 25.0
+  fpga_clock_mhz: 121.0
+  offchip_kb: 64        # main memory, currently off-chip
+  stated_util: 0.46
+  blocks_mm2:
+    cores: 23.79        # measured 5.95 mm2 x 4
+    npus: 17.73         # measured 8.864 mm2 x 2, memories excluded
+    operand_banks: 2.7
+    glue: 2.0           # estimate
+notes: >-
+  The measured design is pad-limited at 28 nm, not transistor-limited: 1.35M
+  gates is under a square millimetre on GRX28. Density levers buy power and
+  integration headroom here, not a smaller die. 7.5T is the default because the
+  9T baseline saves only a fraction of a pad-ring die. The pin budget, not the
+  cell library, is the largest remaining area lever: deleting the 64-bit bus
+  frees more die than every DTCO step combined.

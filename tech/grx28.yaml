@@ -1,0 +1,130 @@
+# =============================================================================
+# GRX28 -- a 28 nm-class planar HKMG technology definition we own.
+#
+# This is a PLANNING MODEL, not a foundry-qualified PDK. Every number is a
+# public-literature target for a 28 nm low-power planar process (TSMC 28LP /
+# GF 28SLP class), not vendor data and not calibrated to silicon.
+#
+# The 28 nm node is planar: there are no fins. A "width unit" is one gate
+# finger, and finger count inside the fixed cell height sets drive strength.
+# =============================================================================
+name: GRX28
+revision: "0.1.0"
+node_class: "28 nm-class planar HKMG, low-power"
+provenance: >-
+  Public-literature design targets for a 28 nm planar HKMG low-power platform.
+  Approximate, uncalibrated, and not a substitute for a foundry PDK.
+
+supply:
+  vdd_hp: 0.90        # core logic supply (V)
+  vdd_hd: 0.80        # low-power / high-density logic supply (V)
+  temp_c: 25.0        # nominal characterisation temperature
+
+# -----------------------------------------------------------------------------
+# Device geometry. Planar HKMG: one width unit is a gate finger of
+# finger_width_nm, repeated at finger_pitch_nm inside the cell height.
+# -----------------------------------------------------------------------------
+device:
+  kind: planar
+  cpp_nm: 117.0          # contacted poly pitch (gate-to-gate)
+  gate_length_nm: 30.0   # drawn Lg
+  finger_width_nm: 120.0 # one gate finger (width unit)
+  finger_pitch_nm: 140.0 # finger-to-finger pitch
+  eot_nm: 1.40           # equivalent oxide thickness of the HKMG stack
+  spacer_nm: 24.0        # gate spacer; cpp - Lg = 2*spacer + contact room
+  nfet:
+    vt_v: 0.32
+    ss_mv_dec: 80.0
+    dibl_mv_v: 55.0
+    ion_ua_per_um: 650.0    # at vdd_hp, 25 C
+    ioff_na_per_um: 2.0     # at vdd_hp, 25 C
+    temp_ioff_factor: 15.0  # 25 C -> 85 C leakage multiplier
+  pfet:
+    vt_v: 0.35
+    ss_mv_dec: 82.0
+    dibl_mv_v: 60.0
+    ion_ua_per_um: 320.0
+    ioff_na_per_um: 1.6
+    temp_ioff_factor: 15.0
+
+# -----------------------------------------------------------------------------
+# Cell architecture. Cell height = tracks * track_pitch.
+# M1 runs vertically (gate contact escape); M2 runs horizontally and carries
+# the power rails plus row routing. A library is "N-track" in M2 tracks.
+# -----------------------------------------------------------------------------
+cell:
+  track_pitch_nm: 90.0
+  rail_width_nm: 45.0
+  edge_margin_nm: 20.0        # rail-to-active margin at cell top/bottom
+  fin_group_gap_nm: 50.0      # N-to-P isolation gap
+  isolation_cpp:              # CPP overhead per cell for diffusion isolation
+    DDB: 1.5                  # double diffusion break: the planar default
+    SDB: 1.5                  # kept for schema compatibility; not used at 28 nm
+    CNOD: 0.0                 # not a 28 nm option
+  coag_cpp_saving: 0.0        # COAG is a FinFET feature; not offered here
+  coag_rg_reduction: 0.0
+  max_fins_per_device_formula: >-
+    floor(((height - 2*edge_margin - fin_group_gap)/2 - finger_width)
+    / finger_pitch) + 1; evaluated in gpdk.tech
+
+# -----------------------------------------------------------------------------
+# SRAM bit cells (targets for a 28 nm LP bitcell).
+# -----------------------------------------------------------------------------
+sram:
+  hd_bitcell_um2: 0.135
+  hc_bitcell_um2: 0.199
+
+# -----------------------------------------------------------------------------
+# BEOL stack. Resistivity is size-effect corrected in gpdk.beol.
+# No via pillars at 28 nm; the via-pillar lever is a FinFET-node feature.
+# -----------------------------------------------------------------------------
+interconnect:
+  ild_k: 2.7
+  barrier_nm: 2.0
+  cu_resistivity_ohm_m: 1.68e-8
+  cu_mean_free_path_nm: 39.0
+  layers:
+    - {name: M1, direction: vertical,   pitch_nm: 90,  width_nm: 45, thickness_nm: 90,  ild_nm: 180}
+    - {name: M2, direction: horizontal, pitch_nm: 90,  width_nm: 45, thickness_nm: 90,  ild_nm: 180}
+    - {name: M3, direction: vertical,   pitch_nm: 90,  width_nm: 45, thickness_nm: 95,  ild_nm: 190}
+    - {name: M4, direction: horizontal, pitch_nm: 110, width_nm: 55, thickness_nm: 110, ild_nm: 220}
+    - {name: M5, direction: vertical,   pitch_nm: 110, width_nm: 55, thickness_nm: 110, ild_nm: 220}
+    - {name: M6, direction: horizontal, pitch_nm: 160, width_nm: 80, thickness_nm: 160, ild_nm: 320}
+    - {name: M7, direction: vertical,   pitch_nm: 160, width_nm: 80, thickness_nm: 160, ild_nm: 320}
+    - {name: M8, direction: horizontal, pitch_nm: 400, width_nm: 200, thickness_nm: 400, ild_nm: 800}
+  via_pillar:
+    enabled: false
+    resistance_reduction: 0.0
+    landing_pad_relaxation: 0.0
+
+# -----------------------------------------------------------------------------
+# Model calibration constants. These live here so every projection is
+# reproducible and every assumption is visible.
+# -----------------------------------------------------------------------------
+model:
+  device:
+    overlap_factor: 1.25         # overlap + fringe on top of Cox*Weff*Lg
+    gate_leak_na_per_fin: 0.05   # per finger
+  # The analytic FO4 term lands near 21 ps at 0.9 V; the allowance covers the
+  # drain/parasitic capacitance the FO4 formula omits.
+  fo4_parasitic_factor: 1.15
+  coag_fo4_benefit: 0.0
+  routing:
+    pin_track_demand: 1.5        # M2 tracks consumed per cell pin
+    util_ceiling: 0.80           # best-case routable utilisation, 9T/2-finger
+    pin_aware_util_gain: 0.08    # relative gain from pin-density-aware place
+    util_exponent: 0.40
+  block:
+    wire_length_coefficient: 0.0022
+    wire_cap_margin: 1.20
+    clock_cap_ff_per_bit: 0.50
+    clock_transitions_per_cycle: 2.0
+    htree_overhead: 0.06
+    place_margin: 0.03
+    sram_leak_mw_per_mb: 30.0
+    sram_array_efficiency: 0.72
+  assembly:
+    min_die_mm: 2.0
+  mbff:
+    "2": {area_per_bit: 0.90, clock_cap_per_bit: 0.82}
+    "4": {area_per_bit: 0.80, clock_cap_per_bit: 0.65}

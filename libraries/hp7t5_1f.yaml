@@ -1,0 +1,13 @@
+id: hp7t5_1f
+label: "7.5T / single-fin / SDB / COAG (balanced HP)"
+tech: grx12f.yaml
+tracks: 7.5
+base_fins: 1
+isolation: SDB
+coag: true
+mbff_bits: [1, 2, 4]
+role: recommended_cpu
+notes: >-
+  Recommended starting point for GRX930: single-fin cells plus single diffusion
+  break and COAG, retaining 7.5T so that 2-4 fins can still be used where a
+  block needs drive. Good routability and a real frequency story.

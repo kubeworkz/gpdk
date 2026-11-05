@@ -1,0 +1,12 @@
+id: hp7t5_2f
+label: "7.5T / 2-fin / DDB / no COAG (track shrink only)"
+tech: grx12f.yaml
+tracks: 7.5
+base_fins: 2
+isolation: DDB
+coag: false
+mbff_bits: [1]
+role: track_shrink
+notes: >-
+  Isolates the value of track-height reduction alone. Drive strength is unchanged
+  from baseline, so this is the cleanest area lever in the set.

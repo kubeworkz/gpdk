@@ -1,0 +1,19 @@
+metric,grx12f_reference,grx28_target
+Device class,finfet,planar
+CPP,84.0 nm,117.0 nm
+Drawn gate length,18.0 nm,30.0 nm
+Width-unit pitch,40.0 nm,140.0 nm
+Width-unit height,44.0 nm,0.0 nm
+Width-unit width,6.5 nm,120.0 nm
+EOT,0.85 nm,1.4 nm
+Weff per unit,94.5 nm,120.0 nm
+9T cell height,576 nm,810 nm
+7.5T cell height,480 nm,675 nm
+6T cell height,384 nm,540 nm
+5.5T cell height,352 nm,495 nm
+Max units/device at 7.5T,5,2
+SRAM HD bitcell,0.088 um2,0.135 um2
+Core supply,0.8 V,0.9 V
+nMOS Ion,66.2 uA/unit,78.0 uA/unit
+pMOS Ion,45.4 uA/unit,38.4 uA/unit
+Inverter FO4,14.62 ps,23.93 ps

@@ -1,0 +1,3 @@
+library,role,tracks,base_units,isolation,coag,cell_height_nm,avg_cell_area_um2,pin_capacity,routable_util,fo4_ps,leakage_nw
+lp28_7t5_1f,low_power,7.5T,1,DDB,no,675,0.4122,1.16,0.704,23.93,0.629
+lp28_9t_1f,baseline,9T,1,DDB,no,810,0.4947,1.48,0.775,23.93,0.629

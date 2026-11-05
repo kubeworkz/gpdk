@@ -1,0 +1,103 @@
+# =============================================================================
+# 12LP_CLASS_REF -- a REFERENCE approximation of a first-generation 12 nm
+# FinFET platform, used only as the comparison baseline in our DTCO reports.
+#
+# This is NOT GlobalFoundries data. It is a deliberately conservative model of
+# a 14 nm-derived 12 nm half-node: 90 nm CPP, 42 nm fin pitch, 64 nm M1/M2,
+# multi-fin 9T/7.5T libraries, double diffusion break, no COAG, no via pillar.
+# =============================================================================
+name: 12LP_CLASS_REF
+revision: "0.1.0"
+node_class: "12 nm-class FinFET, first generation (reference only)"
+provenance: >-
+  Approximate public-literature reference. Not vendor data; not calibrated.
+
+supply:
+  vdd_hp: 0.80
+  vdd_hd: 0.70
+  temp_c: 25.0
+
+device:
+  cpp_nm: 90.0
+  gate_length_nm: 20.0
+  fin_pitch_nm: 42.0
+  fin_height_nm: 42.0
+  fin_width_nm: 7.0
+  eot_nm: 0.95
+  spacer_nm: 14.0
+  nfet:
+    vt_v: 0.30
+    ss_mv_dec: 78.0
+    dibl_mv_v: 50.0
+    ion_ua_per_um: 620.0
+    ioff_na_per_um: 1.2
+    temp_ioff_factor: 11.0
+  pfet:
+    vt_v: 0.33
+    ss_mv_dec: 80.0
+    dibl_mv_v: 54.0
+    ion_ua_per_um: 420.0
+    ioff_na_per_um: 1.0
+    temp_ioff_factor: 11.0
+
+cell:
+  track_pitch_nm: 64.0
+  rail_width_nm: 32.0
+  edge_margin_nm: 22.0
+  fin_group_gap_nm: 52.0
+  isolation_cpp:
+    DDB: 2.0
+    SDB: 1.0
+    CNOD: 0.0
+  coag_cpp_saving: 0.5
+  coag_rg_reduction: 0.40
+  max_fins_per_device_formula: "see gpdk.tech"
+
+sram:
+  hd_bitcell_um2: 0.100
+  hc_bitcell_um2: 0.128
+
+interconnect:
+  ild_k: 2.6
+  barrier_nm: 2.5
+  cu_resistivity_ohm_m: 1.68e-8
+  cu_mean_free_path_nm: 39.0
+  layers:
+    - {name: M0, direction: vertical,   pitch_nm: 44,  width_nm: 18, thickness_nm: 28, ild_nm: 85}
+    - {name: M1, direction: vertical,   pitch_nm: 64,  width_nm: 28, thickness_nm: 54, ild_nm: 130}
+    - {name: M2, direction: horizontal, pitch_nm: 64,  width_nm: 30, thickness_nm: 58, ild_nm: 130}
+    - {name: M3, direction: vertical,   pitch_nm: 64,  width_nm: 30, thickness_nm: 58, ild_nm: 130}
+    - {name: M4, direction: horizontal, pitch_nm: 80,  width_nm: 38, thickness_nm: 78, ild_nm: 170}
+    - {name: M5, direction: vertical,   pitch_nm: 80,  width_nm: 38, thickness_nm: 78, ild_nm: 170}
+    - {name: M6, direction: horizontal, pitch_nm: 112, width_nm: 56, thickness_nm: 108, ild_nm: 230}
+    - {name: M7, direction: vertical,   pitch_nm: 112, width_nm: 56, thickness_nm: 108, ild_nm: 230}
+    - {name: M8, direction: horizontal, pitch_nm: 160, width_nm: 80, thickness_nm: 155, ild_nm: 330}
+    - {name: M9, direction: horizontal, pitch_nm: 400, width_nm: 200, thickness_nm: 400, ild_nm: 800}
+  via_pillar:
+    enabled: false
+    resistance_reduction: 0.0
+    landing_pad_relaxation: 0.0
+
+model:
+  device:
+    overlap_factor: 1.25
+    gate_leak_na_per_fin: 0.12
+  fo4_parasitic_factor: 1.35
+  coag_fo4_benefit: 0.0
+  sdb_cpp_overhead: 0.0
+  routing:
+    pin_track_demand: 1.35
+    util_ceiling: 0.80
+    pin_aware_util_gain: 0.0
+    util_exponent: 0.35
+  block:
+    wire_length_coefficient: 0.0026
+    wire_cap_margin: 1.20
+    clock_cap_ff_per_bit: 0.34
+    clock_transitions_per_cycle: 2.0
+    htree_overhead: 0.05
+    place_margin: 0.03
+    sram_leak_mw_per_mb: 30.0
+  mbff:
+    "2": {area_per_bit: 0.92, clock_cap_per_bit: 0.85}
+    "4": {area_per_bit: 0.84, clock_cap_per_bit: 0.70}

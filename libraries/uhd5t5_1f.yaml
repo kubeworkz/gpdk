@@ -1,0 +1,14 @@
+id: uhd5t5_1f
+label: "5.5T / single-fin / CNOD / COAG (experimental)"
+tech: grx12f.yaml
+tracks: 5.5
+base_fins: 1
+isolation: CNOD
+coag: true
+mbff_bits: [1, 2, 4]
+role: experimental
+notes: >-
+  Exploratory point, not a recommendation. Continuous diffusion removes the
+  isolation overhead entirely but introduces poly-bias leakage and
+  layout-dependent effects, and 3.5 usable tracks is below the pin-access
+  comfort zone for a 12 nm-class router.

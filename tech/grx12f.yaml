@@ -1,0 +1,133 @@
+# =============================================================================
+# GRX12F -- a 12 nm-class FinFET technology definition we own.
+#
+# This is a PLANNING MODEL, not a foundry-qualified PDK. Every number here is a
+# design target or an industry-typical value drawn from public 12/14 nm FinFET
+# literature. Nothing is GlobalFoundries confidential data, and nothing is
+# calibrated to silicon. Treat it as the contract our cells, router and block
+# models are built against.
+# =============================================================================
+name: GRX12F
+revision: "0.1.0"
+node_class: "12 nm-class FinFET, DTCO-optimised"
+provenance: >-
+  Public-literature design targets for a 14/12 nm-class FinFET platform.
+  Approximate, uncalibrated, and not a substitute for a foundry PDK.
+
+supply:
+  vdd_hp: 0.80        # high-performance logic supply (V)
+  vdd_hd: 0.70        # high-density / low-power logic supply (V)
+  temp_c: 25.0        # nominal characterisation temperature
+
+# -----------------------------------------------------------------------------
+# Device geometry. FinFET with a tri-gate effective width of 2*Hfin + Tfin.
+# -----------------------------------------------------------------------------
+device:
+  cpp_nm: 84.0          # contacted poly pitch (gate-to-gate)
+  gate_length_nm: 18.0  # drawn Lg
+  fin_pitch_nm: 40.0
+  fin_height_nm: 44.0
+  fin_width_nm: 6.5
+  eot_nm: 0.85          # equivalent oxide thickness of the gate stack
+  spacer_nm: 13.0       # gate spacer; cpp - Lg = 2*spacer + contact room
+  nfet:
+    vt_v: 0.27
+    ss_mv_dec: 72.0
+    dibl_mv_v: 42.0
+    ion_ua_per_um: 700.0    # at vdd_hp, 25 C
+    ioff_na_per_um: 1.0     # at vdd_hp, 25 C
+    temp_ioff_factor: 11.0  # 25 C -> 85 C leakage multiplier
+  pfet:
+    vt_v: 0.30
+    ss_mv_dec: 74.0
+    dibl_mv_v: 46.0
+    ion_ua_per_um: 480.0
+    ioff_na_per_um: 0.8
+    temp_ioff_factor: 11.0
+
+# -----------------------------------------------------------------------------
+# Cell architecture options. Cell height = tracks * track_pitch.
+# M1 runs vertically (gate/MD escape); M2 runs horizontally and carries the
+# power rails plus row routing. A library is "N-track" in M2 tracks.
+# -----------------------------------------------------------------------------
+cell:
+  track_pitch_nm: 64.0
+  rail_width_nm: 32.0
+  edge_margin_nm: 20.0        # rail-to-active margin at cell top/bottom
+  fin_group_gap_nm: 48.0      # N-to-P diffusion isolation
+  isolation_cpp:              # CPP overhead per cell for diffusion isolation
+    DDB: 2.0                  # double diffusion break (two dummy gates)
+    SDB: 1.0                  # single diffusion break (one dummy gate)
+    CNOD: 0.0                 # continuous diffusion, gate-bias isolation
+  coag_cpp_saving: 0.5        # gate contact no longer needs lateral landing room
+  coag_rg_reduction: 0.40     # gate resistance reduction from COAG
+  max_fins_per_device_formula: >-
+    floor((height - 2*edge_margin - fin_group_gap) / (2 * fin_pitch)) capped
+    by the track budget; evaluated in gpdk.tech
+
+# -----------------------------------------------------------------------------
+# SRAM bit cells (targets).
+# -----------------------------------------------------------------------------
+sram:
+  hd_bitcell_um2: 0.088
+  hc_bitcell_um2: 0.115
+
+# -----------------------------------------------------------------------------
+# BEOL stack. Resistivity is size-effect corrected in gpdk.beol.
+# -----------------------------------------------------------------------------
+interconnect:
+  ild_k: 2.5
+  barrier_nm: 2.0
+  cu_resistivity_ohm_m: 1.68e-8
+  cu_mean_free_path_nm: 39.0
+  layers:
+    - {name: M0, direction: vertical,   pitch_nm: 40,  width_nm: 16, thickness_nm: 30, ild_nm: 80}
+    - {name: M1, direction: vertical,   pitch_nm: 64,  width_nm: 28, thickness_nm: 56, ild_nm: 120}
+    - {name: M2, direction: horizontal, pitch_nm: 64,  width_nm: 30, thickness_nm: 60, ild_nm: 120}
+    - {name: M3, direction: vertical,   pitch_nm: 64,  width_nm: 30, thickness_nm: 60, ild_nm: 120}
+    - {name: M4, direction: horizontal, pitch_nm: 80,  width_nm: 38, thickness_nm: 80, ild_nm: 160}
+    - {name: M5, direction: vertical,   pitch_nm: 80,  width_nm: 38, thickness_nm: 80, ild_nm: 160}
+    - {name: M6, direction: horizontal, pitch_nm: 112, width_nm: 56, thickness_nm: 110, ild_nm: 220}
+    - {name: M7, direction: vertical,   pitch_nm: 112, width_nm: 56, thickness_nm: 110, ild_nm: 220}
+    - {name: M8, direction: horizontal, pitch_nm: 160, width_nm: 80, thickness_nm: 160, ild_nm: 320}
+    - {name: M9, direction: horizontal, pitch_nm: 400, width_nm: 200, thickness_nm: 400, ild_nm: 800}
+  via_pillar:
+    enabled: true
+    resistance_reduction: 0.35   # vs a single via per layer
+    landing_pad_relaxation: 0.15 # fraction of a track freed at M2
+
+# -----------------------------------------------------------------------------
+# Model calibration constants. These live here so every projection is
+# reproducible and every assumption is visible.
+# -----------------------------------------------------------------------------
+model:
+  device:
+    overlap_factor: 1.25         # overlap + fringe on top of Cox*Weff*Lg
+    gate_leak_na_per_fin: 0.12
+  fo4_parasitic_factor: 1.2      # Ceff + parasitics not captured by Cgg
+  coag_fo4_benefit: 0.05         # 5% FO4 improvement from lower Rg
+  sdb_cpp_overhead: 0.0          # isolation already counted above
+  routing:
+    pin_track_demand: 1.3        # M2 tracks consumed per cell pin
+    util_ceiling: 0.82           # best-case routable utilisation, 9T/2-fin
+    pin_aware_util_gain: 0.10    # relative gain from pin-density-aware place
+    util_exponent: 0.35
+  block:
+    wire_length_coefficient: 0.0015  # avg local wire = k * sqrt(placed logic area)
+    wire_cap_margin: 1.15
+    clock_cap_ff_per_bit: 0.30
+    clock_transitions_per_cycle: 2.0
+    htree_overhead: 0.05
+    place_margin: 0.03
+    sram_leak_mw_per_mb: 25.0
+    # Bitcell array area / total macro area. Covers sense amps, muxing, control
+    # and the row/column straps; 0.72 is a typical compiled-SRAM value.
+    sram_array_efficiency: 0.72
+  assembly:
+    # Smallest die that can be handled and wire-bonded. Below this the die is
+    # limited by assembly, not by pads or logic.
+    min_die_mm: 2.0
+  mbff:
+    # bits -> (area per bit relative to a 1-bit DFF, clock cap per bit relative)
+    "2": {area_per_bit: 0.89, clock_cap_per_bit: 0.80}
+    "4": {area_per_bit: 0.78, clock_cap_per_bit: 0.62}

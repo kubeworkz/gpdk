@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+out/*.gds
+out/*.svg
+out/*.png
+out/fabtwin/
+flow/vendor/
+flow/build/
+flow/test/build/

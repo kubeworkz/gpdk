@@ -1,0 +1,13 @@
+id: hp9t_2f
+label: "9T / 2-fin / DDB / no COAG (first-generation baseline)"
+tech: grx12f.yaml
+tracks: 9
+base_fins: 2
+isolation: DDB
+coag: false
+mbff_bits: [1]
+role: baseline
+notes: >-
+  Conservative library: what a first-generation 12 nm FinFET platform offers
+  before any of the density levers are pulled. Every DTCO delta in the reports
+  is measured against this point.

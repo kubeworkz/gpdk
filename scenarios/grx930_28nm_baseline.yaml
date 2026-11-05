@@ -1,0 +1,30 @@
+# Phase 0 baseline: GRX930 on the GRX28 planning node.
+#
+# This scenario exercises the existing F0 gpdk analytical model.  It is a
+# scenario estimate, not a silicon prediction or a foundry sign-off.
+#
+# `inputs.chip` is resolved relative to the repository root.
+schema_version: "0.1"
+id: grx930_28nm_baseline
+description: >-
+  Reproduce the GRX930 measured-baseline projection and the four-point DTCO
+  ladder from the existing gpdk model, with measured and modelled evidence
+  kept in separate observation rows.
+product: grx930
+process: grx28@0.1.0
+seed: 20261105
+samples: 1
+engines:
+  - gpdk
+inputs:
+  chip: chips/grx930.yaml
+outputs:
+  - as_built_die_area_m2
+  - as_built_content_area_m2
+  - as_built_clock_frequency_hz
+  - die_area_m2
+  - content_area_m2
+  - pad_floor_area_m2
+  - native_frequency_hz
+  - power_at_target_w
+  - power_density_at_target_w_per_m2

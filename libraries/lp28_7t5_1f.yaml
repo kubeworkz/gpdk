@@ -1,0 +1,13 @@
+id: lp28_7t5_1f
+label: "28nm 7.5T / 1-finger / DDB (low power)"
+tech: grx28.yaml
+tracks: 7.5
+base_fins: 1
+isolation: DDB
+coag: false
+mbff_bits: [1, 2, 4]
+role: low_power
+notes: >-
+  One finger per device halves drive and leakage at the same cell area. Useful
+  for the 25 MHz control chip; frequency matching adds fingers back when a
+  block needs drive.

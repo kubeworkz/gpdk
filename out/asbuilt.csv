@@ -1,0 +1,5 @@
+chip,item,as_built,node_9t,node_best,node_jump_x
+GRX930,logic_mm2,46.2,0.5678,0.4673,81.4
+GRX930,sram_mm2,40.2,0.1475,0.1475,272.6
+GRX930,content_mm2,86.4,0.8803,0.8013,98.1
+GRX930,die_mm2,165.0,12.99,12.99,12.7

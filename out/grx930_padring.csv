@@ -1,0 +1,179 @@
+pad,net,group,kind,side,row,x_um,y_um
+1,D0,Memory data,signal,south,0,120.0,80.0
+2,D1,Memory data,signal,south,1,198.24,150.0
+3,D2,Memory data,signal,south,0,276.49,80.0
+4,D3,Memory data,signal,south,1,354.73,150.0
+5,D4,Memory data,signal,south,0,432.98,80.0
+6,D5,Memory data,signal,south,1,511.22,150.0
+7,VDDIO_0,IO supply,supply,south,0,589.47,80.0
+8,VSSIO_0,IO supply,supply,south,1,667.71,150.0
+9,D6,Memory data,signal,south,0,745.95,80.0
+10,D7,Memory data,signal,south,1,824.2,150.0
+11,D8,Memory data,signal,south,0,902.44,80.0
+12,D9,Memory data,signal,south,1,980.69,150.0
+13,D10,Memory data,signal,south,0,1058.93,80.0
+14,VDDIO_1,IO supply,supply,south,1,1137.17,150.0
+15,VSSIO_1,IO supply,supply,south,0,1215.42,80.0
+16,D11,Memory data,signal,south,1,1293.66,150.0
+17,D12,Memory data,signal,south,0,1371.91,80.0
+18,D13,Memory data,signal,south,1,1450.15,150.0
+19,D14,Memory data,signal,south,0,1528.4,80.0
+20,D15,Memory data,signal,south,1,1606.64,150.0
+21,VDDIO_2,IO supply,supply,south,0,1684.88,80.0
+22,VSSIO_2,IO supply,supply,south,1,1763.13,150.0
+23,D16,Memory data,signal,south,0,1841.37,80.0
+24,D17,Memory data,signal,south,1,1919.62,150.0
+25,D18,Memory data,signal,south,0,1997.86,80.0
+26,D19,Memory data,signal,south,1,2076.1,150.0
+27,D20,Memory data,signal,south,0,2154.35,80.0
+28,D21,Memory data,signal,south,1,2232.59,150.0
+29,VDDIO_3,IO supply,supply,south,0,2310.84,80.0
+30,VSSIO_3,IO supply,supply,south,1,2389.08,150.0
+31,D22,Memory data,signal,south,0,2467.33,80.0
+32,D23,Memory data,signal,south,1,2545.57,150.0
+33,D24,Memory data,signal,south,0,2623.81,80.0
+34,D25,Memory data,signal,south,1,2702.06,150.0
+35,D26,Memory data,signal,south,0,2780.3,80.0
+36,VDDIO_4,IO supply,supply,south,1,2858.55,150.0
+37,VSSIO_4,IO supply,supply,south,0,2936.79,80.0
+38,D27,Memory data,signal,south,1,3015.03,150.0
+39,D28,Memory data,signal,south,0,3093.28,80.0
+40,D29,Memory data,signal,south,1,3171.52,150.0
+41,D30,Memory data,signal,south,0,3249.77,80.0
+42,D31,Memory data,signal,south,1,3328.01,150.0
+43,VDDIO_5,IO supply,supply,south,0,3406.26,80.0
+44,VSSIO_5,IO supply,supply,south,1,3484.5,150.0
+45,D32,Memory data,signal,east,0,3524.5,120.0
+46,D33,Memory data,signal,east,1,3454.5,198.24
+47,D34,Memory data,signal,east,0,3524.5,276.49
+48,D35,Memory data,signal,east,1,3454.5,354.73
+49,D36,Memory data,signal,east,0,3524.5,432.98
+50,D37,Memory data,signal,east,1,3454.5,511.22
+51,VDDIO_6,IO supply,supply,east,0,3524.5,589.47
+52,VSSIO_6,IO supply,supply,east,1,3454.5,667.71
+53,D38,Memory data,signal,east,0,3524.5,745.95
+54,D39,Memory data,signal,east,1,3454.5,824.2
+55,D40,Memory data,signal,east,0,3524.5,902.44
+56,D41,Memory data,signal,east,1,3454.5,980.69
+57,D42,Memory data,signal,east,0,3524.5,1058.93
+58,VDDIO_7,IO supply,supply,east,1,3454.5,1137.17
+59,VSSIO_7,IO supply,supply,east,0,3524.5,1215.42
+60,D43,Memory data,signal,east,1,3454.5,1293.66
+61,D44,Memory data,signal,east,0,3524.5,1371.91
+62,D45,Memory data,signal,east,1,3454.5,1450.15
+63,D46,Memory data,signal,east,0,3524.5,1528.4
+64,D47,Memory data,signal,east,1,3454.5,1606.64
+65,VDDIO_8,IO supply,supply,east,0,3524.5,1684.88
+66,VSSIO_8,IO supply,supply,east,1,3454.5,1763.13
+67,D48,Memory data,signal,east,0,3524.5,1841.37
+68,D49,Memory data,signal,east,1,3454.5,1919.62
+69,D50,Memory data,signal,east,0,3524.5,1997.86
+70,D51,Memory data,signal,east,1,3454.5,2076.1
+71,D52,Memory data,signal,east,0,3524.5,2154.35
+72,D53,Memory data,signal,east,1,3454.5,2232.59
+73,VDDIO_9,IO supply,supply,east,0,3524.5,2310.84
+74,VSSIO_9,IO supply,supply,east,1,3454.5,2389.08
+75,D54,Memory data,signal,east,0,3524.5,2467.33
+76,D55,Memory data,signal,east,1,3454.5,2545.57
+77,D56,Memory data,signal,east,0,3524.5,2623.81
+78,D57,Memory data,signal,east,1,3454.5,2702.06
+79,D58,Memory data,signal,east,0,3524.5,2780.3
+80,VDDIO_10,IO supply,supply,east,1,3454.5,2858.55
+81,VSSIO_10,IO supply,supply,east,0,3524.5,2936.79
+82,D59,Memory data,signal,east,1,3454.5,3015.03
+83,D60,Memory data,signal,east,0,3524.5,3093.28
+84,D61,Memory data,signal,east,1,3454.5,3171.52
+85,D62,Memory data,signal,east,0,3524.5,3249.77
+86,D63,Memory data,signal,east,1,3454.5,3328.01
+87,VDDIO_11,IO supply,supply,east,0,3524.5,3406.26
+88,VSSIO_11,IO supply,supply,east,1,3454.5,3484.5
+89,A0,Memory address,signal,north,0,3484.5,3524.5
+90,A1,Memory address,signal,north,1,3408.03,3454.5
+91,A2,Memory address,signal,north,0,3331.57,3524.5
+92,VDDIO_12,IO supply,supply,north,1,3255.1,3454.5
+93,VSSIO_12,IO supply,supply,north,0,3178.64,3524.5
+94,A3,Memory address,signal,north,1,3102.17,3454.5
+95,A4,Memory address,signal,north,0,3025.7,3524.5
+96,A5,Memory address,signal,north,1,2949.24,3454.5
+97,VDDIO_13,IO supply,supply,north,0,2872.77,3524.5
+98,VSSIO_13,IO supply,supply,north,1,2796.31,3454.5
+99,A6,Memory address,signal,north,0,2719.84,3524.5
+100,A7,Memory address,signal,north,1,2643.38,3454.5
+101,A8,Memory address,signal,north,0,2566.91,3524.5
+102,VDDIO_14,IO supply,supply,north,1,2490.44,3454.5
+103,VSSIO_14,IO supply,supply,north,0,2413.98,3524.5
+104,A9,Memory address,signal,north,1,2337.51,3454.5
+105,A10,Memory address,signal,north,0,2261.05,3524.5
+106,A11,Memory address,signal,north,1,2184.58,3454.5
+107,VDDIO_15,IO supply,supply,north,0,2108.11,3524.5
+108,VSSIO_15,IO supply,supply,north,1,2031.65,3454.5
+109,A12,Memory address,signal,north,0,1955.18,3524.5
+110,BE0,Memory byte enables,signal,north,1,1878.72,3454.5
+111,BE1,Memory byte enables,signal,north,0,1802.25,3524.5
+112,VDDIO_16,IO supply,supply,north,1,1725.78,3454.5
+113,VSSIO_16,IO supply,supply,north,0,1649.32,3524.5
+114,BE2,Memory byte enables,signal,north,1,1572.85,3454.5
+115,BE3,Memory byte enables,signal,north,0,1496.39,3524.5
+116,BE4,Memory byte enables,signal,north,1,1419.92,3454.5
+117,VDDCORE_0,Core supply,supply,north,0,1343.45,3524.5
+118,VSSCORE_0,Core supply,supply,north,1,1266.99,3454.5
+119,BE5,Memory byte enables,signal,north,0,1190.52,3524.5
+120,BE6,Memory byte enables,signal,north,1,1114.06,3454.5
+121,BE7,Memory byte enables,signal,north,0,1037.59,3524.5
+122,VDDCORE_1,Core supply,supply,north,1,961.13,3454.5
+123,VSSCORE_1,Core supply,supply,north,0,884.66,3524.5
+124,CS_N,Memory control,signal,north,1,808.19,3454.5
+125,WE_N,Memory control,signal,north,0,731.73,3524.5
+126,OE_N,Memory control,signal,north,1,655.26,3454.5
+127,VDDCORE_2,Core supply,supply,north,0,578.8,3524.5
+128,VSSCORE_2,Core supply,supply,north,1,502.33,3454.5
+129,MEM_CLK,Memory control,signal,north,0,425.86,3524.5
+130,ADV_N,Memory control,signal,north,1,349.4,3454.5
+131,WAIT_N,Memory control,signal,north,0,272.93,3524.5
+132,VDDCORE_3,Core supply,supply,north,1,196.47,3454.5
+133,VSSCORE_3,Core supply,supply,north,0,120.0,3524.5
+134,CLK_IN,Clock and reset,signal,west,0,80.0,3484.5
+135,POR_N,Clock and reset,signal,west,1,150.0,3408.03
+136,RESET_N,Clock and reset,signal,west,0,80.0,3331.57
+137,VDDIO_17,IO supply,supply,west,1,150.0,3255.1
+138,VSSIO_17,IO supply,supply,west,0,80.0,3178.64
+139,PLL_BYPASS,Clock and reset,signal,west,1,150.0,3102.17
+140,BOOT0,Boot and config,signal,west,0,80.0,3025.7
+141,BOOT1,Boot and config,signal,west,1,150.0,2949.24
+142,VDDIO_18,IO supply,supply,west,0,80.0,2872.77
+143,VSSIO_18,IO supply,supply,west,1,150.0,2796.31
+144,TEST_MODE,Boot and config,signal,west,0,80.0,2719.84
+145,SCAN_EN,Boot and config,signal,west,1,150.0,2643.38
+146,TCK,JTAG,signal,west,0,80.0,2566.91
+147,VDDIO_19,IO supply,supply,west,1,150.0,2490.44
+148,VSSIO_19,IO supply,supply,west,0,80.0,2413.98
+149,TMS,JTAG,signal,west,1,150.0,2337.51
+150,TDI,JTAG,signal,west,0,80.0,2261.05
+151,TDO,JTAG,signal,west,1,150.0,2184.58
+152,VDDCORE_4,Core supply,supply,west,0,80.0,2108.11
+153,VSSCORE_4,Core supply,supply,west,1,150.0,2031.65
+154,TRST_N,JTAG,signal,west,0,80.0,1955.18
+155,UART_TX,Debug UART,signal,west,1,150.0,1878.72
+156,UART_RX,Debug UART,signal,west,0,80.0,1802.25
+157,VDDCORE_5,Core supply,supply,west,1,150.0,1725.78
+158,VSSCORE_5,Core supply,supply,west,0,80.0,1649.32
+159,UART_RTS,Debug UART,signal,west,1,150.0,1572.85
+160,UART_CTS,Debug UART,signal,west,0,80.0,1496.39
+161,GPIO0,GPIO and interrupts,signal,west,1,150.0,1419.92
+162,VDDCORE_6,Core supply,supply,west,0,80.0,1343.45
+163,VSSCORE_6,Core supply,supply,west,1,150.0,1266.99
+164,GPIO1,GPIO and interrupts,signal,west,0,80.0,1190.52
+165,GPIO2,GPIO and interrupts,signal,west,1,150.0,1114.06
+166,GPIO3,GPIO and interrupts,signal,west,0,80.0,1037.59
+167,VDDCORE_7,Core supply,supply,west,1,150.0,961.13
+168,VSSCORE_7,Core supply,supply,west,0,80.0,884.66
+169,GPIO4,GPIO and interrupts,signal,west,1,150.0,808.19
+170,GPIO5,GPIO and interrupts,signal,west,0,80.0,731.73
+171,GPIO6,GPIO and interrupts,signal,west,1,150.0,655.26
+172,VDDA_0,Analog,supply,west,0,80.0,578.8
+173,VSSA_0,Analog,supply,west,1,150.0,502.33
+174,GPIO7,GPIO and interrupts,signal,west,0,80.0,425.86
+175,FAULT_N,Test and status,signal,west,1,150.0,349.4
+176,HEARTBEAT,Test and status,signal,west,0,80.0,272.93
+177,VDDA_1,Analog,supply,west,1,150.0,196.47
+178,VSSA_1,Analog,supply,west,0,80.0,120.0
