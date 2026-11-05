@@ -1,0 +1,45 @@
+# MCM-SI -- 2.5D silicon-interposer package for a G100 electronic chiplet and a
+# PTA photonic chiplet. Every value is a planning assumption, not a qualified
+# package design kit or assembly rule deck.
+schema_version: "0.1"
+id: mcm_si
+revision: "0.1.0"
+kind: silicon_interposer
+description: >-
+  2.5D silicon interposer carrying one G100 digital die and one PTA photonic
+  die. The stack is defined for provenance and future package/yield engines;
+  this file does not claim an assembly process or a known-good-die model.
+evidence: assumed
+
+chiplets:
+  - product: g100@0.1.0
+    role: electronic
+    required: true
+  - product: pta@0.1.0
+    role: photonic
+    required: true
+
+interposer:
+  material: silicon
+  thickness_um: 100.0
+  routing_layers: 4
+  min_trace_width_um: 1.5
+  min_trace_spacing_um: 1.5
+  dielectric_thickness_um: 1.0
+  tsv_diameter_um: 10.0
+
+bumps:
+  type: microbump
+  diameter_um: 10.0
+  pitch_um: 20.0
+  underfill: capillary
+
+assembly:
+  die_attach: pick-and-place
+  lid: planned
+  test: known-good-die matching required
+
+notes: >-
+  Microbump, trace and dielectric dimensions follow the concept-document
+  planning geometry. They are not a foundry or OSAT rule deck. Thermal,
+  parasitic, warpage and assembly-yield models are Phase 3 work.

@@ -19,6 +19,8 @@ from fabtwin.scenario import load_scenario
 from fabtwin.store import ObservationStore
 
 SCENARIO = ROOT / "scenarios" / "grx930_28nm_baseline.yaml"
+G100_SCENARIO = ROOT / "scenarios" / "g100_28nm_baseline.yaml"
+PTA_SCENARIO = ROOT / "scenarios" / "pta_28nm_baseline.yaml"
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +44,13 @@ def test_scenario_loads_with_hash(scenario):
     assert scenario.samples == 1
     assert len(scenario.sha256) == 64
     assert scenario.chip_path == ROOT / "chips" / "grx930.yaml"
+    assert scenario.package_path is None
+
+
+def test_phase0_baselines_validate():
+    for path in (SCENARIO, G100_SCENARIO, PTA_SCENARIO):
+        loaded = load_scenario(path)
+        assert validate_scenario(loaded) == []
 
 
 def test_unknown_scenario_field_is_rejected(tmp_path):
@@ -125,6 +134,60 @@ def test_same_scenario_produces_same_observations(scenario, tmp_path):
 
     assert rows(first) == rows(second)
     assert first.run_id != second.run_id
+
+
+def test_g100_baseline_scenario_runs(tmp_path):
+    loaded = load_scenario(G100_SCENARIO)
+    assert loaded.product == "g100"
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 40
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["scenario"]["package"] is None
+    assert {item["role"] for item in manifest["inputs"]} == {
+        "scenario",
+        "chip",
+        "tech",
+    }
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 40
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert all(row["unit"] for row in rows)
+
+
+def test_pta_baseline_records_topology_and_package(tmp_path):
+    loaded = load_scenario(PTA_SCENARIO)
+    assert loaded.product == "pta"
+    assert loaded.package_ref == "packages/mcm_si.yaml"
+    assert loaded.package_path == ROOT / "packages" / "mcm_si.yaml"
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 8
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["scenario"]["package"] == "packages/mcm_si.yaml"
+    assert {item["role"] for item in manifest["inputs"]} == {
+        "scenario",
+        "chip",
+        "package",
+        "tech",
+    }
+    package_meta = manifest["engines"][0]["metadata"]["package"]
+    assert package_meta["id"] == "mcm_si"
+    assert package_meta["revision"] == "0.1.0"
+    report_text = (result.run_dir / "report.md").read_text(encoding="utf-8")
+    assert "packages/mcm_si.yaml" in report_text
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    values = {row["metric"]: float(row["value"]) for row in rows}
+    assert len(rows) == 8
+    assert values["mzi_count"] == 16.0
+    assert values["optical_window_m"] == pytest.approx(200e-6)
+    assert values["wavelength_m"] == pytest.approx(1550e-9)
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["source_artifact"] for row in rows} == {"chips/pta.yaml"}
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):
@@ -252,6 +315,193 @@ def test_compare_flags_value_and_evidence_changes(
     report_text = report_path.read_text(encoding="utf-8")
     assert "This report shows changed rows only." in report_text
     assert "assumed -> measured" in report_text
+
+    artifact = payload["report_artifact"]
+    assert artifact["run_a"] == first.run_id
+    assert artifact["run_b"] == second.run_id
+    assert artifact["path"] == payload["report_path"]
+    assert artifact["media_type"] == "text/markdown"
+    assert artifact["bytes"] == report_path.stat().st_size
+    assert artifact["sha256"] == sha256_file(report_path)
+    assert store.list_comparison_artifacts() == [artifact]
+
+    status = main(
+        [
+            "query",
+            "--db",
+            str(store.path),
+            "--reports",
+            "--json",
+        ]
+    )
+    assert status == 0
+    indexed = json.loads(capsys.readouterr().out)
+    assert indexed == [artifact]
+
+
+def test_comparison_report_registration_updates_same_path(
+    scenario, tmp_path, capsys
+):
+    first = execute(scenario, tmp_path)
+    second = execute(scenario, tmp_path)
+    report_path = tmp_path / "comparison.md"
+
+    status = main(
+        [
+            "compare",
+            first.run_id,
+            second.run_id,
+            "--db",
+            str(first.store_path),
+            "--report",
+            str(report_path),
+            "--json",
+        ]
+    )
+    assert status == 0
+    initial = json.loads(capsys.readouterr().out)["report_artifact"]
+
+    status = main(
+        [
+            "compare",
+            first.run_id,
+            second.run_id,
+            "--db",
+            str(first.store_path),
+            "--report",
+            str(report_path),
+            "--only-changes",
+            "--json",
+        ]
+    )
+    assert status == 0
+    updated = json.loads(capsys.readouterr().out)["report_artifact"]
+
+    assert updated["comparison_id"] == initial["comparison_id"]
+    assert updated["sha256"] != initial["sha256"]
+    assert updated["sha256"] == sha256_file(report_path)
+    assert len(ObservationStore(first.store_path).list_comparison_artifacts()) == 1
+
+
+def test_verify_artifacts_checks_runs_and_comparison_reports(
+    scenario, tmp_path, capsys
+):
+    first = execute(scenario, tmp_path)
+    second = execute(scenario, tmp_path)
+    status = main(
+        [
+            "compare",
+            first.run_id,
+            second.run_id,
+            "--db",
+            str(first.store_path),
+            "--json",
+        ]
+    )
+    assert status == 0
+    comparison = json.loads(capsys.readouterr().out)
+    comparison_path = Path(comparison["report_path"])
+
+    status = main(
+        [
+            "verify-artifacts",
+            "--db",
+            str(first.store_path),
+            "--json",
+        ]
+    )
+    assert status == 0
+    verified = json.loads(capsys.readouterr().out)
+    assert verified["checked"] == 11
+    assert verified["ok"] == 11
+    assert verified["failed"] == 0
+    assert len(verified["run_artifacts"]) == 4
+    assert len(verified["inputs"]) == 6
+    assert len(verified["comparison_artifacts"]) == 1
+    assert {row["status"] for row in verified["run_artifacts"]} == {"ok"}
+    assert {row["status"] for row in verified["inputs"]} == {"ok"}
+    assert {row["role"] for row in verified["inputs"]} == {
+        "scenario",
+        "chip",
+        "tech",
+    }
+    assert verified["comparison_artifacts"][0]["path"] == comparison["report_path"]
+    assert (
+        verified["comparison_artifacts"][0]["actual_sha256"]
+        == comparison["report_artifact"]["sha256"]
+    )
+
+    with (second.run_dir / "report.md").open(
+        "a", encoding="utf-8"
+    ) as handle:
+        handle.write("\n")
+    comparison_path.unlink()
+
+    status = main(
+        [
+            "verify-artifacts",
+            "--db",
+            str(first.store_path),
+            "--json",
+        ]
+    )
+    assert status == 1
+    failed = json.loads(capsys.readouterr().out)
+    assert failed["checked"] == 11
+    assert failed["ok"] == 9
+    assert failed["failed"] == 2
+    changed_run = next(
+        row
+        for row in failed["run_artifacts"]
+        if row["run_id"] == second.run_id
+        and Path(row["path"]).name == "report.md"
+    )
+    assert changed_run["status"] == "size_and_hash_mismatch"
+    assert failed["comparison_artifacts"][0]["status"] == "missing"
+
+
+def test_verify_artifacts_checks_input_hashes(tmp_path, capsys):
+    scenario_path = _variant(tmp_path)
+    copied_scenario = load_scenario(scenario_path)
+    result = execute(copied_scenario, tmp_path / "runs")
+
+    status = main(
+        [
+            "verify-artifacts",
+            "--db",
+            str(result.store_path),
+            "--json",
+        ]
+    )
+    assert status == 0
+    verified = json.loads(capsys.readouterr().out)
+    assert verified["checked"] == 5
+    assert verified["ok"] == 5
+    assert {row["role"] for row in verified["inputs"]} == {
+        "scenario",
+        "chip",
+        "tech",
+    }
+    assert {row["status"] for row in verified["inputs"]} == {"ok"}
+
+    with scenario_path.open("a", encoding="utf-8") as handle:
+        handle.write("\n")
+
+    status = main(
+        [
+            "verify-artifacts",
+            "--db",
+            str(result.store_path),
+            "--json",
+        ]
+    )
+    assert status == 1
+    failed = json.loads(capsys.readouterr().out)
+    changed = next(
+        row for row in failed["inputs"] if row["role"] == "scenario"
+    )
+    assert changed["status"] == "size_and_hash_mismatch"
+    assert failed["failed"] == 1
 
 
 def test_gpdk_rejects_more_than_one_sample(tmp_path):

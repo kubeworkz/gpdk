@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from .adapters.gpdk import GpdkEngine
+from .adapters.pta import PtaEngine
 from .model import Engine
 
 ENGINE_CLASSES = {
     GpdkEngine.name: GpdkEngine,
+    PtaEngine.name: PtaEngine,
 }
 
 

@@ -12,7 +12,13 @@ from gpdk.asbuilt import AsBuilt, node_jump, pad_sensitivity
 from gpdk.beol import layer_rc, via_resistance_ohm, wire_delay_ps
 from gpdk.package import PinBudget, choose_package
 from gpdk.padring import build_floorplan, write_artifacts
-from gpdk.block import estimate, frequency_matched, load_chip, pad_limited_die_mm2
+from gpdk.block import (
+    estimate,
+    frequency_matched,
+    load_chip,
+    load_chips,
+    pad_limited_die_mm2,
+)
 from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
 from gpdk.drc import check
@@ -222,7 +228,7 @@ def test_frequency_matching(chip_libs):
 
 
 def test_dtco_steps_reduce_area(libs):
-    cfg = load_chip("grxgpu_pta.yaml")
+    cfg = load_chip("g100.yaml")
     pair = reference_pair(cfg)
     assert pair.node.total_area_mm2 < pair.reference.total_area_mm2
     steps = build_steps(cfg)
@@ -232,6 +238,10 @@ def test_dtco_steps_reduce_area(libs):
     for row in rows[1:]:
         assert row["step_delta_pct"] <= 1.0  # nothing should grow by more than 1%
     assert all(step.iso.freq_ghz >= 0.95 * step.target_ghz for step in steps)
+
+
+def test_load_chips_skips_non_digital_products():
+    assert {cfg.name for cfg in load_chips()} == {"G100", "GRX930"}
 
 
 def test_layout_is_drc_clean(tech):

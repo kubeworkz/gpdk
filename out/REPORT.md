@@ -1,12 +1,12 @@
 # GRX28 — 28 nm-class planar PDK and DTCO starter
 
-Generated 2026-11-04 from `tech/grx28.yaml` and
+Generated 2026-11-05 from `tech/grx28.yaml` and
 `tech/grx12f.yaml`.
 
 > **What this is.** A transparent, reproducible planning model for a 28 nm-class
 > planar platform we own, with the 12 nm FinFET model kept as the advanced-node
 > reference. It carries the cell, BEOL, block and layout models needed to compare
-> DTCO choices for the quad-core/dual-NPU GRX930 and for GRXGPU/PTA.
+> DTCO choices for the quad-core/dual-NPU GRX930 and for G100.
 >
 > **What this is not.** A foundry-qualified PDK, a calibrated compact model, a
 > silicon-verified rule deck, or a statement about any foundry's actual 28 nm
@@ -72,13 +72,6 @@ Cell height scales with tracks. At 28 nm there is no isolation or COAG lever, an
 a single finger does not change a cell's area; it changes drive and leakage. The
 only cell-architecture density lever left is the row height.
 
-A measured ASAP7 7.5T/6T check is consistent with the direction but is not a
-28 nm result. On the same GRX930 slice, 0.270 → 0.216 µm rows measure 990.113 →
-750.765 µm² (−24.17% total cell area; −20.07% combinational cell area) and
-1,025 → 796 µm² routed cell area (−22.34%). Both slices route DRC-clean at
-20 ns, with 27,238 → 23,616 µm wirelength (−13.30%). The 6T arm uses a derived
-6T-compatible VIA12 because the 6T release has no technology LEF.
-
 ## 4. BEOL stack
 
 | Layer | Direction | Pitch (nm) | Width (nm) | R (ohm/um) | C (fF/um) | RC (ps/um2) |
@@ -103,6 +96,63 @@ are a FinFET-node feature and are not offered on GRX28, so the BEOL lever here i
 pitch and wire RC, not a new via structure.
 
 ## 5. Chip projections
+
+### G100
+
+Throughput-oriented digital GPU on GRX28. The 420M-gate, 48 MB SRAM profile is the pre-split GRXGPU/PTA planning block; the photonic PTA chiplet is now defined separately in chips/pta.yaml and is not part of this die.
+
+**Planning assumptions:** 420M gates, FF ratio 0.06, 48 MB SRAM, 8 mm2 IO, 22 FO4 per stage, activity 0.18, target 0.75 GHz. These are placeholders until the real floorplan and netlist exist.
+
+### Headline (all at or above target frequency)
+
+| Metric | 9T baseline | 7.5T recommended | GRX28 optimised |
+|---|---|---|---|
+| Area (mm2) | 411.9 | 384.9 | 378.3 |
+| Frequency, capability (GHz) | 1.02 | 1.04 | 1.04 |
+| Power at target (W) | 126.9 W | 123.1 W | 116.8 W |
+| Power density at target (W/mm2) | 0.31 W/mm2 | 0.32 W/mm2 | 0.31 W/mm2 |
+
+The optimised configuration is **7.5T DDB, 2-finger, MBFF-4** (grx28_7t5_1f).
+
+
+### Lever waterfall
+
+| Step | Library | Tracks | Isolation | Fingers | Native GHz | Area mm2 | Step delta | Cumulative | Power at target |
+|---|---|---|---|---|---|---|---|---|---|
+| GRX28 9T / 1-finger | grx28_9t_1f | 9 | DDB | 2 | 0.71 | 411.926 | +0.0% | 0.0% | 126.9 W |
+| + 7.5T track shrink | grx28_7t5_1f | 7.5 | DDB | 2 | 0.73 | 384.904 | -6.6% | -6.6% | 123.1 W |
+| + multibit flip-flops | grx28_7t5_1f | 7.5 | DDB | 2 | 0.72 | 387.534 | +0.7% | -5.9% | 118.1 W |
+| + pin-density-aware placement | grx28_7t5_1f | 7.5 | DDB | 2 | 0.73 | 378.317 | -2.4% | -8.2% | 116.8 W |
+
+Cell area is not the same as block area: 7.5T keeps
+5.5 usable M2 tracks against
+7 at 9T, so routable
+utilisation falls from 0.75 to 0.68 and part of the
+cell-level gain is given back at placement. The largest single reduction here is
+**7.5T track shrink** at 6.6%.
+
+Multibit flops changed area by +0.7% and power by
+-5.0 W. With a sequential fraction of only 0.06, MBFF is a
+clock-power lever first and an area lever second; at low FF density the extra
+placement congestion can cancel the cell-area saving.
+
+### Library choice at the frequency target
+
+| Library | Role | Tracks | Fingers used | Area mm2 | vs 9T | Native GHz | Power at target | Util |
+|---|---|---|---|---|---|---|---|---|
+| lp28_7t5_1f | low_power | 7.5 | 2 | 384.9 | -6.6% | 0.73 | 123.1 W | 0.70 |
+| lp28_9t_1f | baseline | 9.0 | 2 | 411.9 | +0.0% | 0.71 | 126.9 W | 0.78 |
+
+7.5T is the GPU recommendation at this node. The 9T baseline costs
+about 7% more area and does not buy back enough routability to justify
+it at the SRAM-dominated block scale.
+
+A 6T library is not modelled at this node: 540 nm rows cannot fit the
+two width units a series stack needs, so 7.5T is the density floor.
+The remaining area lever is implementation quality, not a new cell
+architecture: synthesis mapping, placement density and routing closure
+are where the open-source flow earns its area.
+
 
 ### GRX930
 
@@ -277,63 +327,6 @@ architecture: synthesis mapping, placement density and routing closure
 are where the open-source flow earns its area.
 
 
-### GRXGPU/PTA
-
-Throughput-oriented GPU / parallel throughput accelerator on GRX28. Much larger logic and SRAM footprint, a 28 nm-realistic clock, higher switching activity, and a density-first library choice.
-
-**Planning assumptions:** 420M gates, FF ratio 0.06, 48 MB SRAM, 8 mm2 IO, 22 FO4 per stage, activity 0.18, target 0.75 GHz. These are placeholders until the real floorplan and netlist exist.
-
-### Headline (all at or above target frequency)
-
-| Metric | 9T baseline | 7.5T recommended | GRX28 optimised |
-|---|---|---|---|
-| Area (mm2) | 411.9 | 384.9 | 378.3 |
-| Frequency, capability (GHz) | 1.02 | 1.04 | 1.04 |
-| Power at target (W) | 126.9 W | 123.1 W | 116.8 W |
-| Power density at target (W/mm2) | 0.31 W/mm2 | 0.32 W/mm2 | 0.31 W/mm2 |
-
-The optimised configuration is **7.5T DDB, 2-finger, MBFF-4** (grx28_7t5_1f).
-
-
-### Lever waterfall
-
-| Step | Library | Tracks | Isolation | Fingers | Native GHz | Area mm2 | Step delta | Cumulative | Power at target |
-|---|---|---|---|---|---|---|---|---|---|
-| GRX28 9T / 1-finger | grx28_9t_1f | 9 | DDB | 2 | 0.71 | 411.926 | +0.0% | 0.0% | 126.9 W |
-| + 7.5T track shrink | grx28_7t5_1f | 7.5 | DDB | 2 | 0.73 | 384.904 | -6.6% | -6.6% | 123.1 W |
-| + multibit flip-flops | grx28_7t5_1f | 7.5 | DDB | 2 | 0.72 | 387.534 | +0.7% | -5.9% | 118.1 W |
-| + pin-density-aware placement | grx28_7t5_1f | 7.5 | DDB | 2 | 0.73 | 378.317 | -2.4% | -8.2% | 116.8 W |
-
-Cell area is not the same as block area: 7.5T keeps
-5.5 usable M2 tracks against
-7 at 9T, so routable
-utilisation falls from 0.75 to 0.68 and part of the
-cell-level gain is given back at placement. The largest single reduction here is
-**7.5T track shrink** at 6.6%.
-
-Multibit flops changed area by +0.7% and power by
--5.0 W. With a sequential fraction of only 0.06, MBFF is a
-clock-power lever first and an area lever second; at low FF density the extra
-placement congestion can cancel the cell-area saving.
-
-### Library choice at the frequency target
-
-| Library | Role | Tracks | Fingers used | Area mm2 | vs 9T | Native GHz | Power at target | Util |
-|---|---|---|---|---|---|---|---|---|
-| lp28_7t5_1f | low_power | 7.5 | 2 | 384.9 | -6.6% | 0.73 | 123.1 W | 0.70 |
-| lp28_9t_1f | baseline | 9.0 | 2 | 411.9 | +0.0% | 0.71 | 126.9 W | 0.78 |
-
-7.5T is the GPU recommendation at this node. The 9T baseline costs
-about 7% more area and does not buy back enough routability to justify
-it at the SRAM-dominated block scale.
-
-A 6T library is not modelled at this node: 540 nm rows cannot fit the
-two width units a series stack needs, so 7.5T is the density floor.
-The remaining area lever is implementation quality, not a new cell
-architecture: synthesis mapping, placement density and routing closure
-are where the open-source flow earns its area.
-
-
 ## 6. Reference layout and DRC demo (GRX12F)
 
 The layout generator is FinFET-specific, so this demo is the 12 nm reference: a
@@ -395,14 +388,9 @@ blocker.
 | DRC / LVS | KLayout, Magic, Netgen | Engines ready; 28 nm decks must be authored |
 | Device calibration | ngspice + PTM 28 nm | Device cards only; no layout or timing collateral |
 
-The open-source flow is now measured on three nodes: FreePDK45/NanGate45 supplies the 45 nm
-10T anchor, GF180MCU supplies the same-PDK 9T/7T track-height A/B (7T saves
+The first two steps are now measured: FreePDK45/NanGate45 supplies the 45 nm
+10T anchor, and GF180MCU supplies the same-PDK 9T/7T track-height A/B (7T saves
 20.6% routed cell area and 10.6% wirelength, costs 0.72 ns WNS, both routes DRC-clean).
-
-An ASAP7 7.5T/6T check measures −24.17% total cell area (−20.07%
-combinational), −22.34% routed cell area and −13.30% wirelength; both routes are
-DRC-clean at 20 ns using a derived 6T-compatible VIA12.
-
 Next is calibrating power and FO4 against PTM 28 nm cards, then porting the
 identical flow to an NDA 28 nm kit. The 45 nm proxy cannot sign off 28 nm area;
 only the foundry deck can. Details and sources are in
@@ -411,7 +399,7 @@ only the foundry deck can. Details and sources are in
 
 ## 9. Assumptions and what to do next
 
-1. GRX930 carries measured silicon data in its `as_built` block. GRXGPU/PTA
+1. GRX930 carries measured silicon data in its `as_built` block. G100
    still uses planning assumptions; replace them when its netlist exists.
 2. GRX930's 178-pad budget is derived from the measured memory interface, but
    the fixed I/O groups (JTAG, UART, boot, GPIO) and the 1:6 supply ratio are

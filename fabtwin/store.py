@@ -15,8 +15,9 @@ from pathlib import Path
 from typing import Any
 
 from .errors import StoreError
+from .provenance import ROOT, display_path, sha256_file
 
-STORE_SCHEMA_VERSION = "1"
+STORE_SCHEMA_VERSION = "2"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -72,6 +73,23 @@ CREATE TABLE IF NOT EXISTS artifacts (
     sha256 TEXT NOT NULL,
     UNIQUE (run_id, path)
 );
+
+CREATE TABLE IF NOT EXISTS comparison_artifacts (
+    comparison_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_a TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    run_b TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    path TEXT NOT NULL UNIQUE,
+    media_type TEXT NOT NULL,
+    bytes INTEGER NOT NULL,
+    sha256 TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_comparison_artifacts_run_a
+    ON comparison_artifacts(run_a);
+CREATE INDEX IF NOT EXISTS idx_comparison_artifacts_run_b
+    ON comparison_artifacts(run_b);
+CREATE INDEX IF NOT EXISTS idx_comparison_artifacts_sha256
+    ON comparison_artifacts(sha256);
 
 CREATE TABLE IF NOT EXISTS inputs (
     input_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,6 +267,77 @@ class ObservationStore:
             ) from exc
         except (sqlite3.Error, KeyError, TypeError, ValueError) as exc:
             raise StoreError(f"cannot index run {run_id!r}: {exc}") from exc
+
+    def record_comparison_artifact(
+        self,
+        *,
+        run_a: str,
+        run_b: str,
+        path: str | Path,
+    ) -> dict[str, Any]:
+        """Index a written comparison report by path, size, and SHA-256.
+
+        A report path is unique: regenerating the same comparison at the same
+        path replaces the indexed hash instead of leaving a stale entry.
+        """
+        target = Path(path).resolve()
+        try:
+            size = target.stat().st_size
+            digest = sha256_file(target)
+        except OSError as exc:
+            raise StoreError(
+                f"cannot read comparison report {target}: {exc}"
+            ) from exc
+        stored_path = display_path(target)
+
+        try:
+            self.initialize()
+            with self._connect() as connection:
+                connection.execute(
+                    """
+                    INSERT INTO comparison_artifacts (
+                        run_a, run_b, path, media_type, bytes, sha256
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(path) DO UPDATE SET
+                        run_a = excluded.run_a,
+                        run_b = excluded.run_b,
+                        media_type = excluded.media_type,
+                        bytes = excluded.bytes,
+                        sha256 = excluded.sha256
+                    """,
+                    (
+                        run_a,
+                        run_b,
+                        stored_path,
+                        "text/markdown",
+                        size,
+                        digest,
+                    ),
+                )
+                row = connection.execute(
+                    """
+                    SELECT
+                        comparison_id, run_a, run_b, path, media_type,
+                        bytes, sha256
+                    FROM comparison_artifacts
+                    WHERE path = ?
+                    """,
+                    (stored_path,),
+                ).fetchone()
+        except sqlite3.IntegrityError as exc:
+            raise StoreError(
+                "cannot register comparison report; both runs must be "
+                f"indexed: {exc}"
+            ) from exc
+        except sqlite3.Error as exc:
+            raise StoreError(
+                f"cannot register comparison report in {self.path}: {exc}"
+            ) from exc
+        if row is None:
+            raise StoreError(
+                f"comparison report was not indexed in {self.path}"
+            )
+        return dict(row)
 
     def query_observations(
         self,
@@ -430,6 +519,181 @@ class ObservationStore:
                 ]
         except sqlite3.Error as exc:
             raise StoreError(f"cannot list runs in {self.path}: {exc}") from exc
+
+    def list_comparison_artifacts(
+        self, *, run_id: str | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """Return indexed comparison reports, newest first."""
+        limit = _checked_limit(limit)
+        clauses: list[str] = []
+        parameters: list[Any] = []
+        if run_id is not None:
+            clauses.append("(run_a = ? OR run_b = ?)")
+            parameters.extend((run_id, run_id))
+        where = " AND ".join(clauses) if clauses else "1 = 1"
+        query = f"""
+            SELECT
+                comparison_id, run_a, run_b, path, media_type, bytes, sha256
+            FROM comparison_artifacts
+            WHERE {where}
+            ORDER BY comparison_id DESC
+            LIMIT ?
+        """
+        parameters.append(limit)
+        try:
+            self.initialize()
+            with self._connect() as connection:
+                return [
+                    dict(row)
+                    for row in connection.execute(query, parameters)
+                ]
+        except sqlite3.Error as exc:
+            raise StoreError(
+                f"cannot list comparison reports in {self.path}: {exc}"
+            ) from exc
+
+    def verify_artifacts(self) -> dict[str, Any]:
+        """Recompute every indexed artifact hash and compare it to the index."""
+        run_query = """
+            SELECT
+                a.run_id, r.run_dir, a.path, a.bytes, a.sha256
+            FROM artifacts AS a
+            JOIN runs AS r ON r.run_id = a.run_id
+            ORDER BY r.started_at DESC, a.path
+        """
+        input_query = """
+            SELECT input_id, run_id, role, path, bytes, sha256
+            FROM inputs
+            ORDER BY run_id, role
+        """
+        comparison_query = """
+            SELECT run_a, run_b, path, bytes, sha256
+            FROM comparison_artifacts
+            ORDER BY comparison_id
+        """
+        try:
+            self.initialize()
+            with self._connect() as connection:
+                run_rows = [
+                    dict(row) for row in connection.execute(run_query)
+                ]
+                input_rows = [
+                    dict(row) for row in connection.execute(input_query)
+                ]
+                comparison_rows = [
+                    dict(row) for row in connection.execute(comparison_query)
+                ]
+        except sqlite3.Error as exc:
+            raise StoreError(
+                f"cannot read artifacts in {self.path}: {exc}"
+            ) from exc
+
+        run_artifacts = []
+        for row in run_rows:
+            run_dir = _resolve_stored_path(row["run_dir"])
+            artifact_path = Path(row["path"])
+            target = (
+                artifact_path
+                if artifact_path.is_absolute()
+                else run_dir / artifact_path
+            )
+            run_artifacts.append(
+                _verify_artifact(
+                    kind="run",
+                    run_id=row["run_id"],
+                    target=target,
+                    expected_bytes=int(row["bytes"]),
+                    expected_sha256=row["sha256"],
+                )
+            )
+        inputs = [
+            _verify_artifact(
+                kind="input",
+                input_id=row["input_id"],
+                run_id=row["run_id"],
+                role=row["role"],
+                target=_resolve_stored_path(row["path"]),
+                expected_bytes=int(row["bytes"]),
+                expected_sha256=row["sha256"],
+            )
+            for row in input_rows
+        ]
+        comparison_artifacts = [
+            _verify_artifact(
+                kind="comparison",
+                run_a=row["run_a"],
+                run_b=row["run_b"],
+                target=_resolve_stored_path(row["path"]),
+                expected_bytes=int(row["bytes"]),
+                expected_sha256=row["sha256"],
+            )
+            for row in comparison_rows
+        ]
+        checked = len(run_artifacts) + len(inputs) + len(comparison_artifacts)
+        ok = sum(
+            1
+            for row in run_artifacts + inputs + comparison_artifacts
+            if row["status"] == "ok"
+        )
+        return {
+            "checked": checked,
+            "ok": ok,
+            "failed": checked - ok,
+            "run_artifacts": run_artifacts,
+            "inputs": inputs,
+            "comparison_artifacts": comparison_artifacts,
+        }
+
+
+def _resolve_stored_path(value: str | Path) -> Path:
+    """Resolve a path recorded by ``display_path`` from the project root."""
+    path = Path(value)
+    if not path.is_absolute():
+        path = ROOT / path
+    return path.resolve()
+
+
+def _verify_artifact(
+    *,
+    kind: str,
+    target: str | Path,
+    expected_bytes: int,
+    expected_sha256: str,
+    **identity: Any,
+) -> dict[str, Any]:
+    path = Path(target).resolve()
+    result: dict[str, Any] = {
+        **identity,
+        "kind": kind,
+        "path": display_path(path),
+        "expected_bytes": expected_bytes,
+        "actual_bytes": None,
+        "expected_sha256": expected_sha256,
+        "actual_sha256": None,
+        "status": "ok",
+    }
+    try:
+        actual_bytes = path.stat().st_size
+        actual_sha256 = sha256_file(path)
+    except FileNotFoundError:
+        result["status"] = "missing"
+        return result
+    except OSError as exc:
+        result["status"] = "unreadable"
+        result["error"] = str(exc)
+        return result
+
+    result["actual_bytes"] = actual_bytes
+    result["actual_sha256"] = actual_sha256
+    size_bad = actual_bytes != expected_bytes
+    hash_bad = actual_sha256 != expected_sha256
+    if size_bad and hash_bad:
+        result["status"] = "size_and_hash_mismatch"
+    elif size_bad:
+        result["status"] = "size_mismatch"
+    elif hash_bad:
+        result["status"] = "hash_mismatch"
+    return result
 
 
 def _comparison_row(

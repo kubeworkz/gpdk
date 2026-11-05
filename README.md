@@ -5,7 +5,7 @@ definition, a planar device model, standard-cell libraries, a BEOL stack, a
 block-level DTCO estimator, a pad-ring/package floorplan, and a FinFET layout
 demo kept as the advanced-node reference. It answers one question
 quantitatively: **what actually shrinks the quad-core, dual-NPU GRX930 and the
-GRXGPU/PTA logic at 28 nm, and by how much?**
+G100 logic at 28 nm, and by how much?**
 
 It is a planning model, not a foundry-qualified PDK. See
 [Limitations](#limitations) before using any number in a schedule or a datasheet.
@@ -13,15 +13,19 @@ It is a planning model, not a foundry-qualified PDK. See
 ## New direction: foundry digital twin
 
 The repository is now also the home of a foundry digital-twin platform for
-GRX930, G100/GRXGPU and the PTA. The proposed architecture and phased plan are
+GRX930, G100 and the PTA. The proposed architecture and phased plan are
 in [docs/fab-sim-architecture.md](docs/fab-sim-architecture.md); the concept and
 requirements catalogue is [docs/fab-sim.md](docs/fab-sim.md). The twin starts
 from the existing `gpdk` analytical models and measured flow results, not from a
-full-chip TCAD stack. The Phase 0 skeleton is in `fabtwin/`; the first
-reproducible scenario is
-[`scenarios/grx930_28nm_baseline.yaml`](scenarios/grx930_28nm_baseline.yaml).
+full-chip TCAD stack. The Phase 0 runner is in `fabtwin/`; the baseline
+scenarios are
+[`grx930`](scenarios/grx930_28nm_baseline.yaml),
+[`g100`](scenarios/g100_28nm_baseline.yaml) and
+[`pta`](scenarios/pta_28nm_baseline.yaml).
 Each run is indexed in `out/fabtwin/fabtwin.db`; `python -m fabtwin query`
-provides the cross-run observation path.
+provides the cross-run observation path. Phase 0 now defines three products:
+GRX930, G100 and PTA. G100 is the digital GPU profile; PTA is a separate
+photonic chiplet with an MCM package definition.
 
 ## Quick start
 
@@ -31,26 +35,45 @@ python -m gpdk padring  # rebuild the GRX930 pad ring and ball map
 python -m gpdk drc      # check the 12 nm FinFET demo inverter
 python -m fabtwin validate scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_28nm_baseline.yaml
+python -m fabtwin run scenarios/g100_28nm_baseline.yaml
+python -m fabtwin run scenarios/pta_28nm_baseline.yaml
 python -m fabtwin query --runs
+python -m fabtwin query --reports
 python -m fabtwin query --run RUN_ID --metric die_area_m2
 python -m fabtwin compare RUN_A RUN_B --only-changes
+python -m fabtwin verify-artifacts
 python -m pytest        # model, geometry, package and fabtwin tests
+python -m pytest tests/test_clean_checkout.py  # isolated baseline reproducibility check
 ```
 
 Dependencies: Python 3.10+, PyYAML. Pillow is optional and only used for the PNG
 layout preview. Tested with Python 3.14, PyYAML 6.0, pytest 9.2, Pillow 12.3.
 
 `query` reads the SQLite index and accepts `--run`, `--metric`, `--entity`,
-`--evidence`, `--product` and `--limit`; `--runs` lists indexed runs and
-`--json` is machine-readable. The store path defaults to
-`out/fabtwin/fabtwin.db`.
+`--evidence`, `--product` and `--limit`; `--runs` lists indexed runs,
+`--reports` lists registered comparison reports, and `--json` is
+machine-readable. The store path defaults to `out/fabtwin/fabtwin.db`.
 
 `compare` matches observations by entity and metric. It reports value deltas,
 added and removed rows, unit and model-version changes, and evidence transitions
 such as `assumed -> measured`. `--only-changes` limits the table to flagged
 rows. Each comparison writes a Markdown report beside the store at
 `out/fabtwin/comparisons/<run-a>__vs__<run-b>.md`; use `--report` to override
-the path.
+the path. The report is registered in SQLite with its byte count and SHA-256,
+returned as `report_artifact` in JSON output. Regenerating the same path updates
+that entry rather than leaving a stale hash.
+
+The PTA baseline records the declared 4x4 mesh, port count, optical window,
+lane pitch and wavelength. It is a product-definition baseline, not an optical
+performance model; insertion loss, phase error, thermal tuning and tensor error
+are Phase 2 work. Its MCM package definition is a hashed scenario input.
+
+`verify-artifacts` recomputes the SHA-256 and byte count of every indexed run
+artifact, scenario/chip/technology input, and comparison report. It reports
+missing, unreadable, size-mismatched and hash-mismatched files, then exits
+nonzero if any check fails; `--json` returns the detailed result. It modifies
+neither indexed records nor artifact files, and it verifies only what the index
+claims; it does not discover unindexed files.
 
 ## What is in the box
 
@@ -61,7 +84,9 @@ tech/12lp_class_ref.yaml    first-generation 12 nm comparison baseline
 libraries/lp28_*.yaml       28 nm planar libraries: 9T and 7.5T, single-finger
 libraries/hp*_*.yaml        12 nm FinFET reference libraries
 chips/grx930.yaml           measured quad-core RV64 + dual-NPU baseline
-chips/grxgpu_pta.yaml       GPU / parallel throughput accelerator assumptions
+chips/g100.yaml             digital GPU planning profile (pre-split block)
+chips/pta.yaml              photonic tensor accelerator product definition
+packages/mcm_si.yaml        2.5D silicon-interposer package definition
 gpdk/tech.py                node loader; fin and finger width units
 gpdk/device.py              planar/FinFET Ion/Ioff/Cgg/Ron/FO4 model
 gpdk/cells.py               cell templates, track/isolation architecture
@@ -72,7 +97,9 @@ gpdk/package.py             pin budget, package selection, assembly floor
 gpdk/padring.py             pad-ring floorplan and TFBGA ball map
 gpdk/dtco.py                node-aware lever sweep at the target clock
 fabtwin/                    Phase 0 runner, strict schema, manifest, SQLite index, gpdk adapter
-scenarios/grx930_28nm_baseline.yaml  first reproducible Phase 0 baseline
+scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
+scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
+scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader
@@ -81,7 +108,7 @@ out/REPORT.md               generated node, library and chip report
 out/grx930_package.png      pad ring and TFBGA-196 ball map
 out/grx930_padring.csv      pad coordinates; out/grx930_ballmap.csv nets
 out/fabtwin/<run-id>/       run.json, observations.csv and report.md
-out/fabtwin/fabtwin.db      SQLite observation index for all runs
+out/fabtwin/fabtwin.db      SQLite index for runs, observations and report hashes
 out/fabtwin/comparisons/    generated run-to-run comparison reports
 docs/open-source-28nm-flow.md  tools, PDK reality, two-track plan
 docs/dtco-strategy.md       the 28 nm levers, results, and validation plan
@@ -95,14 +122,14 @@ docs/node-definition.md     full GRX12F FinFET reference definition
 ## Headline results
 
 GRX930 uses the **measured RISC-V test chip** as its baseline: four RV64IMAC
-cores, two NPUs, operand banks and 96 KB of on-chip SRAM. GRXGPU/PTA is still a
+cores, two NPUs, operand banks and 96 KB of on-chip SRAM. G100 is still a
 planning profile. All block numbers are at or above each chip's target clock,
 with the 28 nm 9T single-finger library as the baseline.
 
 | Chip | Baseline area | Optimised area | Area | Power at target | Target clock |
 |---|---|---|---|---|---|
 | GRX930 (28 nm retarget) | 0.88 mm² | **0.80 mm²** | **−9.0%** | 5.5 → 5.2 mW | 25 MHz |
-| GRXGPU/PTA | 411.9 mm² | **378.3 mm²** | **−8.2%** | 126.9 → 116.8 W | 0.75 GHz |
+| G100 | 411.9 mm² | **378.3 mm²** | **−8.2%** | 126.9 → 116.8 W | 0.75 GHz |
 
 **The measured chip is the real baseline.** Its 46.2 mm² of logic and 40.2 mm²
 of SRAM sit on a 165 mm² die, i.e. 34.2 µm² per NAND2-equivalent and 51.1 µm² per
@@ -116,7 +143,7 @@ carry the ring, and the 196-ball package leaves 18 balls spare. **93.8% of that
 die is empty and no library lever changes it.** GRX930 at 28 nm is pad-limited:
 density buys integration headroom and power, not a smaller chip.
 
-| Lever (cumulative) | GRX930 | GRXGPU/PTA |
+| Lever (cumulative) | GRX930 | G100 |
 |---|---|---|
 | 7.5T track shrink | −6.9% | −6.6% |
 | + MBFF | −6.7% | −5.9% |
@@ -153,7 +180,7 @@ die. Deleting the 64-bit off-chip bus is worth 7.8 mm².
 | Chip | Library | Why |
 |---|---|---|
 | GRX930 | `lp28_7t5_1f` — 7.5T, single-finger, DDB | Same pad-limited die as 9T, but 16.7% shorter rows and lower leakage; no COAG/SDB decision exists at this node. |
-| GRXGPU/PTA | `lp28_7t5_1f` — 7.5T, single-finger, DDB | The 9T baseline costs 6.6% more area without buying enough routability; MBFF-4 and pin-aware placement recover another 3%. |
+| G100 | `lp28_7t5_1f` — 7.5T, single-finger, DDB | The 9T baseline costs 6.6% more area without buying enough routability; MBFF-4 and pin-aware placement recover another 3%. |
 
 Both use the same device, BEOL and isolation assumptions, so the comparison is
 apples-to-apples within this model.

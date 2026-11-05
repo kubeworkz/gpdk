@@ -1,9 +1,9 @@
 block,step,label,library,tracks,isolation,coag,mbff,pin_aware,fins,native_freq_ghz,iso_freq_ghz,iso_area_mm2,step_delta_mm2,step_delta_pct,vs_baseline_pct,power_w,util
+G100,node9t,GRX28 9T / 1-finger,grx28_9t_1f,9,DDB,False,1,False,2,0.707,1.016,411.926,0.0,0.0,0.0,126.8752,0.752
+G100,track7t5,+ 7.5T track shrink,grx28_7t5_1f,7.5,DDB,False,1,False,2,0.727,1.037,384.904,-27.021,-6.56,-6.56,123.1267,0.682
+G100,mbff,+ multibit flip-flops,grx28_7t5_1f,7.5,DDB,False,4,False,2,0.725,1.035,387.534,2.629,0.68,-5.92,118.14048,0.662
+G100,pin_aware,+ pin-density-aware placement,grx28_7t5_1f,7.5,DDB,False,4,True,2,0.732,1.042,378.317,-9.217,-2.38,-8.16,116.82946,0.683
 GRX930,node9t,GRX28 9T / 1-finger,grx28_9t_1f,9,DDB,False,1,False,1,1.935,1.935,0.88,0.0,0.0,0.0,0.00549,0.775
 GRX930,track7t5,+ 7.5T track shrink,grx28_7t5_1f,7.5,DDB,False,1,False,1,1.941,1.941,0.82,-0.06,-6.85,-6.85,0.00548,0.704
 GRX930,mbff,+ multibit flip-flops,grx28_7t5_1f,7.5,DDB,False,2,False,1,1.941,1.941,0.822,0.002,0.21,-6.65,0.00524,0.693
 GRX930,pin_aware,+ pin-density-aware placement,grx28_7t5_1f,7.5,DDB,False,2,True,1,1.943,1.943,0.801,-0.02,-2.49,-8.97,0.00523,0.715
-GRXGPU/PTA,node9t,GRX28 9T / 1-finger,grx28_9t_1f,9,DDB,False,1,False,2,0.707,1.016,411.926,0.0,0.0,0.0,126.8752,0.752
-GRXGPU/PTA,track7t5,+ 7.5T track shrink,grx28_7t5_1f,7.5,DDB,False,1,False,2,0.727,1.037,384.904,-27.021,-6.56,-6.56,123.1267,0.682
-GRXGPU/PTA,mbff,+ multibit flip-flops,grx28_7t5_1f,7.5,DDB,False,4,False,2,0.725,1.035,387.534,2.629,0.68,-5.92,118.14048,0.662
-GRXGPU/PTA,pin_aware,+ pin-density-aware placement,grx28_7t5_1f,7.5,DDB,False,4,True,2,0.732,1.042,378.317,-9.217,-2.38,-8.16,116.82946,0.683

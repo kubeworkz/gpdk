@@ -1,0 +1,27 @@
+# Phase 0 baseline: PTA photonic chiplet definition on a 28 nm-class SiPh
+# process. This scenario records topology assumptions only. Optical and thermal
+# performance is Phase 2 work, not a Phase 0 result.
+schema_version: "0.1"
+id: pta_28nm_baseline
+description: >-
+  Record the PTA product envelope and MCM package contract: 4x4 MZI mesh,
+  four input/output ports, 200 um window, 20 um lane pitch and 1550 nm
+  operation. No insertion-loss, phase-error or tensor-error model is applied.
+product: pta
+process: grx28@0.1.0
+seed: 20261105
+samples: 1
+engines:
+  - pta
+inputs:
+  chip: chips/pta.yaml
+  package: packages/mcm_si.yaml
+outputs:
+  - mesh_rows
+  - mesh_columns
+  - mzi_count
+  - input_port_count
+  - output_port_count
+  - optical_window_m
+  - lane_pitch_m
+  - wavelength_m

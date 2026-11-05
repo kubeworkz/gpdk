@@ -61,10 +61,16 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="SQLite index (default: out/fabtwin/fabtwin.db)",
     )
-    query_parser.add_argument(
+    listing_group = query_parser.add_mutually_exclusive_group()
+    listing_group.add_argument(
         "--runs",
         action="store_true",
         help="list runs instead of observations",
+    )
+    listing_group.add_argument(
+        "--reports",
+        action="store_true",
+        help="list registered comparison reports",
     )
     query_parser.add_argument("--run", dest="run_id", help="filter by run ID")
     query_parser.add_argument("--metric", help="filter by metric")
@@ -120,6 +126,22 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="emit JSON instead of a table",
     )
+
+    verify_parser = subparsers.add_parser(
+        "verify-artifacts",
+        help="recompute hashes for indexed run and comparison artifacts",
+    )
+    verify_parser.add_argument(
+        "--db",
+        default=None,
+        help="SQLite index (default: out/fabtwin/fabtwin.db)",
+    )
+    verify_parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="emit JSON instead of a report",
+    )
     return parser
 
 
@@ -141,6 +163,57 @@ def _print_runs(rows: list[dict]) -> None:
             f"{row['observation_count']}\t{row['status']}\t"
             f"{row['started_at']}"
         )
+
+
+def _print_comparison_artifacts(rows: list[dict]) -> None:
+    if not rows:
+        print("no comparison reports")
+        return
+    print("comparison_id\trun_a\trun_b\tbytes\tsha256\tpath")
+    for row in rows:
+        print(
+            f"{row['comparison_id']}\t{row['run_a']}\t{row['run_b']}\t"
+            f"{row['bytes']}\t{row['sha256']}\t{row['path']}"
+        )
+
+
+def _print_verification(result: dict) -> None:
+    for title, key in (
+        ("Run artifacts", "run_artifacts"),
+        ("Input files", "inputs"),
+        ("Comparison reports", "comparison_artifacts"),
+    ):
+        rows = result[key]
+        print(f"{title}: {len(rows)}")
+        if not rows:
+            print("  none")
+            continue
+        for row in rows:
+            scope = row.get("run_id") or (
+                f"{row['run_a']} vs {row['run_b']}"
+            )
+            if row.get("role"):
+                scope += f" [{row['role']}]"
+            print(f"  {row['status']:<24} {scope}  {row['path']}")
+            if row["status"] == "ok":
+                continue
+            actual_bytes = (
+                "-" if row["actual_bytes"] is None else row["actual_bytes"]
+            )
+            print(
+                f"    expected sha256={row['expected_sha256']} "
+                f"actual={row['actual_sha256'] or '-'}"
+            )
+            print(
+                f"    expected bytes={row['expected_bytes']} "
+                f"actual={actual_bytes}"
+            )
+            if row.get("error"):
+                print(f"    error: {row['error']}")
+    print(
+        f"checked: {result['checked']}  ok: {result['ok']}  "
+        f"failed: {result['failed']}"
+    )
 
 
 def _print_observations(rows: list[dict]) -> None:
@@ -168,6 +241,10 @@ def _query(args: argparse.Namespace) -> int:
     try:
         if args.runs:
             rows = store.list_runs(limit=args.limit)
+        elif args.reports:
+            rows = store.list_comparison_artifacts(
+                run_id=args.run_id, limit=args.limit
+            )
         else:
             rows = store.query_observations(
                 run_id=args.run_id,
@@ -185,6 +262,8 @@ def _query(args: argparse.Namespace) -> int:
         print(json.dumps(rows, indent=2))
     elif args.runs:
         _print_runs(rows)
+    elif args.reports:
+        _print_comparison_artifacts(rows)
     else:
         _print_observations(rows)
     return 0
@@ -244,14 +323,50 @@ def _compare(args: argparse.Namespace) -> int:
     except OSError as exc:
         print(f"error: cannot write comparison report: {exc}", file=sys.stderr)
         return 1
-    diff["report_path"] = display_path(report_path)
+    try:
+        artifact = store.record_comparison_artifact(
+            run_a=args.run_a,
+            run_b=args.run_b,
+            path=report_path,
+        )
+    except StoreError as exc:
+        print(
+            f"error: cannot register comparison report: {exc}",
+            file=sys.stderr,
+        )
+        return 1
+    diff["report_path"] = artifact["path"]
+    diff["report_artifact"] = artifact
 
     if args.as_json:
         print(json.dumps(diff, indent=2))
     else:
         _print_comparison(diff)
-        print(f"report: {display_path(report_path)}")
+        print(f"report: {artifact['path']}")
+        print(f"report sha256: {artifact['sha256']}")
     return 0
+
+
+def _verify_artifacts(args: argparse.Namespace) -> int:
+    path = _resolve_store(args.db)
+    if not path.is_file():
+        print(
+            f"error: SQLite store not found: {display_path(path)}",
+            file=sys.stderr,
+        )
+        return 1
+    store = ObservationStore(path)
+    try:
+        result = store.verify_artifacts()
+    except StoreError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    if args.as_json:
+        print(json.dumps(result, indent=2))
+    else:
+        _print_verification(result)
+    return 0 if result["failed"] == 0 else 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -260,6 +375,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _query(args)
     if args.command == "compare":
         return _compare(args)
+    if args.command == "verify-artifacts":
+        return _verify_artifacts(args)
 
     try:
         scenario = load_scenario(args.scenario)

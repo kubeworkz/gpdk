@@ -1,0 +1,35 @@
+# PTA -- photonic tensor accelerator chiplet on a 28 nm-class silicon-photonics
+# process. This is a product-definition baseline, not an optical performance
+# model. No qualified SiPh PDK exists for these assumptions.
+name: PTA
+revision: "0.1.0"
+description: >-
+  Photonic tensor accelerator chiplet with a 4x4 MZI mesh, four optical input
+  and four output ports, a 200 um calculation window, a 20 um lane pitch, and
+  1550 nm operation. The topology is planning data from the concept document;
+  optical loss, phase error, tuning power and tensor error are deferred to the
+  Phase 2 photonic/thermal slice.
+kind: photonic_tensor_accelerator
+tech: grx28.yaml
+package: mcm_si@0.1.0
+
+design:
+  mesh:
+    rows: 4
+    columns: 4
+    input_ports: 4
+    output_ports: 4
+    optical_window_um: 200.0
+    lane_pitch_um: 20.0
+  wavelength_nm: 1550.0
+
+assumptions:
+  - "4x4 MZI mesh topology from the concept document"
+  - "four optical input and four output ports"
+  - "200 um calculation window and 20 um lane pitch"
+  - "1550 nm nominal operating wavelength"
+  - "no optical loss, phase-error, thermal or tensor-error model yet"
+
+notes: >-
+  These values define the PTA product envelope only. They must not be read as
+  measured insertion loss, phase error, tuning power, or tensor accuracy.

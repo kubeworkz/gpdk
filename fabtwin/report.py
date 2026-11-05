@@ -161,6 +161,11 @@ def render_report(
     ["Engines", ", ".join(f"`{name}`" for name in scenario.engines)],
     ["Outputs", outputs],
     ["Scenario SHA-256", f"`{scenario.sha256[:16]}...`"],
+    *(
+        [["Package", f"`{scenario.package_ref}`"]]
+        if scenario.package_ref
+        else []
+    ),
 ])}
 
 ## Engines

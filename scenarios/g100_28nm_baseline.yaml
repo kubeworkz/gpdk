@@ -1,0 +1,29 @@
+# Phase 0 baseline: G100 digital GPU on GRX28.
+#
+# This exercises the existing F0 gpdk analytical model. It is a scenario
+# estimate, not a silicon prediction or a foundry sign-off. The PTA photonic
+# chiplet is deliberately not part of this die.
+schema_version: "0.1"
+id: g100_28nm_baseline
+description: >-
+  Reproduce the G100 digital block projection from the pre-split planning
+  profile, with every projected value marked as an assumption.
+product: g100
+process: grx28@0.1.0
+seed: 20261105
+samples: 1
+engines:
+  - gpdk
+inputs:
+  chip: chips/g100.yaml
+outputs:
+  - cell_area_m2
+  - content_area_m2
+  - die_area_m2
+  - native_frequency_hz
+  - pad_floor_area_m2
+  - power_at_target_w
+  - power_density_at_target_w_per_m2
+  - power_w
+  - sram_area_m2
+  - util

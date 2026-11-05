@@ -163,7 +163,14 @@ def load_chip(path: str | Path) -> BlockConfig:
 
 
 def load_chips() -> list[BlockConfig]:
-    return [load_chip(p) for p in sorted(CHIP_DIR.glob("*.yaml"))]
+    """Load digital block definitions, skipping non-digital products."""
+    chips: list[BlockConfig] = []
+    for path in sorted(CHIP_DIR.glob("*.yaml")):
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict) or "gates_m" not in raw:
+            continue
+        chips.append(load_chip(path))
+    return chips
 
 
 def pad_limited_die_mm2(cfg: BlockConfig) -> float:

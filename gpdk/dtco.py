@@ -1,4 +1,4 @@
-"""DTCO lever sweep for the GRX930 and GRXGPU/PTA blocks.
+"""DTCO lever sweep for the GRX930 and G100 blocks.
 
 The waterfall depends on the node class. A FinFET node (GRX12F) can trade track
 height, fin count, isolation and COAG. A planar node (GRX28) has no fins, no

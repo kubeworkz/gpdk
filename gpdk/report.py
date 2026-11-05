@@ -745,7 +745,7 @@ Generated {dt.date.today().isoformat()} from `{tech.path.relative_to(ROOT).as_po
 > **What this is.** A transparent, reproducible planning model for a 28 nm-class
 > planar platform we own, with the 12 nm FinFET model kept as the advanced-node
 > reference. It carries the cell, BEOL, block and layout models needed to compare
-> DTCO choices for the quad-core/dual-NPU GRX930 and for GRXGPU/PTA.
+> DTCO choices for the quad-core/dual-NPU GRX930 and for G100.
 >
 > **What this is not.** A foundry-qualified PDK, a calibrated compact model, a
 > silicon-verified rule deck, or a statement about any foundry's actual 28 nm
@@ -818,7 +818,7 @@ a signoff deck.
 
 {padring_md}{flow_md}## 9. Assumptions and what to do next
 
-1. GRX930 carries measured silicon data in its `as_built` block. GRXGPU/PTA
+1. GRX930 carries measured silicon data in its `as_built` block. G100
    still uses planning assumptions; replace them when its netlist exists.
 2. GRX930's 178-pad budget is derived from the measured memory interface, but
    the fixed I/O groups (JTAG, UART, boot, GPIO) and the 1:6 supply ratio are

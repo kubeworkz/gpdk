@@ -110,15 +110,16 @@ shows that the decision depends on it.
 ## 4. Product model
 
 The twin needs separate product definitions before it needs a simulator. The
-current `chips/grxgpu_pta.yaml` combines the GPU and the PTA in one planning
-block; that is adequate for a block-area estimate but not for a manufacturing
-twin.
+pre-split `chips/grxgpu_pta.yaml` combined the GPU and the PTA in one
+planning block, which was adequate for a block-area estimate but not for a
+manufacturing twin. The split is now defined in `chips/g100.yaml` and
+`chips/pta.yaml`; `packages/mcm_si.yaml` defines the package stack.
 
 | Entity | Definition | Current evidence |
 |---|---|---|
 | `grx930` | 28 nm planar digital SoC: four RV64 cores, two NPUs, 96 KB SRAM | Measured legacy baseline plus GRX28 projection |
 | `g100` / `grxgpu` | 28 nm digital GPU/throughput chip | Planning assumptions only; 420M gates, 48 MB SRAM, 0.75 GHz target |
-| `pta` | Photonic tensor accelerator chiplet, 28 nm-class silicon photonics | Equations and assumptions only; no qualified SiPh PDK |
+| `pta` | Photonic tensor accelerator chiplet, 28 nm-class silicon photonics | Declared topology and package assumptions only; no optical model or qualified SiPh PDK |
 | `mcm` | 2.5D silicon interposer or bridge package containing an electronic die and a PTA die | Package assumptions only |
 
 **Recommendation:** commit to the **chiplet baseline**: an electronic chiplet
@@ -127,9 +128,9 @@ electronic-plus-photonic die remains a comparison scenario, not the default. The
 process, thermal, and known-good-die models are simpler and more honest when the
 two technologies are separated.
 
-The first task is therefore a product-definition task: split G100 and PTA into
-separate YAML files, give each a revision, and give the MCM its own stack
-definition. No yield model should be written against a combined block.
+The product-definition task is complete: G100 and PTA are separate revisioned
+YAML files, and the MCM has its own stack definition. No yield model is written
+against a combined block.
 
 ## 5. Data and contracts
 
@@ -210,7 +211,7 @@ implementation:
 id: pta_width_sigma
 product: pta@rev-a
 process: pta28@0.1
-package: mcm_si@0.1
+package: mcm_si@0.1.0
 samples: 2000
 seed: 20261105
 engines: [photonic, package, yield]

@@ -203,6 +203,11 @@ def execute(
     seen_inputs: set[tuple[str, str]] = {
         ("scenario", display_path(scenario.path))
     }
+    if scenario.package_path is not None:
+        input_records.append(_input_record("package", scenario.package_path))
+        seen_inputs.add(
+            ("package", display_path(scenario.package_path))
+        )
     for result in results:
         for input_file in result.inputs:
             key = (input_file.role, display_path(input_file.path))
@@ -273,6 +278,7 @@ def execute(
             "sha256": scenario.sha256,
             "product": scenario.product,
             "process": scenario.process,
+            "package": scenario.package_ref,
             "seed": scenario.seed,
             "samples": scenario.samples,
             "outputs": list(scenario.outputs),

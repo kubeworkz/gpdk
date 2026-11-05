@@ -32,7 +32,7 @@ TOP_LEVEL_FIELDS = frozenset(
         "outputs",
     }
 )
-INPUT_FIELDS = frozenset({"chip"})
+INPUT_FIELDS = frozenset({"chip", "package"})
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 _PRODUCT_RE = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 _PROCESS_RE = re.compile(
@@ -58,6 +58,8 @@ class Scenario:
     engines: tuple[str, ...]
     chip_ref: str
     chip_path: Path
+    package_ref: str | None
+    package_path: Path | None
     outputs: tuple[str, ...]
 
 
@@ -196,6 +198,8 @@ def load_scenario(path: str | Path) -> Scenario:
 
     chip_ref: str | None = None
     chip_path: Path | None = None
+    package_ref: str | None = None
+    package_path: Path | None = None
     inputs = raw.get("inputs")
     if not isinstance(inputs, dict):
         _add(errors, path, "'inputs' must be a mapping")
@@ -223,6 +227,28 @@ def load_scenario(path: str | Path) -> Scenario:
                     f"'inputs.chip' does not exist: {display_path(chip_path)}",
                 )
 
+        package_value = inputs.get("package")
+        if package_value is not None:
+            if not isinstance(package_value, str) or not package_value.strip():
+                _add(
+                    errors,
+                    path,
+                    "'inputs.package' must be a non-empty path string",
+                )
+            else:
+                package_ref = package_value.strip()
+                candidate = Path(package_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                package_path = candidate.resolve()
+                if not package_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.package' does not exist: "
+                        f"{display_path(package_path)}",
+                    )
+
     if errors:
         raise ScenarioValidationError(errors)
     assert scenario_id is not None
@@ -246,5 +272,7 @@ def load_scenario(path: str | Path) -> Scenario:
         engines=engines,
         chip_ref=chip_ref,
         chip_path=chip_path,
+        package_ref=package_ref,
+        package_path=package_path,
         outputs=outputs,
     )

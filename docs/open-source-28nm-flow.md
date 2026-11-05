@@ -1,6 +1,6 @@
 # Open-source 28 nm implementation flow
 
-This is the implementation plan for shrinking GRX930 and GRXGPU/PTA at 28 nm
+This is the implementation plan for shrinking GRX930 and G100 at 28 nm
 using open-source EDA. It separates three things that are often conflated:
 
 1. what the open-source tools can do today,

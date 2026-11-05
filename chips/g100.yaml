@@ -1,10 +1,11 @@
-# GRXGPU / PTA -- parallel throughput accelerator.
+# G100 -- digital GPU / throughput accelerator on GRX28.
 # ALL NUMBERS BELOW ARE PLANNING ASSUMPTIONS, not the real design database.
-name: GRXGPU/PTA
+name: G100
+revision: "0.1.0"
 description: >-
-  Throughput-oriented GPU / parallel throughput accelerator on GRX28. Much
-  larger logic and SRAM footprint, a 28 nm-realistic clock, higher switching
-  activity, and a density-first library choice.
+  Throughput-oriented digital GPU on GRX28. The 420M-gate, 48 MB SRAM profile
+  is the pre-split GRXGPU/PTA planning block; the photonic PTA chiplet is now
+  defined separately in chips/pta.yaml and is not part of this die.
 tech: grx28.yaml
 library: lp28_7t5_1f
 gates_m: 420
@@ -18,8 +19,10 @@ vdd: 0.90
 mbff_bits: 4
 upsize_fins: 1
 pin_aware: true
+package: mcm_si@0.1.0
 notes: >-
   7.5T single-finger is the density play at 28 nm. The risk is not cell height
   but pin access and long-wire drive. MBFF-4 and pin-density-aware placement are
   assumed in the reference configuration. 1.5 GHz is not a 28 nm target; the
-  model's 0.73 GHz capability at 22 FO4 stages is the realistic ceiling here.
+  model's native capability at 22 FO4 stages is the realistic ceiling here.
+  Every value is a planning assumption, not a G100 design database.
