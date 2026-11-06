@@ -27,6 +27,7 @@ SOURCE_DIRECTORIES = (
     "packages",
     "scenarios",
     "tech",
+    "yields",
 )
 SOURCE_FILES = ("pytest.ini", "requirements.txt")
 SCENARIOS = (

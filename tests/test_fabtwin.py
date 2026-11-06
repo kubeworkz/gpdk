@@ -22,6 +22,7 @@ from fabtwin.store import ObservationStore
 SCENARIO = ROOT / "scenarios" / "grx930_28nm_baseline.yaml"
 G100_SCENARIO = ROOT / "scenarios" / "g100_28nm_baseline.yaml"
 PTA_SCENARIO = ROOT / "scenarios" / "pta_28nm_baseline.yaml"
+YIELD_SCENARIO = ROOT / "scenarios" / "grx930_yield_28nm.yaml"
 
 
 @pytest.fixture(scope="module")
@@ -192,6 +193,46 @@ def test_pta_baseline_records_topology_and_package(tmp_path):
     assert values["wavelength_m"] == pytest.approx(1550e-9)
     assert {row["evidence_class"] for row in rows} == {"assumed"}
     assert {row["source_artifact"] for row in rows} == {"chips/pta.yaml"}
+
+
+def test_yield_scenario_records_wafer_package_and_uncertainty(tmp_path):
+    loaded = load_scenario(YIELD_SCENARIO)
+    assert loaded.product == "grx930"
+    assert loaded.yield_ref == "yields/grx930_28nm.yaml"
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 9
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["scenario"]["yield"] == "yields/grx930_28nm.yaml"
+    assert {item["role"] for item in manifest["inputs"]} == {
+        "scenario",
+        "chip",
+        "yield",
+        "tech",
+    }
+    engine = manifest["engines"][0]
+    assert engine["name"] == "yield"
+    assert engine["metadata"]["package"]["name"] == "TFBGA-196"
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    values = {row["metric"]: float(row["value"]) for row in rows}
+    assert values["gross_dies_per_wafer"] > values[
+        "good_packages_per_wafer"
+    ]
+    assert values["good_packages_per_wafer"] > 0.0
+    assert 0.0 < values["die_yield"] < 1.0
+    assert values["cost_per_good_package_usd"] > 0.0
+    uncertainties = {row["metric"]: row["uncertainty"] for row in rows}
+    assert uncertainties["die_yield"]
+    assert uncertainties["cost_per_good_package_usd"]
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["model_version"] for row in rows} == {
+        "yield-assumptions@0.1.0"
+    }
+    assert {row["source_artifact"] for row in rows} == {
+        "yields/grx930_28nm.yaml"
+    }
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):

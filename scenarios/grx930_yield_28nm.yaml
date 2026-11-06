@@ -1,0 +1,30 @@
+# Phase 1 baseline: GRX930 die, package and cost yield on GRX28.
+#
+# The scenario uses the projected GRX930 die area from the existing gpdk path,
+# the selected pin-budget package, and the hashed planning assumptions in
+# yields/grx930_28nm.yaml. It is not a foundry yield prediction.
+schema_version: "0.1"
+id: grx930_yield_28nm
+description: >-
+  Estimate GRX930 die-per-wafer, defect-limited die yield, package assembly
+  yield, known-good die count, and cost per good package with a seeded
+  Monte Carlo sample. Every number is an assumption-driven planning estimate.
+product: grx930
+process: grx28@0.1.0
+seed: 20261106
+samples: 1000
+engines:
+  - yield
+inputs:
+  chip: chips/grx930.yaml
+  yield: yields/grx930_28nm.yaml
+outputs:
+  - die_area_m2
+  - critical_area_m2
+  - gross_dies_per_wafer
+  - die_yield
+  - assembly_yield
+  - known_good_dies_per_wafer
+  - good_packages_per_wafer
+  - cost_per_known_good_die_usd
+  - cost_per_good_package_usd

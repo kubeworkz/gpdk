@@ -25,7 +25,9 @@ scenarios are
 Each run is indexed in `out/fabtwin/fabtwin.db`; `python -m fabtwin query`
 provides the cross-run observation path. Phase 0 now defines three products:
 GRX930, G100 and PTA. G100 is the digital GPU profile; PTA is a separate
-photonic chiplet with an MCM package definition.
+photonic chiplet with an MCM package definition. Phase 1 starts with the
+GRX930 die/package yield slice; its assumptions are in `yields/grx930_28nm.yaml`
+and its session is `scenarios/grx930_yield_28nm.yaml`.
 
 ## Quick start
 
@@ -37,6 +39,7 @@ python -m fabtwin validate scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/g100_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_28nm_baseline.yaml
+python -m fabtwin run scenarios/grx930_yield_28nm.yaml
 python -m fabtwin query --runs
 python -m fabtwin query --reports
 python -m fabtwin query --run RUN_ID --metric die_area_m2
@@ -92,6 +95,7 @@ chips/grx930.yaml           measured quad-core RV64 + dual-NPU baseline
 chips/g100.yaml             digital GPU planning profile (pre-split block)
 chips/pta.yaml              photonic tensor accelerator product definition
 packages/mcm_si.yaml        2.5D silicon-interposer package definition
+yields/grx930_28nm.yaml      Phase 1 wafer, defect, assembly and cost assumptions
 gpdk/tech.py                node loader; fin and finger width units
 gpdk/device.py              planar/FinFET Ion/Ioff/Cgg/Ron/FO4 model
 gpdk/cells.py               cell templates, track/isolation architecture
@@ -105,6 +109,8 @@ fabtwin/                    Phase 0 runner, strict schema, manifest, SQLite inde
 scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
 scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
+scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
+gpdk/dieyield.py             wafer grid, Poisson yield, assembly and cost model
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader

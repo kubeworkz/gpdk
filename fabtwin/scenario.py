@@ -32,7 +32,7 @@ TOP_LEVEL_FIELDS = frozenset(
         "outputs",
     }
 )
-INPUT_FIELDS = frozenset({"chip", "package"})
+INPUT_FIELDS = frozenset({"chip", "package", "yield"})
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 _PRODUCT_RE = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 _PROCESS_RE = re.compile(
@@ -60,6 +60,8 @@ class Scenario:
     chip_path: Path
     package_ref: str | None
     package_path: Path | None
+    yield_ref: str | None
+    yield_path: Path | None
     outputs: tuple[str, ...]
 
 
@@ -200,6 +202,8 @@ def load_scenario(path: str | Path) -> Scenario:
     chip_path: Path | None = None
     package_ref: str | None = None
     package_path: Path | None = None
+    yield_ref: str | None = None
+    yield_path: Path | None = None
     inputs = raw.get("inputs")
     if not isinstance(inputs, dict):
         _add(errors, path, "'inputs' must be a mapping")
@@ -249,6 +253,28 @@ def load_scenario(path: str | Path) -> Scenario:
                         f"{display_path(package_path)}",
                     )
 
+        yield_value = inputs.get("yield")
+        if yield_value is not None:
+            if not isinstance(yield_value, str) or not yield_value.strip():
+                _add(
+                    errors,
+                    path,
+                    "'inputs.yield' must be a non-empty path string",
+                )
+            else:
+                yield_ref = yield_value.strip()
+                candidate = Path(yield_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                yield_path = candidate.resolve()
+                if not yield_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.yield' does not exist: "
+                        f"{display_path(yield_path)}",
+                    )
+
     if errors:
         raise ScenarioValidationError(errors)
     assert scenario_id is not None
@@ -274,5 +300,7 @@ def load_scenario(path: str | Path) -> Scenario:
         chip_path=chip_path,
         package_ref=package_ref,
         package_path=package_path,
+        yield_ref=yield_ref,
+        yield_path=yield_path,
         outputs=outputs,
     )

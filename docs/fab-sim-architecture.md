@@ -287,6 +287,12 @@ measured data.
   DRC deck.
 - Sensitivity: defect density, die area, pad count, assembly tolerance.
 
+The first implemented slice covers the projected GRX930 die grid, Poisson
+critical-area yield, package assembly, cost per good package, and seeded
+sampling uncertainty. It lives in `gpdk/dieyield.py`, `yields/grx930_28nm.yaml`,
+and `scenarios/grx930_yield_28nm.yaml`; defect-density and pad-count curves are
+the next part of the slice.
+
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains
 an assumption-driven estimate.

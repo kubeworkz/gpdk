@@ -1,0 +1,31 @@
+# Phase 1 yield assumptions for the GRX930 GRX28 projection.
+#
+# Every value below is a planning assumption. They are not a foundry yield
+# model, a qualified defect density, or an OSAT quote. Replace them with
+# calibrated data before using the output for a schedule or contract.
+schema_version: "0.1"
+id: grx930_28nm_yield
+revision: "0.1.0"
+product: grx930
+process: grx28@0.1.0
+description: >-
+  F0/F1 planning yield for the GRX930 28 nm projected die: 300 mm wafer,
+  3 mm edge exclusion, 80 um scribe lane, Poisson critical-area defects, and
+  an exponential package assembly term. The package is selected from the
+  existing GRX930 pin budget, not from a vendor quote.
+
+wafer:
+  diameter_mm: 300.0
+  edge_exclusion_mm: 3.0
+  scribe_lane_um: 80.0
+  cost_usd: 4500.0
+
+defects:
+  density_per_cm2: 0.08
+  critical_area_fraction: 0.35
+
+assembly:
+  base_yield: 0.995
+  per_pad_defect_ppm: 8.0
+  package_cost_usd: 1.20
+  test_cost_usd: 0.40

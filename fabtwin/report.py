@@ -166,6 +166,11 @@ def render_report(
         if scenario.package_ref
         else []
     ),
+    *(
+        [["Yield model", f"`{scenario.yield_ref}`"]]
+        if scenario.yield_ref
+        else []
+    ),
 ])}
 
 ## Engines
@@ -189,10 +194,10 @@ value is exact.
 
 {_table(["Class", "Rows", "Meaning"], evidence_rows)}
 
-The F0 projected rows are `assumed` because the `gpdk` technology and planning
-parameters are uncalibrated. The as-built rows are `measured` source data. A
-projected result must not be described as a measured yield or a qualified
-silicon result.
+Projected and simulated rows are `assumed` because the technology, model
+parameters and planning assumptions are uncalibrated. The as-built rows are
+`measured` source data. A projected result must not be described as a measured
+yield or a qualified silicon result.
 
 ## Inputs
 

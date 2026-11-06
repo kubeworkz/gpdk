@@ -21,6 +21,15 @@ from gpdk.block import (
 )
 from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
+from gpdk.dieyield import (
+    WaferSpec,
+    YieldAssumptions,
+    defect_density_curve,
+    die_grid,
+    package_assembly_yield,
+    poisson_die_yield,
+    simulate_yield,
+)
 from gpdk.drc import check
 from gpdk.dtco import build_steps, lever_table, reference_pair
 from gpdk.gds import read_gds, write_gds
@@ -396,3 +405,84 @@ def test_gds_round_trip(tech, tmp_path):
     assert info["bbox_nm"] == (0, 0, 210, 480)
     assert len(info["layers"]) == 9
     assert path.stat().st_size > 500
+
+
+def test_die_grid_known_answers():
+    wafer = WaferSpec(
+        diameter_mm=100.0,
+        edge_exclusion_mm=0.0,
+        scribe_lane_um=0.0,
+        cost_usd=1000.0,
+    )
+    assert die_grid(wafer, 10.0, 10.0).count == 60
+    exact_fit = WaferSpec(
+        diameter_mm=2.0 * math.sqrt(50.0),
+        edge_exclusion_mm=0.0,
+        scribe_lane_um=0.0,
+        cost_usd=1000.0,
+    )
+    assert die_grid(exact_fit, 10.0, 10.0).count == 1
+
+
+def test_poisson_yield_known_answer():
+    assert poisson_die_yield(100.0, 0.5, 1.0) == pytest.approx(
+        math.exp(-0.5)
+    )
+    assert poisson_die_yield(100.0, 0.5, 0.0) == 1.0
+    assert poisson_die_yield(100.0, 0.5, 2.0) < poisson_die_yield(
+        100.0, 0.5, 1.0
+    )
+
+
+def test_package_assembly_yield_known_answer():
+    assert package_assembly_yield(0, 0.99, 10.0) == pytest.approx(0.99)
+    assert package_assembly_yield(100, 0.99, 10.0) < 0.99
+
+
+def test_yield_simulation_is_seeded_and_physical():
+    assumptions = YieldAssumptions(
+        id="test_yield",
+        product="grx930",
+        process="grx28@0.1.0",
+        revision="0.1.0",
+        wafer=WaferSpec(100.0, 0.0, 0.0, 1000.0),
+        defect_density_per_cm2=0.1,
+        critical_area_fraction=0.5,
+        base_assembly_yield=0.99,
+        per_pad_defect_ppm=10.0,
+        package_cost_usd=1.0,
+        test_cost_usd=0.2,
+    )
+    first = simulate_yield(assumptions, 100.0, 100, samples=20, seed=7)
+    second = simulate_yield(assumptions, 100.0, 100, samples=20, seed=7)
+    assert first == second
+    assert 0.0 < first.die_yield < 1.0
+    assert first.known_good_dies_per_wafer < first.gross_dies_per_wafer
+    assert first.good_packages_per_wafer < first.known_good_dies_per_wafer
+    assert first.cost_per_good_package_usd > 0.0
+
+
+def test_defect_density_curve_is_monotonic():
+    assumptions = YieldAssumptions(
+        id="test_curve",
+        product="grx930",
+        process="grx28@0.1.0",
+        revision="0.1.0",
+        wafer=WaferSpec(100.0, 0.0, 0.0, 1000.0),
+        defect_density_per_cm2=0.1,
+        critical_area_fraction=0.5,
+        base_assembly_yield=0.99,
+        per_pad_defect_ppm=10.0,
+        package_cost_usd=1.0,
+        test_cost_usd=0.2,
+    )
+    rows = defect_density_curve(
+        assumptions,
+        100.0,
+        100,
+        (0.0, 0.1, 0.5),
+        samples=20,
+    )
+    yields = [row["die_yield"] for row in rows]
+    assert yields == sorted(yields, reverse=True)
+    assert all("die_yield_stderr" in row for row in rows)
