@@ -13,13 +13,25 @@ Layout::
     runs/<scenario-id>/observations.json   the same rows with numeric values
     runs/<scenario-id>/report.md
     runs/<scenario-id>/<engine artifacts>  e.g. wafer_map.svg, wafer_map.csv
+    browser/manifest.json           what the site's Pyodide runner loads
+    browser/gpdk-src.zip            fabtwin, gpdk and the input files they read
+    browser/<wheel>                 pure-Python dependencies (``--wheel``)
+    browser/inputs.json             each scenario's inputs by role, parsed
+
+The browser files let the site rerun a scenario in the visitor's browser with
+``fabtwin.browser.run_scenario`` (Pyodide), on the same code and inputs as the
+published runs.
 """
 
 from __future__ import annotations
 
 import csv
 import json
+import shutil
+
+import yaml
 import tempfile
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -32,6 +44,82 @@ from .scenario import load_scenario
 SITE_SCHEMA_VERSION = "1"
 DEFAULT_SCENARIO_DIR = ROOT / "scenarios"
 CLAIM = "scenario estimate; not foundry sign-off"
+BROWSER_SCHEMA_VERSION = "1"
+# Python packages and the input trees their engines read, relative to ROOT.
+BROWSER_PACKAGES = ("fabtwin", "gpdk")
+BROWSER_INPUTS = (
+    "scenarios", "chips", "tech", "libraries", "yields",
+    "factory", "packages", "photonic",
+)
+# Pyodide's own builds, loaded with pyodide.loadPackage.
+PYODIDE_PACKAGES = ("pyyaml",)
+_ZIP_TIME = (2026, 1, 1, 0, 0, 0)
+
+
+def _source_zip(path: Path) -> list[str]:
+    """Write fabtwin, gpdk and their inputs to a byte-reproducible zip."""
+    names: list[str] = []
+    for top in BROWSER_PACKAGES:
+        names += [p.relative_to(ROOT).as_posix() for p in (ROOT / top).rglob("*.py")]
+    for top in BROWSER_INPUTS:
+        names += [p.relative_to(ROOT).as_posix() for p in (ROOT / top).rglob("*.yaml")]
+    names = sorted(set(n for n in names if "__pycache__" not in n))
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for name in names:
+            info = zipfile.ZipInfo(name, date_time=_ZIP_TIME)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            z.writestr(info, (ROOT / name).read_bytes())
+    return names
+
+
+def _write_browser(out: Path, wheels: list[Path], scenarios: list[Any]) -> dict[str, Any]:
+    browser = out / "browser"
+    browser.mkdir()
+    names = _source_zip(browser / "gpdk-src.zip")
+    wheel_records = []
+    for wheel in wheels:
+        if wheel.suffix != ".whl" or not wheel.is_file():
+            raise FabTwinError(f"not a wheel file: {wheel}")
+        shutil.copyfile(wheel, browser / wheel.name)
+        wheel_records.append(_file_record(out, browser / wheel.name, "application/zip"))
+    # The site reads current input values (slider defaults) from here, so they
+    # always match the source in the zip.
+    roles = ("chip", "package", "yield", "factory", "photonic")
+    by_scenario: dict[str, dict[str, str]] = {}
+    files: dict[str, Any] = {}
+    for s in scenarios:
+        refs = {}
+        for role in roles:
+            path = getattr(s, f"{role}_path")
+            if path is None:
+                continue
+            refs[role] = display_path(path)
+            files[refs[role]] = yaml.safe_load(Path(path).read_text("utf-8"))
+        by_scenario[s.id] = refs
+    (browser / "inputs.json").write_text(
+        json.dumps({"scenarios": by_scenario, "files": files}, indent=1) + "\n",
+        encoding="utf-8",
+    )
+    manifest = {
+        "schema_version": BROWSER_SCHEMA_VERSION,
+        "entry": "fabtwin.browser:run_scenario",
+        "root": "/gpdk",
+        "source": {
+            **_file_record(out, browser / "gpdk-src.zip", "application/zip"),
+            "files": len(names),
+        },
+        "wheels": wheel_records,
+        "pyodide_packages": list(PYODIDE_PACKAGES),
+        "inputs": _file_record(out, browser / "inputs.json", "application/json"),
+        "scenarios": {
+            s.id: display_path(s.path) for s in scenarios
+        },
+    }
+    (browser / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+    return manifest
 
 
 def default_scenarios() -> list[Path]:
@@ -72,6 +160,7 @@ def export_site(
     *,
     commit: str | None = None,
     run_url: str | None = None,
+    wheels: Iterable[str | Path] = (),
 ) -> dict[str, Any]:
     """Run each scenario and write the bundle to ``out_dir``; return the index."""
     out = Path(out_dir)
@@ -147,12 +236,15 @@ def export_site(
                 }
             )
 
+    _write_browser(out, [Path(w) for w in wheels], scenarios)
+
     index = {
         "schema_version": SITE_SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "commit": commit,
         "run_url": run_url,
         "claim": CLAIM,
+        "browser": "browser/manifest.json",
         "runs": runs,
     }
     (out / "index.json").write_text(

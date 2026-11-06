@@ -6,6 +6,11 @@
 # to the orphan branch `twin-data`, which gridworkz.com reads at build time from
 # raw.githubusercontent.com, and Netlify is asked to rebuild the site. Pull
 # requests build the bundle as a check and publish nothing.
+#
+# The bundle also carries browser/: the source, inputs and SimPy wheel the
+# site's Pyodide runner loads. Before anything is published,
+# tests/pyodide_smoke.mjs runs that bundle in Pyodide and requires it to
+# reproduce the published runs.
 
 name: Twin data
 
@@ -38,11 +43,32 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      # The browser runner installs the same SimPy the runs below used.
+      - name: Fetch the SimPy wheel
+        run: |
+          v=$(python -c "import importlib.metadata as m; print(m.version('simpy'))")
+          python -m pip download --no-deps --only-binary :all: "simpy==$v" -d "$RUNNER_TEMP/wheels"
+          ls "$RUNNER_TEMP/wheels"
+
       - name: Export the bundle
         run: |
           python -m fabtwin export-site "$RUNNER_TEMP/twin-data" \
             --commit "$GITHUB_SHA" \
-            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            $(printf -- '--wheel %s ' "$RUNNER_TEMP"/wheels/*.whl)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run the browser bundle in Pyodide
+        env:
+          PYODIDE_VERSION: "314.0.7"   # keep in step with the site's runner
+        run: |
+          mkdir -p "$RUNNER_TEMP/pyodide" && cd "$RUNNER_TEMP/pyodide"
+          npm install --no-audit --no-fund "pyodide@$PYODIDE_VERSION"
+          cp "$GITHUB_WORKSPACE/tests/pyodide_smoke.mjs" .
+          node pyodide_smoke.mjs "$RUNNER_TEMP/twin-data"
 
       - name: Summary
         run: |
