@@ -26,6 +26,9 @@ YIELD_SCENARIO = ROOT / "scenarios" / "grx930_yield_28nm.yaml"
 YIELD_SENSITIVITY_SCENARIO = (
     ROOT / "scenarios" / "grx930_yield_sensitivity_28nm.yaml"
 )
+YIELD_VARIATION_SCENARIO = (
+    ROOT / "scenarios" / "grx930_yield_variation_28nm.yaml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -278,6 +281,47 @@ def test_yield_sensitivity_scenario_records_curves(tmp_path):
         float(row["uncertainty"]) > 0.0
         for row in by_metric["cost_per_good_package_usd"]
     )
+
+
+def test_yield_variation_scenario_records_lot_statistics(tmp_path):
+    loaded = load_scenario(YIELD_VARIATION_SCENARIO)
+    assert loaded.engines == ("yield_variation",)
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 6
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    engine = manifest["engines"][0]
+    assert engine["name"] == "yield_variation"
+    assert engine["metadata"]["variation"] == {
+        "wafers_per_lot": 25,
+        "defect_density_cv_lot": 0.15,
+        "defect_density_cv_wafer": 0.1,
+        "assembly_ppm_cv_lot": 0.1,
+    }
+    assert engine["metadata"]["simulation"]["lots"] == 40
+    assert engine["metadata"]["simulation"]["wafers"] == 1000
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 6
+    values = {row["metric"]: row for row in rows}
+    assert {row["entity_type"] for row in rows} == {"lot_simulation"}
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["source_artifact"] for row in rows} == {
+        "yields/grx930_28nm.yaml"
+    }
+    assert 0.0 < float(values["die_yield_mean"]["value"]) < 1.0
+    assert float(values["wafer_to_wafer_die_yield_sigma"]["value"]) > 0.0
+    assert float(values["lot_to_lot_die_yield_sigma"]["value"]) > float(
+        values["wafer_to_wafer_die_yield_sigma"]["value"]
+    )
+    assert values["die_yield_mean"]["uncertainty"]
+    assert values["cost_per_good_package_usd_mean"]["uncertainty"]
+    assert not values["wafer_to_wafer_die_yield_sigma"]["uncertainty"]
+    assert not values["lot_to_lot_die_yield_sigma"]["uncertainty"]
+    assert float(values["good_packages_per_wafer_mean"]["value"]) > 0.0
+    assert float(values["cost_per_good_package_usd_mean"]["value"]) > 0.0
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):

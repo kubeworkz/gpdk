@@ -23,6 +23,7 @@ from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
 from gpdk.dieyield import (
     SensitivitySpec,
+    VariationSpec,
     WaferSpec,
     YieldAssumptions,
     assembly_tolerance_curve,
@@ -31,6 +32,7 @@ from gpdk.dieyield import (
     pad_count_curve,
     package_assembly_yield,
     poisson_die_yield,
+    simulate_lot_yield,
     simulate_yield,
 )
 from gpdk.drc import check
@@ -575,3 +577,74 @@ def test_zero_good_packages_is_reported_clearly():
     assumptions = replace(_sensitivity_assumptions(), base_assembly_yield=0.0)
     with pytest.raises(ValueError, match="no good packages"):
         simulate_yield(assumptions, 100.0, 100, samples=5)
+
+
+def test_variation_spec_parses_and_rejects_bad_cv():
+    spec = VariationSpec.from_mapping(
+        {
+            "variation": {
+                "wafers_per_lot": 10,
+                "defect_density_cv_lot": 0.2,
+                "defect_density_cv_wafer": 0.1,
+                "assembly_ppm_cv_lot": 0.05,
+            }
+        }
+    )
+    assert spec.wafers_per_lot == 10
+    assert spec.defect_density_cv_lot == 0.2
+    with pytest.raises(ValueError, match="variation mapping"):
+        VariationSpec.from_mapping({})
+    with pytest.raises(ValueError, match="non-negative"):
+        VariationSpec.from_mapping(
+            {"variation": {"defect_density_cv_lot": -0.1}}
+        )
+
+
+def test_lot_simulation_with_zero_cv_has_no_process_variation():
+    assumptions = replace(
+        _sensitivity_assumptions(),
+        variation=VariationSpec(
+            wafers_per_lot=10,
+            defect_density_cv_lot=0.0,
+            defect_density_cv_wafer=0.0,
+            assembly_ppm_cv_lot=0.0,
+        ),
+    )
+    estimate = simulate_lot_yield(assumptions, 100.0, 100, lots=12, seed=3)
+    assert estimate.wafer_to_wafer_die_yield_sigma == 0.0
+    assert estimate.lot_to_lot_die_yield_sigma == 0.0
+    assert estimate.die_yield_stderr == 0.0
+    assert estimate.die_yield_mean == pytest.approx(
+        poisson_die_yield(100.0, 0.5, 0.1)
+    )
+    assert estimate.assembly_yield_mean == pytest.approx(
+        package_assembly_yield(100, 0.99, 10.0)
+    )
+
+
+def test_lot_variation_is_seeded_and_ordered():
+    assumptions = replace(
+        _sensitivity_assumptions(),
+        variation=VariationSpec(
+            wafers_per_lot=8,
+            defect_density_cv_lot=0.15,
+            defect_density_cv_wafer=0.10,
+            assembly_ppm_cv_lot=0.10,
+        ),
+    )
+    first = simulate_lot_yield(assumptions, 100.0, 100, lots=20, seed=7)
+    second = simulate_lot_yield(assumptions, 100.0, 100, lots=20, seed=7)
+    assert first == second
+    assert first.lots == 20
+    assert first.wafers == 160
+    assert 0.0 < first.die_yield_mean < 1.0
+    assert first.die_yield_stderr is not None
+    assert first.wafer_to_wafer_die_yield_sigma > 0.0
+    assert first.lot_to_lot_die_yield_sigma > first.wafer_to_wafer_die_yield_sigma
+    assert first.good_packages_per_wafer_mean > 0.0
+    assert first.cost_per_good_package_usd_mean > 0.0
+
+
+def test_lot_simulation_requires_variation_mapping():
+    with pytest.raises(ValueError, match="variation mapping"):
+        simulate_lot_yield(_sensitivity_assumptions(), 100.0, 100, lots=2)

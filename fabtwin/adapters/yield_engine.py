@@ -10,12 +10,14 @@ import yaml
 
 from gpdk.block import load_chip
 from gpdk.dieyield import (
+    LotEstimate,
     SensitivitySpec,
     YieldAssumptions,
     YieldEstimate,
     assembly_tolerance_curve,
     defect_density_curve,
     pad_count_curve,
+    simulate_lot_yield,
     simulate_yield,
 )
 from gpdk.dtco import best_step, build_steps
@@ -103,6 +105,46 @@ _SENSITIVITY_METRICS = frozenset(
         "cost_per_good_package_usd",
     }
 )
+_VARIATION_METRICS: dict[
+    str,
+    tuple[
+        str,
+        Callable[[LotEstimate], float],
+        Callable[[LotEstimate], float | None] | None,
+    ],
+] = {
+    "die_yield_mean": (
+        "1",
+        lambda estimate: estimate.die_yield_mean,
+        lambda estimate: estimate.die_yield_stderr,
+    ),
+    "wafer_to_wafer_die_yield_sigma": (
+        "1",
+        lambda estimate: estimate.wafer_to_wafer_die_yield_sigma,
+        None,
+    ),
+    "lot_to_lot_die_yield_sigma": (
+        "1",
+        lambda estimate: estimate.lot_to_lot_die_yield_sigma,
+        None,
+    ),
+    "assembly_yield_mean": (
+        "1",
+        lambda estimate: estimate.assembly_yield_mean,
+        lambda estimate: estimate.assembly_yield_stderr,
+    ),
+    "good_packages_per_wafer_mean": (
+        "1",
+        lambda estimate: estimate.good_packages_per_wafer_mean,
+        lambda estimate: estimate.good_packages_stderr,
+    ),
+    "cost_per_good_package_usd_mean": (
+        "USD",
+        lambda estimate: estimate.cost_per_good_package_usd_mean,
+        lambda estimate: estimate.cost_per_good_package_stderr,
+    ),
+}
+SUPPORTED_VARIATION_METRICS = frozenset(_VARIATION_METRICS)
 
 
 def _slug(value: str) -> str:
@@ -499,5 +541,167 @@ class YieldSensitivityEngine:
                 "independent measured wafers.",
                 "Monte Carlo reports sampling uncertainty, not model "
                 "calibration uncertainty.",
+            ),
+        )
+
+
+class YieldVariationEngine:
+    """F1 lot and wafer variation over the same yield assumptions."""
+
+    name = "yield_variation"
+    version = "0.1.0"
+    fidelity = "F1"
+
+    def validate(self, scenario: Scenario) -> list[str]:
+        errors: list[str] = []
+        if scenario.samples < 2:
+            errors.append("yield variation needs at least two lots")
+        unknown = sorted(
+            set(scenario.outputs) - SUPPORTED_VARIATION_METRICS
+        )
+        if unknown:
+            errors.append(
+                "unsupported yield variation metric(s): "
+                + ", ".join(unknown)
+            )
+        try:
+            cfg, tech, assumptions, estimate, budget, package = (
+                _load_inputs(scenario)
+            )
+        except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+            errors.append(f"cannot load yield variation inputs: {exc}")
+            return errors
+        expected_product = _slug(cfg.name)
+        if scenario.product != expected_product:
+            errors.append(
+                f"product {scenario.product!r} does not match chip "
+                f"{cfg.name!r} (expected {expected_product!r})"
+            )
+        expected_process = f"{_slug(tech.name)}@{tech.revision}"
+        if scenario.process.lower() != expected_process:
+            errors.append(
+                f"process {scenario.process!r} does not match "
+                f"{tech.name} revision {tech.revision} "
+                f"(expected {expected_process!r})"
+            )
+        if assumptions.product != scenario.product:
+            errors.append(
+                f"yield model product {assumptions.product!r} does not match "
+                f"scenario product {scenario.product!r}"
+            )
+        if assumptions.process.lower() != scenario.process.lower():
+            errors.append(
+                f"yield model process {assumptions.process!r} does not match "
+                f"scenario process {scenario.process!r}"
+            )
+        if assumptions.variation is None:
+            errors.append(
+                "yield model needs a variation mapping for the variation "
+                "engine"
+            )
+        if budget.total_pads <= 0:
+            errors.append("pin budget must contain at least one pad")
+        if estimate.die_area_mm2 <= 0:
+            errors.append("modelled die area must be positive")
+        return errors
+
+    def run(self, scenario: Scenario) -> EngineResult:
+        errors = self.validate(scenario)
+        if errors:
+            raise EngineError("; ".join(errors))
+
+        cfg, tech, assumptions, estimate, budget, package = _load_inputs(
+            scenario
+        )
+        variation = assumptions.variation
+        if variation is None:
+            raise EngineError("yield model needs a variation mapping")
+        simulation = simulate_lot_yield(
+            assumptions,
+            estimate.die_area_mm2,
+            budget.total_pads,
+            lots=scenario.samples,
+            seed=scenario.seed,
+        )
+        source = display_path(scenario.yield_path)
+        model_version = f"{_MODEL_VERSION_PREFIX}@{assumptions.revision}"
+        observations: list[Observation] = []
+        for metric in scenario.outputs:
+            unit, projector, uncertainty_projector = _VARIATION_METRICS[metric]
+            uncertainty = (
+                None
+                if uncertainty_projector is None
+                else uncertainty_projector(simulation)
+            )
+            observations.append(
+                Observation(
+                    entity_type="lot_simulation",
+                    entity_id=scenario.product,
+                    metric=metric,
+                    value=float(projector(simulation)),
+                    unit=unit,
+                    uncertainty=uncertainty,
+                    evidence_class="assumed",
+                    source_artifact=source,
+                    model_version=model_version,
+                )
+            )
+
+        input_files = [
+            InputFile(scenario.chip_path, "chip"),
+            InputFile(scenario.yield_path, "yield"),
+        ]
+        if tech.path is not None:
+            input_files.append(InputFile(tech.path, "tech"))
+
+        return EngineResult(
+            engine=self.name,
+            engine_version=self.version,
+            fidelity=self.fidelity,
+            model_version=model_version,
+            observations=tuple(observations),
+            inputs=tuple(input_files),
+            metadata={
+                "chip": cfg.name,
+                "tech": {
+                    "name": tech.name,
+                    "revision": tech.revision,
+                },
+                "die_area_mm2": estimate.die_area_mm2,
+                "pad_count": budget.total_pads,
+                "package": {
+                    "name": package.name,
+                    "kind": package.kind,
+                    "body_mm": package.body_mm,
+                    "pads": package.pads,
+                },
+                "variation": {
+                    "wafers_per_lot": variation.wafers_per_lot,
+                    "defect_density_cv_lot": (
+                        variation.defect_density_cv_lot
+                    ),
+                    "defect_density_cv_wafer": (
+                        variation.defect_density_cv_wafer
+                    ),
+                    "assembly_ppm_cv_lot": variation.assembly_ppm_cv_lot,
+                },
+                "simulation": {
+                    "lots": scenario.samples,
+                    "wafers": simulation.wafers,
+                    "seed": scenario.seed,
+                    "scope": (
+                        "lognormal lot and wafer variation plus die and "
+                        "assembly sampling; not calibrated fab or OSAT "
+                        "distributions"
+                    ),
+                },
+            },
+            warnings=(
+                "Yield variation is an F1 planning exercise, not a "
+                "calibrated fab or OSAT distribution.",
+                "Defect-density and assembly CVs are assumed lognormal "
+                "multipliers with the nominal value as median.",
+                "Yield sigmas describe the modelled expected yield; they "
+                "exclude die-sampling noise.",
             ),
         )

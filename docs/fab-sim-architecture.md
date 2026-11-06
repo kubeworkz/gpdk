@@ -297,6 +297,16 @@ observations, each with the standard error of the sampled mean. The sweep points
 are listed under `sensitivity` in the yield assumptions; they are planning
 points, not measured process corners.
 
+The variation session `scenarios/grx930_yield_variation_28nm.yaml` adds a
+hierarchical lot model: defect density is drawn per lot and again per wafer from
+lognormal multipliers, and assembly per-pad ppm is drawn per assembly lot. It
+reports the mean die yield, the wafer-to-wafer sigma, the lot-to-lot sigma, and
+lot means for assembly yield, good packages and cost. At the planning CVs (15%
+lot, 10% wafer) the GRX930 model gives 99.63% mean die yield with 0.036%
+wafer-to-wafer and 0.061% lot-to-lot sigma. The sigmas describe modelled
+expected yield and exclude die-sampling noise; the distributions are
+assumptions, not calibration.
+
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains
 an assumption-driven estimate.

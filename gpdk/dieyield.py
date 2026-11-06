@@ -83,6 +83,7 @@ class YieldAssumptions:
     package_cost_usd: float
     test_cost_usd: float
     description: str = ""
+    variation: VariationSpec | None = None
 
     def __post_init__(self) -> None:
         if not self.id:
@@ -132,6 +133,11 @@ class YieldAssumptions:
             package_cost_usd=float(assembly.get("package_cost_usd", 1.20)),
             test_cost_usd=float(assembly.get("test_cost_usd", 0.40)),
             description=str(raw.get("description", "")).strip(),
+            variation=(
+                VariationSpec.from_mapping(raw)
+                if "variation" in raw
+                else None
+            ),
         )
 
 
@@ -169,6 +175,50 @@ class SensitivitySpec:
 
 
 @dataclass(frozen=True)
+class VariationSpec:
+    """Lognormal lot/wafer variation around the nominal yield assumptions.
+
+    Coefficients of variation apply to lognormal multipliers whose median is
+    the nominal value. Defect density varies per lot and again per wafer;
+    assembly per-pad defect ppm varies per assembly lot.
+    """
+
+    wafers_per_lot: int = 25
+    defect_density_cv_lot: float = 0.15
+    defect_density_cv_wafer: float = 0.10
+    assembly_ppm_cv_lot: float = 0.10
+
+    def __post_init__(self) -> None:
+        if self.wafers_per_lot < 2:
+            raise ValueError("variation needs at least two wafers per lot")
+        for name in (
+            "defect_density_cv_lot",
+            "defect_density_cv_wafer",
+            "assembly_ppm_cv_lot",
+        ):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} must be non-negative")
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "VariationSpec":
+        variation = raw.get("variation")
+        if not isinstance(variation, Mapping):
+            raise ValueError("yield model needs a variation mapping")
+        return cls(
+            wafers_per_lot=int(variation.get("wafers_per_lot", 25)),
+            defect_density_cv_lot=float(
+                variation.get("defect_density_cv_lot", 0.15)
+            ),
+            defect_density_cv_wafer=float(
+                variation.get("defect_density_cv_wafer", 0.10)
+            ),
+            assembly_ppm_cv_lot=float(
+                variation.get("assembly_ppm_cv_lot", 0.10)
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class YieldEstimate:
     die_area_mm2: float
     critical_area_mm2: float
@@ -203,6 +253,54 @@ class YieldEstimate:
             "cost_per_good_package_stderr": self.cost_per_good_package_stderr,
             "wafer_utilization": self.wafer_utilization,
             "samples": self.samples,
+        }
+
+
+@dataclass(frozen=True)
+class LotEstimate:
+    die_area_mm2: float
+    critical_area_mm2: float
+    gross_dies_per_wafer: int
+    lots: int
+    wafers_per_lot: int
+    wafers: int
+    die_yield_mean: float
+    die_yield_stderr: float | None
+    wafer_to_wafer_die_yield_sigma: float
+    lot_to_lot_die_yield_sigma: float
+    assembly_yield_mean: float
+    assembly_yield_stderr: float | None
+    good_packages_per_wafer_mean: float
+    good_packages_stderr: float | None
+    cost_per_good_package_usd_mean: float
+    cost_per_good_package_stderr: float | None
+
+    def as_dict(self) -> dict[str, float | int | None]:
+        return {
+            "die_area_mm2": self.die_area_mm2,
+            "critical_area_mm2": self.critical_area_mm2,
+            "gross_dies_per_wafer": self.gross_dies_per_wafer,
+            "lots": self.lots,
+            "wafers_per_lot": self.wafers_per_lot,
+            "wafers": self.wafers,
+            "die_yield_mean": self.die_yield_mean,
+            "die_yield_stderr": self.die_yield_stderr,
+            "wafer_to_wafer_die_yield_sigma": (
+                self.wafer_to_wafer_die_yield_sigma
+            ),
+            "lot_to_lot_die_yield_sigma": self.lot_to_lot_die_yield_sigma,
+            "assembly_yield_mean": self.assembly_yield_mean,
+            "assembly_yield_stderr": self.assembly_yield_stderr,
+            "good_packages_per_wafer_mean": (
+                self.good_packages_per_wafer_mean
+            ),
+            "good_packages_stderr": self.good_packages_stderr,
+            "cost_per_good_package_usd_mean": (
+                self.cost_per_good_package_usd_mean
+            ),
+            "cost_per_good_package_stderr": (
+                self.cost_per_good_package_stderr
+            ),
         }
 
 
@@ -286,6 +384,41 @@ def _mean_stderr(values: list[float]) -> tuple[float, float | None]:
     return mean, statistics.stdev(values) / math.sqrt(len(values))
 
 
+def _lognormal_sigma(cv: float) -> float:
+    if cv < 0:
+        raise ValueError("coefficient of variation must be non-negative")
+    return math.sqrt(math.log1p(cv * cv))
+
+
+def _sample_wafer(
+    rng: random.Random,
+    die_count: int,
+    die_yield: float,
+    assembly_yield: float,
+) -> tuple[int, int]:
+    good_dies = sum(1 for _ in range(die_count) if rng.random() < die_yield)
+    good_packages = sum(
+        1 for _ in range(good_dies) if rng.random() < assembly_yield
+    )
+    return good_dies, good_packages
+
+
+def _wafer_cost(
+    assumptions: YieldAssumptions,
+    die_count: int,
+    good_die_count: int,
+    good_package_count: int,
+) -> float | None:
+    if not good_package_count:
+        return None
+    total_cost = (
+        assumptions.wafer.cost_usd
+        + die_count * assumptions.test_cost_usd
+        + good_die_count * assumptions.package_cost_usd
+    )
+    return total_cost / good_package_count
+
+
 def simulate_yield(
     assumptions: YieldAssumptions,
     die_area_mm2: float,
@@ -322,22 +455,20 @@ def simulate_yield(
     good_packages: list[float] = []
     package_costs: list[float] = []
     for _ in range(samples):
-        good_die_count = sum(
-            1 for _ in range(grid.count) if rng.random() < die_yield
-        )
-        good_package_count = sum(
-            1 for _ in range(good_die_count) if rng.random() < assembly
+        good_die_count, good_package_count = _sample_wafer(
+            rng, grid.count, die_yield, assembly
         )
         die_yields.append(good_die_count / grid.count)
         good_dies.append(float(good_die_count))
         good_packages.append(float(good_package_count))
-        if good_package_count:
-            total_cost = (
-                assumptions.wafer.cost_usd
-                + grid.count * assumptions.test_cost_usd
-                + good_die_count * assumptions.package_cost_usd
-            )
-            package_costs.append(total_cost / good_package_count)
+        cost = _wafer_cost(
+            assumptions,
+            grid.count,
+            good_die_count,
+            good_package_count,
+        )
+        if cost is not None:
+            package_costs.append(cost)
 
     if not package_costs:
         raise ValueError(
@@ -372,6 +503,122 @@ def simulate_yield(
         cost_per_good_package_stderr=cost_stderr,
         wafer_utilization=utilization,
         samples=samples,
+    )
+
+
+def simulate_lot_yield(
+    assumptions: YieldAssumptions,
+    die_area_mm2: float,
+    pad_count: int,
+    *,
+    lots: int = 40,
+    seed: int = 0,
+) -> LotEstimate:
+    """Simulate lots with lognormal defect-density and assembly variation.
+
+    Defect density is drawn once per lot and again per wafer around the lot
+    value; per-pad assembly ppm is drawn once per assembly lot. The reported
+    yield sigmas describe the modelled expected die yield, so they exclude
+    die-sampling noise. Good-package and cost means come from sampled wafers
+    and therefore include sampling noise.
+    """
+    if die_area_mm2 <= 0:
+        raise ValueError("die area must be positive")
+    if pad_count < 0:
+        raise ValueError("pad count must be non-negative")
+    if lots < 2:
+        raise ValueError("lot simulation must cover at least two lots")
+    variation = assumptions.variation
+    if variation is None:
+        raise ValueError("lot simulation requires a variation mapping")
+
+    side_mm = math.sqrt(die_area_mm2)
+    grid = die_grid(assumptions.wafer, side_mm, side_mm)
+    if grid.count == 0:
+        raise ValueError("die does not fit on the wafer")
+    sigma_lot = _lognormal_sigma(variation.defect_density_cv_lot)
+    sigma_wafer = _lognormal_sigma(variation.defect_density_cv_wafer)
+    sigma_ppm = _lognormal_sigma(variation.assembly_ppm_cv_lot)
+    rng = random.Random(seed)
+    lot_yields: list[float] = []
+    lot_packages: list[float] = []
+    lot_costs: list[float] = []
+    lot_assembly: list[float] = []
+    within_lot_variances: list[float] = []
+    for _ in range(lots):
+        density_lot = assumptions.defect_density_per_cm2 * math.exp(
+            rng.gauss(0.0, sigma_lot)
+        )
+        ppm_lot = assumptions.per_pad_defect_ppm * math.exp(
+            rng.gauss(0.0, sigma_ppm)
+        )
+        assembly = package_assembly_yield(
+            pad_count,
+            assumptions.base_assembly_yield,
+            ppm_lot,
+        )
+        wafer_yields: list[float] = []
+        wafer_packages: list[float] = []
+        wafer_costs: list[float] = []
+        for _ in range(variation.wafers_per_lot):
+            density = density_lot * math.exp(rng.gauss(0.0, sigma_wafer))
+            expected_yield = poisson_die_yield(
+                die_area_mm2,
+                assumptions.critical_area_fraction,
+                density,
+            )
+            good_dies, good_packages = _sample_wafer(
+                rng,
+                grid.count,
+                expected_yield,
+                assembly,
+            )
+            wafer_yields.append(expected_yield)
+            wafer_packages.append(float(good_packages))
+            cost = _wafer_cost(
+                assumptions,
+                grid.count,
+                good_dies,
+                good_packages,
+            )
+            if cost is not None:
+                wafer_costs.append(cost)
+        if not wafer_costs:
+            raise ValueError(
+                "no good packages in a lot; cost per good package is "
+                "undefined"
+            )
+        lot_yields.append(statistics.fmean(wafer_yields))
+        lot_packages.append(statistics.fmean(wafer_packages))
+        lot_costs.append(statistics.fmean(wafer_costs))
+        lot_assembly.append(assembly)
+        within_lot_variances.append(statistics.variance(wafer_yields))
+
+    die_mean, die_stderr = _mean_stderr(lot_yields)
+    package_mean, package_stderr = _mean_stderr(lot_packages)
+    cost_mean, cost_stderr = _mean_stderr(lot_costs)
+    assembly_mean, assembly_stderr = _mean_stderr(lot_assembly)
+    return LotEstimate(
+        die_area_mm2=die_area_mm2,
+        critical_area_mm2=critical_area_mm2(
+            die_area_mm2, assumptions.critical_area_fraction
+        ),
+        gross_dies_per_wafer=grid.count,
+        lots=lots,
+        wafers_per_lot=variation.wafers_per_lot,
+        wafers=lots * variation.wafers_per_lot,
+        die_yield_mean=die_mean,
+        die_yield_stderr=die_stderr,
+        wafer_to_wafer_die_yield_sigma=math.sqrt(
+            statistics.fmean(within_lot_variances)
+        ),
+        lot_to_lot_die_yield_sigma=statistics.stdev(lot_yields),
+        assembly_yield_mean=assembly_mean,
+        assembly_yield_stderr=assembly_stderr,
+        good_packages_per_wafer_mean=package_mean,
+        good_packages_stderr=package_stderr,
+        cost_per_good_package_usd_mean=cost_mean,
+        cost_per_good_package_stderr=cost_stderr,
     )
 
 

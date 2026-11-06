@@ -1,0 +1,25 @@
+# Phase 1 variation: GRX930 lot means plus the wafer-to-wafer and lot-to-lot
+# components of die-yield variation. The variation block in the yield YAML is a
+# planning assumption, not a calibrated fab distribution.
+schema_version: "0.1"
+id: grx930_yield_variation_28nm
+description: >-
+  Simulate GRX930 lots with lognormal lot and wafer defect-density variation
+  and assembly-lot ppm variation, reporting the mean die yield and both
+  variance components.
+product: grx930
+process: grx28@0.1.0
+seed: 20261106
+samples: 40
+engines:
+  - yield_variation
+inputs:
+  chip: chips/grx930.yaml
+  yield: yields/grx930_28nm.yaml
+outputs:
+  - die_yield_mean
+  - wafer_to_wafer_die_yield_sigma
+  - lot_to_lot_die_yield_sigma
+  - assembly_yield_mean
+  - good_packages_per_wafer_mean
+  - cost_per_good_package_usd_mean

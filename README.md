@@ -41,6 +41,13 @@ from 4,822 to 4,805. The defect-density effect is small because the modelled
 critical area is 4.55 mm² of a 12.99 mm² die. Every value is `assumed`: this is
 scenario yield under stated assumptions, not a foundry yield prediction.
 
+The variation session `scenarios/grx930_yield_variation_28nm.yaml` runs 40
+assembly lots of 25 wafers with lognormal defect-density and assembly variation.
+At 15% lot and 10% wafer defect-density CV it gives a 99.63% mean die yield with
+0.036% wafer-to-wafer and 0.061% lot-to-lot sigma, 4,816 good packages per wafer
+and $2.55 per good package. The sigmas describe the modelled expected yield, not
+measured distributions.
+
 ## Quick start
 
 ```bash
@@ -53,6 +60,7 @@ python -m fabtwin run scenarios/g100_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_yield_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml
+python -m fabtwin run scenarios/grx930_yield_variation_28nm.yaml
 python -m fabtwin query --runs
 python -m fabtwin query --reports
 python -m fabtwin query --run RUN_ID --metric die_area_m2
@@ -124,7 +132,8 @@ scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
 scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
 scenarios/grx930_yield_sensitivity_28nm.yaml  GRX930 yield sensitivity curves
-gpdk/dieyield.py             wafer grid, Poisson yield, assembly, cost and curves
+scenarios/grx930_yield_variation_28nm.yaml   GRX930 lot/wafer variation session
+gpdk/dieyield.py             wafer grid, yield, sensitivity and lot variation
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader
