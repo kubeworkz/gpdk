@@ -22,6 +22,8 @@ from fabtwin.store import ObservationStore
 SCENARIO = ROOT / "scenarios" / "grx930_28nm_baseline.yaml"
 G100_SCENARIO = ROOT / "scenarios" / "g100_28nm_baseline.yaml"
 PTA_SCENARIO = ROOT / "scenarios" / "pta_28nm_baseline.yaml"
+PTA_PHOTONIC_SCENARIO = ROOT / "scenarios" / "pta_photonic_28nm.yaml"
+G100_MCM_SCENARIO = ROOT / "scenarios" / "g100_mcm_28nm.yaml"
 YIELD_SCENARIO = ROOT / "scenarios" / "grx930_yield_28nm.yaml"
 YIELD_SENSITIVITY_SCENARIO = (
     ROOT / "scenarios" / "grx930_yield_sensitivity_28nm.yaml"
@@ -123,6 +125,17 @@ def test_run_writes_manifest_and_hashes(scenario, tmp_path):
     )
 
 
+def test_photonic_engine_rejects_missing_photonic_input(tmp_path):
+    raw = yaml.safe_load(PTA_SCENARIO.read_text(encoding="utf-8"))
+    raw["id"] = "pta_photonic_missing"
+    raw["engines"] = ["pta_photonic"]
+    path = tmp_path / "scenario.yaml"
+    path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    loaded = load_scenario(path)
+    errors = validate_scenario(loaded)
+    assert any("inputs.photonic" in error for error in errors)
+
+
 def test_same_scenario_produces_same_observations(scenario, tmp_path):
     first = execute(scenario, tmp_path / "first")
     second = execute(scenario, tmp_path / "second")
@@ -171,6 +184,41 @@ def test_g100_baseline_scenario_runs(tmp_path):
     assert all(row["unit"] for row in rows)
 
 
+def test_pta_photonic_noise_and_ranking(scenario, tmp_path):
+    loaded = load_scenario(PTA_PHOTONIC_SCENARIO)
+    first = execute(loaded, tmp_path / "first")
+    second = execute(loaded, tmp_path / "second")
+
+    keys = (
+        "entity_type",
+        "entity_id",
+        "metric",
+        "value",
+        "unit",
+        "evidence_class",
+        "source_artifact",
+        "model_version",
+    )
+
+    def rows(result):
+        with (result.run_dir / "observations.csv").open(
+            newline="", encoding="utf-8"
+        ) as handle:
+            return [
+                {key: row[key] for key in keys}
+                for row in csv.DictReader(handle)
+            ]
+
+    assert rows(first) == rows(second)
+    sensitivity = [
+        row for row in rows(first) if row["entity_type"] == "sensitivity"
+    ]
+    phase_rows = [row for row in sensitivity if row["metric"] == "phase_error_swing"]
+    loss_rows = [row for row in sensitivity if row["metric"] == "insertion_loss_swing"]
+    assert max(phase_rows, key=lambda row: float(row["value"]))["entity_id"] == "width_nm"
+    assert max(loss_rows, key=lambda row: float(row["value"]))["entity_id"] == "alignment_um"
+
+
 def test_pta_baseline_records_topology_and_package(tmp_path):
     loaded = load_scenario(PTA_SCENARIO)
     assert loaded.product == "pta"
@@ -202,6 +250,225 @@ def test_pta_baseline_records_topology_and_package(tmp_path):
     assert values["wavelength_m"] == pytest.approx(1550e-9)
     assert {row["evidence_class"] for row in rows} == {"assumed"}
     assert {row["source_artifact"] for row in rows} == {"chips/pta.yaml"}
+
+
+def test_pta_photonic_scenario_records_optical_and_sensitivity_rows(tmp_path):
+    loaded = load_scenario(PTA_PHOTONIC_SCENARIO)
+    assert loaded.product == "pta"
+    assert loaded.engines == ("pta_photonic",)
+    assert loaded.photonic_ref == "photonic/pta_siph_28nm.yaml"
+    assert loaded.photonic_path == ROOT / "photonic" / "pta_siph_28nm.yaml"
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 15
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["scenario"]["photonic"] == "photonic/pta_siph_28nm.yaml"
+    assert {item["role"] for item in manifest["inputs"]} == {
+        "scenario",
+        "chip",
+        "package",
+        "photonic",
+        "tech",
+    }
+    engine = manifest["engines"][0]
+    assert engine["name"] == "pta_photonic"
+    assert engine["fidelity"] == "F1"
+    assert engine["model_version"] == "pta-photonic@0.1.0"
+    assert engine["metadata"]["dominant_phase_parameter"] == "width_nm"
+    assert engine["metadata"]["dominant_loss_parameter"] == "alignment_um"
+    assert engine["metadata"]["thermal"]["resistance_k_per_w"] > 0.0
+    assert engine["metadata"]["thermal"]["local_temperature_rise_k"] > 0.0
+
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 15
+    assert {row["entity_type"] for row in rows} == {
+        "product",
+        "sensitivity",
+    }
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["model_version"] for row in rows} == {
+        "pta-photonic@0.1.0"
+    }
+    assert {row["source_artifact"] for row in rows} == {
+        "photonic/pta_siph_28nm.yaml"
+    }
+    product_rows = {
+        row["metric"]: row for row in rows if row["entity_type"] == "product"
+    }
+    assert set(product_rows) == {
+        "insertion_loss_db",
+        "phase_error_rad",
+        "tuning_power_w",
+        "tensor_error",
+        "temperature_rise_k",
+    }
+    assert all(float(row["value"]) > 0.0 for row in product_rows.values())
+    assert all(row["uncertainty"] for row in product_rows.values())
+    sensitivity_rows = [
+        row for row in rows if row["entity_type"] == "sensitivity"
+    ]
+    assert len(sensitivity_rows) == 10
+    assert not any(row["uncertainty"] for row in sensitivity_rows)
+    report_text = (result.run_dir / "report.md").read_text(encoding="utf-8")
+    assert "Photonic model" in report_text
+    assert "photonic/pta_siph_28nm.yaml" in report_text
+    assert "| 82.739 | mW | assumed | 2.87913 |" in report_text
+
+
+def test_pta_photonic_measured_calibration_input(tmp_path):
+    calibration = {
+        "schema_version": "0.1",
+        "id": "pta_siph_synthetic_cal",
+        "revision": "0.2.0",
+        "product": "pta",
+        "process": "grx28@0.1.0",
+        "description": "Synthetic test fixture; not real measured data.",
+        "evidence": "measured",
+        "source": "synthetic test fixture",
+        "parameters": {
+            "width_sensitivity_per_nm": {
+                "value": 0.0004,
+                "uncertainty": 0.00001,
+                "unit": "1/nm",
+                "test_structure": "synthetic width sweep",
+                "method": "synthetic linear extraction",
+            },
+            "base_loss_db_per_cm": {
+                "value": 0.8,
+                "uncertainty": 0.05,
+                "unit": "dB/cm",
+                "test_structure": "synthetic cutback",
+                "method": "synthetic linear extraction",
+            },
+            "thermo_optic_per_k": {
+                "value": 0.00018,
+                "uncertainty": 0.000002,
+                "unit": "1/K",
+                "test_structure": "synthetic thermal phase sweep",
+                "method": "synthetic linear extraction",
+            },
+            "thermal_resistance_k_per_w": {
+                "value": 4.0,
+                "uncertainty": 0.1,
+                "unit": "K/W",
+                "test_structure": "synthetic thermal test structure",
+                "method": "synthetic slope extraction",
+            },
+        },
+    }
+    calibration_path = tmp_path / "pta_calibration.yaml"
+    calibration_path.write_text(
+        yaml.safe_dump(calibration, sort_keys=False), encoding="utf-8"
+    )
+    raw = yaml.safe_load(PTA_PHOTONIC_SCENARIO.read_text(encoding="utf-8"))
+    raw["id"] = "pta_photonic_calibrated"
+    raw["inputs"]["photonic_calibration"] = str(calibration_path)
+    scenario_path = tmp_path / "scenario.yaml"
+    scenario_path.write_text(
+        yaml.safe_dump(raw, sort_keys=False), encoding="utf-8"
+    )
+    loaded = load_scenario(scenario_path)
+    assert loaded.photonic_calibration_path == calibration_path.resolve()
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path / "runs")
+    assert result.observation_count == 19
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["scenario"]["photonic_calibration"] == str(
+        calibration_path
+    )
+    assert "photonic_calibration" in {
+        item["role"] for item in manifest["inputs"]
+    }
+    engine = manifest["engines"][0]
+    assert engine["model_version"] == "pta-photonic@0.1.0+cal@0.2.0"
+    assert engine["metadata"]["thermal"]["resistance_k_per_w"] == 4.0
+    assert engine["metadata"]["thermal"]["resistance_basis"] == "measured"
+    assert engine["metadata"]["calibration"]["complete_groups"] == [
+        "width",
+        "thermal",
+    ]
+    assert "loss" in engine["metadata"]["calibration"]["incomplete_groups"]
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 19
+    calibration_rows = [
+        row for row in rows if row["entity_type"] == "calibration"
+    ]
+    assert len(calibration_rows) == 4
+    assert {row["evidence_class"] for row in calibration_rows} == {"measured"}
+    assert all(row["uncertainty"] for row in calibration_rows)
+    assert {row["metric"] for row in calibration_rows} == {
+        "width_sensitivity_per_nm",
+        "base_loss_db_per_cm",
+        "thermo_optic_per_k",
+        "thermal_resistance_k_per_w",
+    }
+    assert {row["model_version"] for row in calibration_rows} == {
+        "pta-calibration@0.2.0"
+    }
+    assert {row["evidence_class"] for row in rows if row["entity_type"] != "calibration"} == {"assumed"}
+    report_text = (result.run_dir / "report.md").read_text(encoding="utf-8")
+    assert "Photonic calibration" in report_text
+    assert calibration_path.name in report_text
+    assert engine["metadata"]["calibration"]["source"] == (
+        "synthetic test fixture"
+    )
+
+
+def test_g100_mcm_scenario_compares_package_options(tmp_path):
+    loaded = load_scenario(G100_MCM_SCENARIO)
+    assert loaded.product == "g100"
+    assert loaded.engines == ("mcm_yield",)
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 17
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert {item["role"] for item in manifest["inputs"]} == {
+        "scenario",
+        "chip",
+        "package",
+        "yield",
+        "tech",
+    }
+    engine = manifest["engines"][0]
+    assert engine["name"] == "mcm_yield"
+    assert engine["fidelity"] == "F1"
+    assert engine["metadata"]["best_cost_option"] == "organic_substrate"
+    assert engine["metadata"]["best_yield_option"] == "silicon_interposer"
+    assert len(engine["metadata"]["options"]) == 3
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 17
+    assert {row["entity_type"] for row in rows} == {
+        "product",
+        "package_option",
+    }
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["source_artifact"] for row in rows} == {
+        "yields/g100_mcm_28nm.yaml"
+    }
+    options = {row["entity_id"] for row in rows if row["entity_type"] == "package_option"}
+    assert options == {
+        "silicon_interposer",
+        "organic_substrate",
+        "silicon_bridge",
+    }
+    products = {
+        (row["entity_id"], row["metric"]): float(row["value"])
+        for row in rows
+        if row["entity_type"] == "product"
+    }
+    assert products[("g100", "g100_die_yield")] > 0.0
+    assert products[("pta", "pta_die_yield")] > 0.0
+    assert products[("mcm", "kgd_match_yield")] > 0.0
+    assert products[("mcm", "pta_wafers_per_g100_wafer")] > 0.0
 
 
 def test_yield_scenario_records_wafer_package_and_uncertainty(tmp_path):

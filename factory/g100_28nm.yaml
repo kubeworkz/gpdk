@@ -1,0 +1,259 @@
+# Phase 4 planning assumptions for the G100 28 nm fab and ATP line.
+# The route is a simplified planning abstraction, not a foundry MES route card.
+# Tool counts, MTBF/MTTR, process times, operating cost and litho scanner capex
+# are explicit assumptions. Only lithography tools are capital-priced here;
+# other tool-group capex is not yet modelled. Batched stations wait up to
+# batch_wait_hours to form a load.
+schema_version: "0.1"
+id: g100_factory_28nm
+revision: "0.1.0"
+product: g100
+process: grx28@0.1.0
+description: >-
+  G100 28 nm fab route plus assembly, test and packaging. Six litho passes on
+  a three-tool scanner group are the intended capacity constraint. Furnaces,
+  metrology, die attach, mold and final test are batched. Downtime enters as
+  MTBF/MTTR availability applied to effective process time.
+wafer_starts_per_week: 600.0
+simulation_weeks: 16.0
+warmup_weeks: 4.0
+wafers_per_lot: 25
+operating_cost_usd_per_week: 2400000.0
+# Optional planning selling price; enables payback and ROI. Not a quote or
+# market forecast. Gross margin is price minus the Phase 3 package cost.
+package_price_usd: 100.0
+# Planning hurdle rate and five-year scanner DCF assumptions. The ramp
+# scales the scanner's incremental annual cash flow; the terminal value is a
+# planning residual equal to 20% of incremental capex at the end of year 5.
+discount_rate: 0.10
+dcf_ramp: [0.60, 0.80, 1.00, 1.00, 1.00]
+terminal_value_pct_of_capex: 0.20
+# One-at-a-time scanner economics sweep. Price points derive margin from the
+# package cost; margin points set contribution margin before factory operating
+# cost. These are planning sensitivities, not a price or demand forecast.
+sensitivity:
+  package_prices_usd: [70.0, 85.0, 100.0, 115.0, 130.0]
+  gross_margins_usd_per_good_package: [20.0, 40.0, 60.0, 80.0]
+  discount_rates: [0.05, 0.075, 0.10, 0.125, 0.15]
+  terminal_value_pcts_of_capex: [0.0, 0.10, 0.20, 0.30, 0.40]
+package_option: silicon_interposer
+
+tool_groups:
+  - id: litho
+    tools: 3
+    mtbf_hours: 110.0
+    mttr_hours: 12.0
+    capex_usd_per_tool: 60000000.0
+    depreciation_years: 5.0
+  - id: etch
+    tools: 3
+    mtbf_hours: 150.0
+    mttr_hours: 8.0
+  - id: dep
+    tools: 2
+    mtbf_hours: 160.0
+    mttr_hours: 9.0
+  - id: cmp
+    tools: 2
+    mtbf_hours: 140.0
+    mttr_hours: 9.0
+  - id: implant
+    tools: 2
+    mtbf_hours: 180.0
+    mttr_hours: 7.0
+  - id: diffusion
+    tools: 1
+    mtbf_hours: 200.0
+    mttr_hours: 10.0
+  - id: metrology
+    tools: 2
+    mtbf_hours: 220.0
+    mttr_hours: 4.0
+  - id: wafer_test
+    tools: 2
+    mtbf_hours: 180.0
+    mttr_hours: 6.0
+  - id: dice
+    tools: 3
+    mtbf_hours: 200.0
+    mttr_hours: 6.0
+  - id: die_attach
+    tools: 2
+    mtbf_hours: 170.0
+    mttr_hours: 8.0
+  - id: underfill
+    tools: 2
+    mtbf_hours: 190.0
+    mttr_hours: 6.0
+  - id: mold
+    tools: 2
+    mtbf_hours: 180.0
+    mttr_hours: 7.0
+  - id: final_test
+    tools: 2
+    mtbf_hours: 160.0
+    mttr_hours: 10.0
+  - id: pack_ship
+    tools: 1
+    mtbf_hours: 400.0
+    mttr_hours: 4.0
+
+fab_route:
+  - name: well_implant
+    tool_group: implant
+    process_hours: 1.2
+    setup_hours: 0.2
+  - name: sti_etch
+    tool_group: etch
+    process_hours: 1.8
+  - name: liner_dep
+    tool_group: dep
+    process_hours: 1.4
+  - name: sti_cmp
+    tool_group: cmp
+    process_hours: 1.6
+  - name: gate_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: gate_etch
+    tool_group: etch
+    process_hours: 1.7
+  - name: gate_oxide
+    tool_group: diffusion
+    process_hours: 3.0
+    batch_size: 6
+    batch_wait_hours: 8.0
+  - name: extension_implant
+    tool_group: implant
+    process_hours: 1.1
+  - name: spacer_dep
+    tool_group: dep
+    process_hours: 1.5
+  - name: spacer_etch
+    tool_group: etch
+    process_hours: 1.6
+  - name: sd_implant
+    tool_group: implant
+    process_hours: 1.2
+  - name: sd_anneal
+    tool_group: diffusion
+    process_hours: 3.0
+    batch_size: 6
+    batch_wait_hours: 8.0
+  - name: contact_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: contact_etch
+    tool_group: etch
+    process_hours: 1.7
+  - name: silicide_dep
+    tool_group: dep
+    process_hours: 1.6
+  - name: m1_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: m1_etch
+    tool_group: etch
+    process_hours: 1.8
+  - name: m1_dep
+    tool_group: dep
+    process_hours: 1.7
+  - name: m1_cmp
+    tool_group: cmp
+    process_hours: 1.6
+  - name: via_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: via_etch
+    tool_group: etch
+    process_hours: 1.8
+  - name: via_dep
+    tool_group: dep
+    process_hours: 1.7
+  - name: via_cmp
+    tool_group: cmp
+    process_hours: 1.6
+  - name: top_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: top_etch
+    tool_group: etch
+    process_hours: 1.8
+  - name: passivation_dep
+    tool_group: dep
+    process_hours: 1.5
+  - name: pad_litho
+    tool_group: litho
+    process_hours: 2.5
+  - name: pad_etch
+    tool_group: etch
+    process_hours: 1.6
+  - name: inline_metrology_1
+    tool_group: metrology
+    process_hours: 0.5
+    batch_size: 6
+    batch_wait_hours: 4.0
+  - name: inline_metrology_2
+    tool_group: metrology
+    process_hours: 0.5
+    batch_size: 6
+    batch_wait_hours: 4.0
+  - name: inline_metrology_3
+    tool_group: metrology
+    process_hours: 0.5
+    batch_size: 6
+    batch_wait_hours: 4.0
+  - name: wafer_sort
+    tool_group: wafer_test
+    process_hours: 3.5
+    batch_size: 4
+    batch_wait_hours: 6.0
+
+atp_route:
+  - name: dice
+    tool_group: dice
+    process_hours: 2.0
+    batch_size: 4
+    batch_wait_hours: 4.0
+  - name: die_attach
+    tool_group: die_attach
+    process_hours: 3.0
+    batch_size: 4
+    batch_wait_hours: 6.0
+    setup_hours: 0.5
+  - name: underfill_cure
+    tool_group: underfill
+    process_hours: 1.5
+    batch_size: 4
+    batch_wait_hours: 4.0
+  - name: mold
+    tool_group: mold
+    process_hours: 2.0
+    batch_size: 4
+    batch_wait_hours: 4.0
+  - name: final_test
+    tool_group: final_test
+    process_hours: 8.0
+    batch_size: 8
+    batch_wait_hours: 8.0
+  - name: pack_ship
+    tool_group: pack_ship
+    process_hours: 1.0
+
+what_if:
+  - id: higher_starts
+    description: Raise wafer starts 33 percent to 800 per week.
+    wafer_starts_per_week: 800.0
+  - id: low_downtime
+    description: Halve MTTR on every tool group at baseline starts.
+    mttr_scale: 0.5
+  - id: extra_litho
+    roi_reference: higher_starts
+    description: >-
+      Add a fourth lithography scanner and hold starts at 800 per week. The
+      scanner carries a $120k/week planning operating-cost delta and $60M
+      capex depreciated over five years.
+    wafer_starts_per_week: 800.0
+    operating_cost_delta_usd_per_week: 120000.0
+    tool_count_overrides:
+      litho: 4

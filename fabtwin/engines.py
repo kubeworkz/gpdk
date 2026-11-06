@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from .adapters.factory import FactoryAtpEngine
 from .adapters.gpdk import GpdkEngine
+from .adapters.mcm_yield import McmYieldEngine
 from .adapters.pta import PtaEngine
+from .adapters.pta_photonic import PtaPhotonicEngine
 from .adapters.yield_engine import (
     YieldEngine,
     YieldSensitivityEngine,
@@ -13,8 +16,11 @@ from .adapters.yield_engine import (
 from .model import Engine
 
 ENGINE_CLASSES = {
+    FactoryAtpEngine.name: FactoryAtpEngine,
     GpdkEngine.name: GpdkEngine,
+    McmYieldEngine.name: McmYieldEngine,
     PtaEngine.name: PtaEngine,
+    PtaPhotonicEngine.name: PtaPhotonicEngine,
     YieldEngine.name: YieldEngine,
     YieldSensitivityEngine.name: YieldSensitivityEngine,
     YieldVariationEngine.name: YieldVariationEngine,

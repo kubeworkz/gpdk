@@ -1,0 +1,64 @@
+# F1 PTA silicon-photonic and thermal planning assumptions.
+#
+# Every value is an assumption. This is not a qualified SiPh PDK, a measured
+# waveguide library, or an OSAT thermal model. Replace these values with
+# calibrated process and package data before using the output for a commitment.
+#
+# Conventions:
+#   width/etch/LER in nm, alignment in um, temperature in degC, length in um,
+#   loss in dB or dB/cm, phase in rad, heater power in mW per 2*pi, power in W.
+schema_version: "0.1"
+id: pta_siph_28nm
+revision: "0.1.0"
+product: pta
+process: grx28@0.1.0
+description: >-
+  F1 planning assumptions for the PTA 4x4 MZI mesh: fabricated waveguide width,
+  etch depth, line-edge roughness, ambient temperature, package alignment and a
+  one-dimensional silicon-interposer thermal path. The optical coefficients are
+  planning values, not a calibrated SiPh PDK.
+evidence: assumed
+
+optical:
+  wavelength_nm: 1550.0
+  effective_index: 2.40
+  nominal_width_nm: 450.0
+  nominal_etch_depth_nm: 220.0
+  width_sensitivity_per_nm: 0.0005
+  etch_sensitivity_per_nm: 0.00025
+  thermo_optic_per_k: 0.000186
+  laser_drift_nm_per_k: 0.10
+  base_loss_db_per_cm: 1.0
+  scattering_loss_db_per_cm_nm2: 0.5
+  coupling_loss_db: 1.0
+  alignment_loss_db_per_um2: 20.0
+  heater_power_mw_per_2pi: 20.0
+  mesh_excess_loss_db: 0.05
+
+variation:
+  width_nm:
+    mean: 450.0
+    sigma: 3.0
+  etch_depth_nm:
+    mean: 220.0
+    sigma: 5.0
+  ler_nm:
+    mean: 2.0
+    sigma: 0.3
+  alignment_um:
+    mean: 0.0
+    sigma: 0.15
+  ambient_c:
+    mean: 25.0
+    sigma: 5.0
+
+thermal:
+  reference_c: 25.0
+  electronic_heat_w: 2.0
+  distance_mm: 0.25
+  contact_width_mm: 5.0
+  interposer_thickness_um: 100.0
+  silicon_conductivity_w_mk: 149.0
+  trench_count: 0
+  trench_width_um: 0.0
+  air_conductivity_w_mk: 0.026

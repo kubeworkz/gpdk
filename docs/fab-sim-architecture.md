@@ -119,7 +119,7 @@ manufacturing twin. The split is now defined in `chips/g100.yaml` and
 |---|---|---|
 | `grx930` | 28 nm planar digital SoC: four RV64 cores, two NPUs, 96 KB SRAM | Measured legacy baseline plus GRX28 projection |
 | `g100` / `grxgpu` | 28 nm digital GPU/throughput chip | Planning assumptions only; 420M gates, 48 MB SRAM, 0.75 GHz target |
-| `pta` | Photonic tensor accelerator chiplet, 28 nm-class silicon photonics | Declared topology and package assumptions only; no optical model or qualified SiPh PDK |
+| `pta` | Photonic tensor accelerator chiplet, 28 nm-class silicon photonics | F1 photonic/thermal planning model plus declared topology and package assumptions; no qualified SiPh PDK or measured calibration |
 | `mcm` | 2.5D silicon interposer or bridge package containing an electronic die and a PTA die | Package assumptions only |
 
 **Recommendation:** commit to the **chiplet baseline**: an electronic chiplet
@@ -346,6 +346,41 @@ F1 planning model. Absolute yield is still set by the assumptions in
 the PTA error budget. No claim of an optimized 397 nm waveguide or a specific
 phase error until there is measured calibration data.
 
+The implemented slice is `gpdk/photonics.py`, `photonic/pta_siph_28nm.yaml`,
+`fabtwin/adapters/pta_photonic.py` and `scenarios/pta_photonic_28nm.yaml`. It
+models width and etch-depth shifts through effective index, line-edge roughness
+through scattering loss, ambient plus electronic-die heat through a 1D silicon-
+interposer path, and package alignment through coupling loss. It propagates
+these to insertion loss, per-MZI phase error, mesh tuning power and a stated
+tensor-error proxy (phase error divided by pi). At the planning assumptions and
+400 samples it gives 3.21 dB insertion loss, 1.62 rad phase error, 82.7 mW mesh
+tuning power, a 0.52 tensor-error proxy and a 6.27 K temperature rise. The same
+run computes 3.38 K/W thermal resistance and a 6.77 K local rise before ambient
+variation.
+
+The one-sigma ranking identifies **width** as the dominant phase contributor
+(1.22 rad), ahead of etch depth (1.01 rad) and ambient temperature (0.13 rad).
+**Alignment** dominates insertion loss (0.45 dB), ahead of LER (0.09 dB). The
+phase gate is therefore met locally for the F1 planning model, but it is a
+narrow lead over etch depth and depends entirely on the assumed sensitivities.
+The optical outputs remain `assumed`; phase is per-MZI without common-mode
+cancellation or tuning feedback, and the thermal path omits TIM, bump and
+die-level interface resistances. This is not a claim of an optimized 397 nm
+waveguide or measured PTA performance.
+
+**Measured calibration path.** A scenario can add
+`inputs.photonic_calibration` pointing to a strict measured-coefficient file.
+The file must declare `evidence: measured`, name a source and test structure for
+every value, and provide a positive standard uncertainty. Supported coefficients
+cover width and etch sensitivity, base/scattering/coupling/alignment/mesh loss,
+the thermo-optic coefficient and thermal resistance. Supplied values replace the
+planning assumptions; omitted values remain explicitly listed as assumptions.
+The calibration itself is recorded as `measured` observations, but aggregate
+outputs stay `assumed` because they are model estimates, not measurements.
+Calibration uncertainty is recorded but is not yet propagated to aggregate
+uncertainty. No measured PTA calibration dataset is committed; tests use
+synthetic fixtures only.
+
 ### Phase 3 — G100 and MCM assembly
 
 **Goal:** reuse the electronic path and add known-good-die packaging.
@@ -358,6 +393,23 @@ phase error until there is measured calibration data.
 
 **Exit gate:** package yield and cost per good package for at least two packaging
 options; the result identifies the limiting assembly step.
+
+The implemented slice is `gpdk/mcm.py`, `yields/g100_mcm_28nm.yaml`,
+`fabtwin/adapters/mcm_yield.py` and `scenarios/g100_mcm_28nm.yaml`. It combines
+the G100 die-area model with a planning PTA die area, Poisson die yield and KGD
+test-yield factors. Enough PTA wafers are purchased to match every G100 KGD; a
+random G100/PTA pair is both known-good 86.8% of the time. The package options
+use the existing exponential per-interconnect assembly model.
+
+At the planning assumptions the silicon interposer leads package assembly yield
+at 98.7% and delivers 131.6 good packages per G100 wafer; the organic substrate
+is cheapest at $44.64 per good package but lowest at 97.7% assembly yield; the
+silicon bridge is $50.37 at 98.5%. The comparison therefore does not produce a
+single winner: yield and cost point to different options. G100 die yield is
+89.9%, PTA die yield is 98.0%, and the matched-pair KGD yield is 86.8%. These
+are F1 planning estimates, not OSAT data or vendor quotes. The package options,
+interconnect counts, ppm rates and costs are explicit assumptions; test escapes
+and handling damage are not separately modelled.
 
 ### Phase 4 — Factory and ATP discrete-event model
 
@@ -372,6 +424,76 @@ options; the result identifies the limiting assembly step.
 
 **Exit gate:** a baseline route and at least two what-if scenarios; the model
 identifies the bottleneck and the cycle-time sensitivity to wafer starts.
+
+The implemented slice is `gpdk/factory.py`, `factory/g100_28nm.yaml`,
+`fabtwin/adapters/factory.py` and `scenarios/g100_factory_28nm.yaml`. The route
+has 38 steps across 14 tool groups; six lithography passes share three
+scanners. Furnaces, metrology, die attach, mold and final test are batched.
+Downtime enters as MTBF/(MTBF + MTTR) availability applied to effective process
+time. The factory consumes the G100 die area, the Phase 3 MCM yield model and
+the selected silicon-interposer package option.
+
+At 600 wafer starts/week the baseline produces 598.5 wafers/week and 78,784 good
+packages/week. Cycle time is 141.5 h, queue time is 61.2 h and WIP is 19.7 lots.
+Lithography is the bottleneck at 75.9% utilization, ahead of deposition at 67.9%
+and etch at 66.1%. Cost is $95.60 per good package: $56.35 from the Phase 3
+package estimate plus $39.25 of factory operating cost and depreciation. The
+three-scanner fleet represents $180M of capex and $0.69M/week of straight-line
+depreciation; only lithography tools are capital-priced. The 800-start what-if
+raises lithography to 97.0% and doubles cycle time to 299.7 h (+111.7%); WIP
+rises to 51.9 lots and throughput reaches only 729.6 wafers/week, below the 800
+start rate. Halving MTTR lowers cycle time only 1.8% to 139.0 h and lithography
+utilization to 72.2%, because the baseline line is constrained by starts and
+tool count rather than downtime. Adding a fourth lithography scanner at 800
+starts restores cycle time to 146.0 h (+3.1% versus baseline) and WIP to 26.8
+lots, reaches 799.6 wafers/week and shifts the bottleneck to deposition at
+90.3%. The scanner adds $60M of capex depreciated over five years and a
+$120k/week operating-cost delta, taking the fleet to $240M and depreciation to
+$0.92M/week. Its capital-aware cost is $89.07 per good package, $0.51 above the
+higher-starts case, although cycle time and WIP are much lower. It adds about
+9,212 good packages/week at roughly $38.08 of incremental factory cost per
+additional package; including the Phase 3 package cost, the all-in marginal
+cost is about $94.43 per added package. At the scenario's $100 planning price,
+gross margin before factory operating cost is $43.65 per package; the scanner
+adds $14.67M of annual cash flow and pays back in 4.09 years, with a 4.4%
+annual ROI after depreciation on its $60M incremental capex. The comparison
+uses `higher_starts` as the scanner's ROI reference, so it excludes the value
+of raising starts; that case adds no capex but keeps the 299.7 h cycle time and
+51.9 lots WIP. The $100 price is a planning assumption, not a market forecast.
+A one-at-a-time price sweep gives 201.74 years and -19.5% ROI at $70, 4.09
+years and 4.4% at $100, and 2.07 years and 28.4% at $130. A margin sweep gives
+17.96 years and -14.4% at $20, 4.64 years and 1.5% at $40, 2.67 years and 17.5%
+at $60, and 1.87 years and 33.5% at $80. The sweep holds output, operating cost
+and depreciation constant and is not a demand forecast. At a 10% hurdle rate,
+the five-year DCF is -$4.71M NPV and 7.3% IRR, so the scanner misses the hurdle
+at $100. NPV is +$18.73M at $115 and +$42.17M at $130; margin points are
+-$10.41M/4.0% at $40, +$20.84M/21.0% at $60 and +$52.09M/35.7% at $80. IRR is
+n/a when five-year cash flow does not recover capex. The DCF uses a
+60%/80%/100%/100%/100% cash-flow ramp and a terminal value of 20% of capex at
+the end of year 5; it excludes taxes, working capital, price erosion and
+replacement capex. A discount-rate sweep gives +$4.66M NPV at 5%, -$0.29M at
+7.5%, -$4.71M at 10%, -$8.65M at 12.5% and -$12.19M at 15%, with IRR unchanged
+at 7.3%. A terminal-value sweep gives -$12.16M/2.3% at 0%, -$8.43M/5.0% at
+10%, -$4.71M/7.3% at 20%, -$0.98M/9.5% at 30% and +$2.75M/11.4% at 40% of
+capex; NPV crosses zero near a 33% residual. That curve holds the base cash
+flow, ramp and hurdle rate constant. The lower $88.55 cost in the higher-starts
+case is fixed-cost dilution,
+not a capacity-expansion business case.
+
+These are F1 planning estimates from a simplified route, not a foundry MES
+route card or measured line. Failure sampling, dispatch rules, reticle changes,
+maintenance calendars, transport time and operator constraints are not
+modelled, and over-capacity cases describe a 16-week transient. Only the
+lithography scanner fleet is capital-priced, so absolute cost is partial.
+Payback, ROI, NPV and IRR require the optional package price or gross margin;
+the current scenario uses a $100 planning price and a matched reference for the
+scanner. The price/margin sensitivity is one-at-a-time and holds volume,
+operating cost and depreciation constant, so it is not a demand forecast. The
+discount-rate curve holds the base scanner cash flow, ramp and terminal value
+fixed; IRR is independent of the hurdle rate. The local exit gate is met:
+baseline plus three what-ifs,
+named bottlenecks, and a measured cycle-time response to wafer starts and tool
+capacity.
 
 ### Phase 5 — Calibration and virtual tape-out
 
@@ -436,10 +558,10 @@ vertical slice**. GRX930 is the right first product because it has a measured
 baseline and a pad-limited die; it lets the team validate the data spine, the
 yield arithmetic, and the package model before adding photonic uncertainty.
 
-Run the PTA slice in parallel only at F0/F1: extract the equations, define the
-distributions, and build the sensitivity harness. Do not wait for a SiPh PDK to
-start the PTA model, and do not pretend the resulting numbers are silicon
-predictions.
+The PTA F1 slice is now implemented as a separate engine and assumptions file.
+Keep it at F0/F1 until a SiPh PDK and measured test structures are available:
+the sensitivity ranking is useful for deciding what to calibrate first, but the
+absolute optical numbers are not silicon predictions.
 
 The first concrete deliverable is deliberately small:
 

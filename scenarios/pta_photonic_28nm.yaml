@@ -1,0 +1,26 @@
+# Phase 2 PTA photonic/thermal slice. Propagates width, etch-depth, LER,
+# temperature and alignment distributions through F1 optical and 1D thermal
+# models. All values are planning assumptions, not measured PTA data.
+schema_version: "0.1"
+id: pta_photonic_28nm
+description: >-
+  Propagate PTA waveguide width, etch depth, line-edge roughness, temperature
+  and package alignment through an F1 optical and one-dimensional thermal model
+  to insertion loss, phase error, tuning power and tensor error, then rank the
+  dominant contributors.
+product: pta
+process: grx28@0.1.0
+seed: 20261106
+samples: 400
+engines:
+  - pta_photonic
+inputs:
+  chip: chips/pta.yaml
+  package: packages/mcm_si.yaml
+  photonic: photonic/pta_siph_28nm.yaml
+outputs:
+  - insertion_loss_db
+  - phase_error_rad
+  - tuning_power_w
+  - tensor_error
+  - temperature_rise_k

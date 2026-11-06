@@ -1,0 +1,29 @@
+# Phase 3 G100 + PTA MCM assembly yield, KGD matching and package comparison.
+schema_version: "0.1"
+id: g100_mcm_28nm
+description: >-
+  Combine G100 Poisson die yield with PTA known-good-die supply, matched-pair
+  KGD yield and three package assembly options, then compare good packages per
+  G100 wafer and cost per good package.
+product: g100
+process: grx28@0.1.0
+seed: 20261106
+samples: 1
+engines:
+  - mcm_yield
+inputs:
+  chip: chips/g100.yaml
+  package: packages/mcm_si.yaml
+  yield: yields/g100_mcm_28nm.yaml
+outputs:
+  - g100_die_area_m2
+  - g100_die_yield
+  - g100_known_good_dies_per_wafer
+  - pta_die_area_m2
+  - pta_die_yield
+  - pta_known_good_dies_per_wafer
+  - kgd_match_yield
+  - pta_wafers_per_g100_wafer
+  - assembly_yield
+  - good_packages_per_g100_wafer
+  - cost_per_good_package_usd

@@ -57,6 +57,83 @@ good packages per wafer and $2.55 per good package. The radial yield slope is
 signatures. Each map run writes `wafer_map.svg` and `wafer_map.csv` beside the
 standard artifacts.
 
+Phase 2 implements the PTA photonic/thermal slice in `gpdk/photonics.py`,
+`photonic/pta_siph_28nm.yaml` and the `pta_photonic` F1 engine. The session
+`scenarios/pta_photonic_28nm.yaml` propagates width, etch depth, line-edge
+roughness, ambient temperature and package alignment through a per-MZI phase
+and loss budget plus a one-dimensional silicon-interposer thermal path. At the
+planning assumptions and 400 samples it gives 3.21 dB insertion loss, 1.62 rad
+per-MZI phase error, 82.7 mW mesh tuning power, a 0.52 tensor-error proxy and a
+6.27 K temperature rise. The one-sigma phase ranking is width (1.22 rad) ahead
+of etch depth (1.01 rad) and ambient temperature (0.13 rad); the loss ranking is
+alignment (0.45 dB) ahead of LER (0.09 dB). The thermal path is 3.38 K/W with a
+6.77 K local rise before ambient variation. These are F1 planning estimates, not
+measured PTA performance: phase is per-MZI without common-mode cancellation or
+tuning feedback, and the thermal path omits TIM, bump and die-level interface
+resistances.
+
+A scenario may also set `inputs.photonic_calibration` to a measured-coefficient
+file. The calibration contract replaces width sensitivity, etch sensitivity,
+loss coefficients, thermo-optic coefficient and/or thermal resistance with
+values extracted from named test structures; each value carries a standard
+uncertainty and must be marked `evidence: measured`. Calibration observations
+are stored as `measured`, while aggregate model outputs remain `assumed`
+because they are still model estimates. No measured PTA calibration dataset is
+included in the repository; synthetic fixtures are used only in tests.
+
+Phase 3 adds the G100 + PTA MCM assembly slice in `gpdk/mcm.py`, with assumptions
+in `yields/g100_mcm_28nm.yaml` and the `g100_mcm_28nm` session. It combines G100
+Poisson die yield, PTA known-good-die supply, matched-pair KGD yield and three
+package options. At the planning assumptions G100 die yield is 89.9% with 133
+KGD per wafer, PTA die yield is 98.0% with 1,220 KGD per wafer, and a random
+G100/PTA pair is both known-good 86.8% of the time. The silicon interposer gives
+the highest package assembly yield at 98.7% and 131.6 good packages per G100
+wafer; the organic substrate is cheapest at $44.64 per good package but lowest
+yield at 97.7%; the silicon bridge sits between them at $50.37 and 98.5%. These
+are F1 planning estimates, not OSAT quotes.
+
+Phase 4 adds the SimPy factory and ATP slice in `gpdk/factory.py`, with
+assumptions in `factory/g100_28nm.yaml`, the `factory_atp` engine and the
+`g100_factory_28nm` session. The route has 38 steps across 14 tool groups, six
+lithography passes on three scanners, batched furnaces, metrology, die attach,
+mold and final test, and MTBF/MTTR availability applied as effective process
+time. At 600 wafer starts/week the baseline gives 141.5 h cycle time (5.9 days),
+61.2 h queue time, 19.7 lots WIP, 598.5 wafers/week throughput and 78,784 good
+packages/week at $95.60 per good package. Lithography is the bottleneck at
+75.9% utilization. Raising starts 33% to 800 pushes lithography to 97.0%,
+doubles cycle time to 299.7 h and raises WIP to 51.9 lots while throughput
+plateaus at 729.6 wafers/week, below the 800 start rate. Halving MTTR cuts cycle
+time only 1.8% to 139.0 h and lowers lithography utilization to 72.2%, so
+downtime is not the binding constraint at baseline. Adding a fourth
+lithography scanner at 800 starts restores cycle time to 146.0 h (+3.1% versus
+baseline) and WIP to 26.8 lots, reaches 799.6 wafers/week, and shifts the
+bottleneck to deposition at 90.3%. Its capital-aware cost is $89.07 per good
+package with $240M of scanner capex and $0.92M/week of depreciation, $0.51
+above the higher-starts case. It adds about 9,212 good packages/week at roughly
+$38.08 of incremental factory cost per additional package, before the $56.35
+Phase 3 package cost. At the scenario's $100 planning price, the scanner adds
+$14.67M of annual cash flow, pays back in 4.09 years and earns 4.4% annual ROI
+after depreciation on its $60M incremental capex, measured against the matched
+800-start, three-scanner case. Higher starts adds no capex but carries 299.7 h
+cycle time and 51.9 lots WIP. The $100 price is a planning assumption, not a
+market forecast. The scanner DCF uses a 60%/80%/100%/100%/100% cash-flow ramp
+and a terminal value equal to 20% of incremental capex. At a 10% hurdle rate it
+is -$4.71M NPV and 7.3% IRR, so the scanner misses the hurdle at $100; NPV
+turns positive at $115. A discount-rate sweep gives +$4.66M NPV at 5%, -$0.29M
+at 7.5% and -$12.19M at 15%, with IRR unchanged at 7.3%. A terminal-value sweep
+runs from -$12.16M NPV and 2.3% IRR with no residual value to +$2.75M and 11.4%
+at 40% of capex; NPV turns positive near a 33% residual. The one-at-a-time
+sweep runs from 201.74 years
+and -19.5% ROI at a $70 price to
+2.07 years and 28.4% at $130; at a $20 gross margin it is 17.96 years and
+-14.4%, improving to 1.87 years and 33.5% at $80. The baseline cost combines
+the Phase 3 package cost with $39.25 of factory operating cost and
+depreciation per good package. The higher-starts case spreads the fixed
+operating cost and three-scanner fleet over more output, so its lower $88.55 is
+not a capacity-expansion business case. Only lithography scanners are
+capital-priced; other tool-group capex is not included. These are F1 planning
+estimates, not a foundry MES route card or measured line performance.
+
 ## Quick start
 
 ```bash
@@ -67,6 +144,9 @@ python -m fabtwin validate scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/g100_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_28nm_baseline.yaml
+python -m fabtwin run scenarios/pta_photonic_28nm.yaml
+python -m fabtwin run scenarios/g100_mcm_28nm.yaml
+python -m fabtwin run scenarios/g100_factory_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_variation_28nm.yaml
@@ -80,8 +160,9 @@ python -m pytest        # model, geometry, package and fabtwin tests
 python -m pytest tests/test_clean_checkout.py  # isolated baseline reproducibility check
 ```
 
-Dependencies: Python 3.10+, PyYAML. Pillow is optional and only used for the PNG
-layout preview. Tested with Python 3.14, PyYAML 6.0, pytest 9.2, Pillow 12.3.
+Dependencies: Python 3.10+, PyYAML, SimPy 4.1+. Pillow is optional and only used
+for the PNG layout preview. Tested with Python 3.14, PyYAML 6.0, SimPy 4.1.2,
+pytest 9.2, Pillow 12.3.
 
 `query` reads the SQLite index and accepts `--run`, `--metric`, `--entity`,
 `--evidence`, `--product` and `--limit`; `--runs` lists indexed runs,
@@ -98,9 +179,12 @@ returned as `report_artifact` in JSON output. Regenerating the same path updates
 that entry rather than leaving a stale hash.
 
 The PTA baseline records the declared 4x4 mesh, port count, optical window,
-lane pitch and wavelength. It is a product-definition baseline, not an optical
-performance model; insertion loss, phase error, thermal tuning and tensor error
-are Phase 2 work. Its MCM package definition is a hashed scenario input.
+lane pitch and wavelength. It remains a product-definition baseline and does
+not consume the optical model. Its MCM package definition is a hashed scenario
+input. The separate `pta_photonic` session consumes
+`photonic/pta_siph_28nm.yaml` and reports insertion loss, phase error, tuning
+power, tensor error and temperature rise plus the sensitivity rows; it leaves
+the Phase 0 PTA fingerprint unchanged.
 
 `baselines/phase0_baseline.json` holds the run-independent fingerprints for
 all three baselines: scenario and input hashes, observation rows, evidence
@@ -126,7 +210,11 @@ chips/grx930.yaml           measured quad-core RV64 + dual-NPU baseline
 chips/g100.yaml             digital GPU planning profile (pre-split block)
 chips/pta.yaml              photonic tensor accelerator product definition
 packages/mcm_si.yaml        2.5D silicon-interposer package definition
+photonic/pta_siph_28nm.yaml Phase 2 PTA optical, process and 1D thermal assumptions
+photonic/<name>_calibration.yaml  optional measured-coefficient calibration input
 yields/grx930_28nm.yaml      Phase 1 wafer, defect, assembly and cost assumptions
+yields/g100_mcm_28nm.yaml   Phase 3 G100/PTA KGD, assembly and package options
+factory/g100_28nm.yaml      Phase 4 G100 fab/ATP route, tools, downtime and what-ifs
 gpdk/tech.py                node loader; fin and finger width units
 gpdk/device.py              planar/FinFET Ion/Ioff/Cgg/Ron/FO4 model
 gpdk/cells.py               cell templates, track/isolation architecture
@@ -140,12 +228,19 @@ fabtwin/                    Phase 0 runner, strict schema, manifest, SQLite inde
 scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
 scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
+scenarios/pta_photonic_28nm.yaml     PTA photonic/thermal F1 sensitivity slice
+scenarios/g100_mcm_28nm.yaml        G100/PTA MCM assembly and package comparison
+scenarios/g100_factory_28nm.yaml    G100 fab/ATP cycle-time and bottleneck study
 scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
 scenarios/grx930_yield_sensitivity_28nm.yaml  GRX930 yield sensitivity curves
 scenarios/grx930_yield_variation_28nm.yaml   GRX930 lot/wafer variation session
 scenarios/grx930_yield_wafer_map_28nm.yaml   GRX930 radial/angular/cluster map session
 gpdk/dieyield.py             wafer grid, yield, variation, maps and curves
-gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
+gpdk/mcm.py                  G100/PTA KGD matching and package comparison
+gpdk/factory.py              SimPy fab/ATP route, batching, availability and metrics
+gpdk/photonics.py            PTA optical, phase, loss, thermal and sensitivity model
+gpdk/photonic_calibration.py measured-coefficient calibration contract
+gpdk/layout.py               abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader
 gpdk/report.py              report and CSV generator
@@ -280,6 +375,35 @@ Tool versions and the specific 28 nm blockers are in
   memory data are known. GRX930's memory pins are derived from 8 B/cycle and
   64 KB, but the fixed groups (JTAG, UART, boot, GPIO) and the 1:6 supply ratio
   are assumptions; the die floor moves linearly with the pad count.
+- **The factory model is not a line simulation.** The 38-step route, 14 tool
+  groups, process times, MTBF/MTTR and operating cost are planning assumptions.
+  Downtime is deterministic availability, not random failures, and the model has
+  no dispatch rules, reticle changes, maintenance calendar, transport time or
+  operator constraints. Over-capacity what-ifs are a 16-week transient. Only
+  lithography scanner capex is included, depreciated straight-line over five
+  years; other tool groups are not capital-priced. What-if tool additions
+  include only their declared weekly operating-cost delta. Payback, ROI, NPV
+  and IRR need the optional package price or gross margin; the current scenario
+  uses a $100 planning price. The price/margin sweep is one-at-a-time and holds
+  volume, operating cost and depreciation constant; it is not a demand
+  forecast. The five-year DCF uses the configured 60/80/100/100/100 ramp and a
+  terminal value of 20% of incremental capex; it excludes taxes, working
+  capital, price erosion and replacement capex. IRR is n/a when the five-year
+  cash flow does not recover capex. The discount-rate curve holds the base
+  scanner cash flow, ramp and terminal value fixed; IRR is independent of the
+  hurdle rate. Use the
+  bottleneck ranking and
+  sensitivity direction, not the absolute cycle time, until the route is
+  calibrated against a real line.
+- **The PTA optical model is not calibrated by default.** There is no qualified
+  SiPh PDK or measured PTA data behind `photonic/pta_siph_28nm.yaml`. The optional
+  calibration input can replace coefficient assumptions with measured test-
+  structure values, but aggregate outputs are still model estimates and remain
+  `assumed`. The phase result is per-MZI without common-mode cancellation or
+  tuning feedback; the tensor-error proxy is phase error divided by pi; and the
+  1D thermal path omits TIM, bump and die-level interface resistances. Use the
+  ranking, not the absolute optical numbers, until a measured calibration is
+  supplied.
 
 ## Provenance
 

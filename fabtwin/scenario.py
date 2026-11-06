@@ -32,7 +32,16 @@ TOP_LEVEL_FIELDS = frozenset(
         "outputs",
     }
 )
-INPUT_FIELDS = frozenset({"chip", "package", "yield"})
+INPUT_FIELDS = frozenset(
+    {
+        "chip",
+        "package",
+        "yield",
+        "factory",
+        "photonic",
+        "photonic_calibration",
+    }
+)
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 _PRODUCT_RE = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 _PROCESS_RE = re.compile(
@@ -62,6 +71,12 @@ class Scenario:
     package_path: Path | None
     yield_ref: str | None
     yield_path: Path | None
+    factory_ref: str | None
+    factory_path: Path | None
+    photonic_ref: str | None
+    photonic_path: Path | None
+    photonic_calibration_ref: str | None
+    photonic_calibration_path: Path | None
     outputs: tuple[str, ...]
 
 
@@ -204,6 +219,12 @@ def load_scenario(path: str | Path) -> Scenario:
     package_path: Path | None = None
     yield_ref: str | None = None
     yield_path: Path | None = None
+    factory_ref: str | None = None
+    factory_path: Path | None = None
+    photonic_ref: str | None = None
+    photonic_path: Path | None = None
+    photonic_calibration_ref: str | None = None
+    photonic_calibration_path: Path | None = None
     inputs = raw.get("inputs")
     if not isinstance(inputs, dict):
         _add(errors, path, "'inputs' must be a mapping")
@@ -275,6 +296,79 @@ def load_scenario(path: str | Path) -> Scenario:
                         f"{display_path(yield_path)}",
                     )
 
+        factory_value = inputs.get("factory")
+        if factory_value is not None:
+            if not isinstance(factory_value, str) or not factory_value.strip():
+                _add(
+                    errors,
+                    path,
+                    "'inputs.factory' must be a non-empty path string",
+                )
+            else:
+                factory_ref = factory_value.strip()
+                candidate = Path(factory_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                factory_path = candidate.resolve()
+                if not factory_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.factory' does not exist: "
+                        f"{display_path(factory_path)}",
+                    )
+
+        photonic_value = inputs.get("photonic")
+        if photonic_value is not None:
+            if (
+                not isinstance(photonic_value, str)
+                or not photonic_value.strip()
+            ):
+                _add(
+                    errors,
+                    path,
+                    "'inputs.photonic' must be a non-empty path string",
+                )
+            else:
+                photonic_ref = photonic_value.strip()
+                candidate = Path(photonic_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                photonic_path = candidate.resolve()
+                if not photonic_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.photonic' does not exist: "
+                        f"{display_path(photonic_path)}",
+                    )
+
+        calibration_value = inputs.get("photonic_calibration")
+        if calibration_value is not None:
+            if (
+                not isinstance(calibration_value, str)
+                or not calibration_value.strip()
+            ):
+                _add(
+                    errors,
+                    path,
+                    "'inputs.photonic_calibration' must be a non-empty "
+                    "path string",
+                )
+            else:
+                photonic_calibration_ref = calibration_value.strip()
+                candidate = Path(photonic_calibration_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                photonic_calibration_path = candidate.resolve()
+                if not photonic_calibration_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.photonic_calibration' does not exist: "
+                        f"{display_path(photonic_calibration_path)}",
+                    )
+
     if errors:
         raise ScenarioValidationError(errors)
     assert scenario_id is not None
@@ -302,5 +396,11 @@ def load_scenario(path: str | Path) -> Scenario:
         package_path=package_path,
         yield_ref=yield_ref,
         yield_path=yield_path,
+        factory_ref=factory_ref,
+        factory_path=factory_path,
+        photonic_ref=photonic_ref,
+        photonic_path=photonic_path,
+        photonic_calibration_ref=photonic_calibration_ref,
+        photonic_calibration_path=photonic_calibration_path,
         outputs=outputs,
     )

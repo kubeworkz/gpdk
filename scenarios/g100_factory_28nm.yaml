@@ -1,0 +1,42 @@
+# Phase 4 G100 factory and ATP discrete-event study.
+# Runs the baseline route plus the higher-starts and low-downtime what-ifs.
+schema_version: "0.1"
+id: g100_factory_28nm
+description: >-
+  Simulate the G100 28 nm fab and ATP route with finite tool groups, batching,
+  setup and availability loss. Report cycle time, queue time, WIP, throughput,
+  tool utilization, bottleneck step and fully loaded cost per good package for
+  a baseline and two what-if cases.
+product: g100
+process: grx28@0.1.0
+seed: 20261106
+samples: 1
+engines:
+  - factory_atp
+inputs:
+  chip: chips/g100.yaml
+  package: packages/mcm_si.yaml
+  yield: yields/g100_mcm_28nm.yaml
+  factory: factory/g100_28nm.yaml
+outputs:
+  - wafer_starts_per_s
+  - cycle_time_s
+  - queue_time_s
+  - wip_lots
+  - throughput_wafers_per_s
+  - good_packages_per_s
+  - cost_per_good_package_usd
+  - tool_capex_usd
+  - depreciation_usd_per_week
+  - depreciation_per_good_package_usd
+  - incremental_capex_usd
+  - incremental_annual_cash_flow_usd
+  - incremental_annual_net_income_usd
+  - payback_years
+  - roi
+  - npv_usd
+  - irr
+  - step_queue_time_s
+  - tool_utilization
+  - bottleneck_step_queue_s
+  - bottleneck_tool_utilization

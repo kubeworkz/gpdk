@@ -226,6 +226,33 @@ def execute(
         seen_inputs.add(
             ("yield", display_path(scenario.yield_path))
         )
+    if scenario.factory_path is not None:
+        input_records.append(
+            _input_record("factory", scenario.factory_path)
+        )
+        seen_inputs.add(
+            ("factory", display_path(scenario.factory_path))
+        )
+    if scenario.photonic_path is not None:
+        input_records.append(
+            _input_record("photonic", scenario.photonic_path)
+        )
+        seen_inputs.add(
+            ("photonic", display_path(scenario.photonic_path))
+        )
+    if scenario.photonic_calibration_path is not None:
+        input_records.append(
+            _input_record(
+                "photonic_calibration",
+                scenario.photonic_calibration_path,
+            )
+        )
+        seen_inputs.add(
+            (
+                "photonic_calibration",
+                display_path(scenario.photonic_calibration_path),
+            )
+        )
     for result in results:
         for input_file in result.inputs:
             key = (input_file.role, display_path(input_file.path))
@@ -312,6 +339,9 @@ def execute(
             "process": scenario.process,
             "package": scenario.package_ref,
             "yield": scenario.yield_ref,
+            "factory": scenario.factory_ref,
+            "photonic": scenario.photonic_ref,
+            "photonic_calibration": scenario.photonic_calibration_ref,
             "seed": scenario.seed,
             "samples": scenario.samples,
             "outputs": list(scenario.outputs),

@@ -21,10 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRECTORIES = (
     "baselines",
     "chips",
+    "factory",
     "fabtwin",
     "gpdk",
     "libraries",
     "packages",
+    "photonic",
     "scenarios",
     "tech",
     "yields",
