@@ -8,6 +8,7 @@ from .adapters.yield_engine import (
     YieldEngine,
     YieldSensitivityEngine,
     YieldVariationEngine,
+    YieldWaferMapEngine,
 )
 from .model import Engine
 
@@ -17,6 +18,7 @@ ENGINE_CLASSES = {
     YieldEngine.name: YieldEngine,
     YieldSensitivityEngine.name: YieldSensitivityEngine,
     YieldVariationEngine.name: YieldVariationEngine,
+    YieldWaferMapEngine.name: YieldWaferMapEngine,
 }
 
 

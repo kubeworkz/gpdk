@@ -12,12 +12,14 @@ from gpdk.block import load_chip
 from gpdk.dieyield import (
     LotEstimate,
     SensitivitySpec,
+    WaferMapEstimate,
     YieldAssumptions,
     YieldEstimate,
     assembly_tolerance_curve,
     defect_density_curve,
     pad_count_curve,
     simulate_lot_yield,
+    simulate_wafer_map,
     simulate_yield,
 )
 from gpdk.dtco import best_step, build_steps
@@ -145,6 +147,56 @@ _VARIATION_METRICS: dict[
     ),
 }
 SUPPORTED_VARIATION_METRICS = frozenset(_VARIATION_METRICS)
+_WAFER_MAP_METRICS: dict[
+    str,
+    tuple[
+        str,
+        Callable[[WaferMapEstimate], float],
+        Callable[[WaferMapEstimate], float | None] | None,
+    ],
+] = {
+    "die_yield_mean": (
+        "1",
+        lambda estimate: estimate.die_yield_mean,
+        lambda estimate: estimate.die_yield_stderr,
+    ),
+    "center_die_yield": (
+        "1",
+        lambda estimate: estimate.center_die_yield,
+        None,
+    ),
+    "edge_die_yield": (
+        "1",
+        lambda estimate: estimate.edge_die_yield,
+        None,
+    ),
+    "edge_to_center_yield_ratio": (
+        "1",
+        lambda estimate: estimate.edge_to_center_yield_ratio,
+        None,
+    ),
+    "radial_yield_slope_per_mm": (
+        "1/mm",
+        lambda estimate: estimate.radial_yield_slope_per_mm,
+        None,
+    ),
+    "assembly_yield": (
+        "1",
+        lambda estimate: estimate.assembly_yield,
+        None,
+    ),
+    "good_packages_per_wafer": (
+        "1",
+        lambda estimate: estimate.good_packages_per_wafer,
+        lambda estimate: estimate.good_packages_stderr,
+    ),
+    "cost_per_good_package_usd": (
+        "USD",
+        lambda estimate: estimate.cost_per_good_package_usd,
+        lambda estimate: estimate.cost_per_good_package_stderr,
+    ),
+}
+SUPPORTED_WAFER_MAP_METRICS = frozenset(_WAFER_MAP_METRICS)
 
 
 def _slug(value: str) -> str:
@@ -703,5 +755,198 @@ class YieldVariationEngine:
                 "multipliers with the nominal value as median.",
                 "Yield sigmas describe the modelled expected yield; they "
                 "exclude die-sampling noise.",
+            ),
+        )
+
+
+class YieldWaferMapEngine:
+    """F1 radial within-wafer yield map over the same assumptions."""
+
+    name = "yield_wafer_map"
+    version = "0.1.0"
+    fidelity = "F1"
+
+    def validate(self, scenario: Scenario) -> list[str]:
+        errors: list[str] = []
+        if scenario.samples < 1:
+            errors.append("wafer map needs at least one sample")
+        unknown = sorted(
+            set(scenario.outputs) - SUPPORTED_WAFER_MAP_METRICS
+        )
+        if unknown:
+            errors.append(
+                "unsupported wafer map metric(s): " + ", ".join(unknown)
+            )
+        try:
+            cfg, tech, assumptions, estimate, budget, package = (
+                _load_inputs(scenario)
+            )
+        except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+            errors.append(f"cannot load wafer map inputs: {exc}")
+            return errors
+        expected_product = _slug(cfg.name)
+        if scenario.product != expected_product:
+            errors.append(
+                f"product {scenario.product!r} does not match chip "
+                f"{cfg.name!r} (expected {expected_product!r})"
+            )
+        expected_process = f"{_slug(tech.name)}@{tech.revision}"
+        if scenario.process.lower() != expected_process:
+            errors.append(
+                f"process {scenario.process!r} does not match "
+                f"{tech.name} revision {tech.revision} "
+                f"(expected {expected_process!r})"
+            )
+        if assumptions.product != scenario.product:
+            errors.append(
+                f"yield model product {assumptions.product!r} does not match "
+                f"scenario product {scenario.product!r}"
+            )
+        if assumptions.process.lower() != scenario.process.lower():
+            errors.append(
+                f"yield model process {assumptions.process!r} does not match "
+                f"scenario process {scenario.process!r}"
+            )
+        if assumptions.spatial is None:
+            errors.append(
+                "yield model needs a spatial mapping for the wafer map engine"
+            )
+        if budget.total_pads <= 0:
+            errors.append("pin budget must contain at least one pad")
+        if estimate.die_area_mm2 <= 0:
+            errors.append("modelled die area must be positive")
+        return errors
+
+    def run(self, scenario: Scenario) -> EngineResult:
+        errors = self.validate(scenario)
+        if errors:
+            raise EngineError("; ".join(errors))
+
+        cfg, tech, assumptions, estimate, budget, package = _load_inputs(
+            scenario
+        )
+        spatial = assumptions.spatial
+        if spatial is None:
+            raise EngineError("yield model needs a spatial mapping")
+        simulation = simulate_wafer_map(
+            assumptions,
+            estimate.die_area_mm2,
+            budget.total_pads,
+            samples=scenario.samples,
+            seed=scenario.seed,
+        )
+        source = display_path(scenario.yield_path)
+        model_version = f"{_MODEL_VERSION_PREFIX}@{assumptions.revision}"
+        observations: list[Observation] = []
+        for metric in scenario.outputs:
+            unit, projector, uncertainty_projector = _WAFER_MAP_METRICS[metric]
+            uncertainty = (
+                None
+                if uncertainty_projector is None
+                else uncertainty_projector(simulation)
+            )
+            observations.append(
+                Observation(
+                    entity_type="wafer_map",
+                    entity_id=scenario.product,
+                    metric=metric,
+                    value=float(projector(simulation)),
+                    unit=unit,
+                    uncertainty=uncertainty,
+                    evidence_class="assumed",
+                    source_artifact=source,
+                    model_version=model_version,
+                )
+            )
+        for zone in simulation.zones:
+            entity_id = f"zone:{zone.index}"
+            for metric, value, unit in (
+                (
+                    "defect_density_per_cm2",
+                    zone.defect_density_per_cm2,
+                    "1/cm2",
+                ),
+                ("die_yield", zone.die_yield, "1"),
+                ("die_count", float(zone.die_count), "1"),
+                ("radius_mm", zone.r_mid_mm, "mm"),
+            ):
+                observations.append(
+                    Observation(
+                        entity_type="wafer_zone",
+                        entity_id=entity_id,
+                        metric=metric,
+                        value=value,
+                        unit=unit,
+                        uncertainty=None,
+                        evidence_class="assumed",
+                        source_artifact=source,
+                        model_version=model_version,
+                    )
+                )
+
+        input_files = [
+            InputFile(scenario.chip_path, "chip"),
+            InputFile(scenario.yield_path, "yield"),
+        ]
+        if tech.path is not None:
+            input_files.append(InputFile(tech.path, "tech"))
+
+        return EngineResult(
+            engine=self.name,
+            engine_version=self.version,
+            fidelity=self.fidelity,
+            model_version=model_version,
+            observations=tuple(observations),
+            inputs=tuple(input_files),
+            metadata={
+                "chip": cfg.name,
+                "tech": {
+                    "name": tech.name,
+                    "revision": tech.revision,
+                },
+                "die_area_mm2": estimate.die_area_mm2,
+                "pad_count": budget.total_pads,
+                "package": {
+                    "name": package.name,
+                    "kind": package.kind,
+                    "body_mm": package.body_mm,
+                    "pads": package.pads,
+                },
+                "spatial": {
+                    "edge_boost": spatial.edge_boost,
+                    "radial_exponent": spatial.radial_exponent,
+                    "radial_bins": spatial.radial_bins,
+                },
+                "zones": [
+                    {
+                        "index": zone.index,
+                        "r_min_mm": zone.r_min_mm,
+                        "r_max_mm": zone.r_max_mm,
+                        "r_mid_mm": zone.r_mid_mm,
+                        "die_count": zone.die_count,
+                        "defect_density_per_cm2": (
+                            zone.defect_density_per_cm2
+                        ),
+                        "die_yield": zone.die_yield,
+                    }
+                    for zone in simulation.zones
+                ],
+                "simulation": {
+                    "samples": scenario.samples,
+                    "seed": scenario.seed,
+                    "scope": (
+                        "radial defect-density profile plus die and "
+                        "assembly sampling; no angular or clustering "
+                        "structure"
+                    ),
+                },
+            },
+            warnings=(
+                "Wafer map is an F1 planning profile, not a measured "
+                "wafer map.",
+                "The radial density profile is an assumption; it carries "
+                "no angular or spatial-clustering structure.",
+                "Zone yields use modelled expected yield; the wafer mean "
+                "and package counts include sampling noise.",
             ),
         )

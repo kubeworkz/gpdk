@@ -307,6 +307,14 @@ wafer-to-wafer and 0.061% lot-to-lot sigma. The sigmas describe modelled
 expected yield and exclude die-sampling noise; the distributions are
 assumptions, not calibration.
 
+The wafer-map session `scenarios/grx930_yield_wafer_map_28nm.yaml` adds a radial
+within-wafer profile, D(r) = D0 * (1 + edge_boost * (r/R)^p), and emits
+zone-level defect-density and yield observations plus center/edge yield, the
+edge-to-center ratio and a radial slope. At the planning profile the model gives
+99.35% mean die yield, 99.63% center yield, 99.11% edge yield and a slope of
+-5.7e-5 per mm. The map has no angular or clustering structure; the profile is
+an assumption, not measured map data.
+
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains
 an assumption-driven estimate.

@@ -48,6 +48,13 @@ At 15% lot and 10% wafer defect-density CV it gives a 99.63% mean die yield with
 and $2.55 per good package. The sigmas describe the modelled expected yield, not
 measured distributions.
 
+The wafer-map session `scenarios/grx930_yield_wafer_map_28nm.yaml` adds a radial
+defect-density profile, D(r) = D0 * (1 + 2 * (r/R)^3), and reports a five-zone
+map. At the planning profile the mean die yield is 99.35%, with 99.63% at the
+center and 99.11% at the edge (edge/center 0.995), 4,803 good packages per wafer
+and $2.55 per good package. The radial yield slope is -5.7e-5 per mm. The
+profile is an assumption; it has no angular or clustering structure.
+
 ## Quick start
 
 ```bash
@@ -61,6 +68,7 @@ python -m fabtwin run scenarios/pta_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_yield_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_variation_28nm.yaml
+python -m fabtwin run scenarios/grx930_yield_wafer_map_28nm.yaml
 python -m fabtwin query --runs
 python -m fabtwin query --reports
 python -m fabtwin query --run RUN_ID --metric die_area_m2
@@ -133,7 +141,8 @@ scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
 scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
 scenarios/grx930_yield_sensitivity_28nm.yaml  GRX930 yield sensitivity curves
 scenarios/grx930_yield_variation_28nm.yaml   GRX930 lot/wafer variation session
-gpdk/dieyield.py             wafer grid, yield, sensitivity and lot variation
+scenarios/grx930_yield_wafer_map_28nm.yaml   GRX930 radial wafer-map session
+gpdk/dieyield.py             wafer grid, yield, variation, maps and curves
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader

@@ -23,6 +23,7 @@ from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
 from gpdk.dieyield import (
     SensitivitySpec,
+    SpatialSpec,
     VariationSpec,
     WaferSpec,
     YieldAssumptions,
@@ -33,6 +34,7 @@ from gpdk.dieyield import (
     package_assembly_yield,
     poisson_die_yield,
     simulate_lot_yield,
+    simulate_wafer_map,
     simulate_yield,
 )
 from gpdk.drc import check
@@ -648,3 +650,72 @@ def test_lot_variation_is_seeded_and_ordered():
 def test_lot_simulation_requires_variation_mapping():
     with pytest.raises(ValueError, match="variation mapping"):
         simulate_lot_yield(_sensitivity_assumptions(), 100.0, 100, lots=2)
+
+
+def test_spatial_spec_parses_and_rejects_bad_profile():
+    spec = SpatialSpec.from_mapping(
+        {
+            "spatial": {
+                "edge_boost": 1.5,
+                "radial_exponent": 2.0,
+                "radial_bins": 4,
+            }
+        }
+    )
+    assert spec.edge_boost == 1.5
+    assert spec.radial_bins == 4
+    with pytest.raises(ValueError, match="spatial mapping"):
+        SpatialSpec.from_mapping({})
+    with pytest.raises(ValueError, match="radial exponent"):
+        SpatialSpec.from_mapping({"spatial": {"radial_exponent": 0.0}})
+    with pytest.raises(ValueError, match="radial bins"):
+        SpatialSpec.from_mapping({"spatial": {"radial_bins": 1}})
+
+
+def test_wafer_map_is_seeded_and_edge_limited():
+    assumptions = replace(
+        _sensitivity_assumptions(),
+        spatial=SpatialSpec(
+            edge_boost=2.0,
+            radial_exponent=3.0,
+            radial_bins=5,
+        ),
+    )
+    first = simulate_wafer_map(assumptions, 100.0, 100, samples=40, seed=11)
+    second = simulate_wafer_map(assumptions, 100.0, 100, samples=40, seed=11)
+    assert first == second
+    assert len(first.zones) == 5
+    assert sum(zone.die_count for zone in first.zones) == (
+        first.gross_dies_per_wafer
+    )
+    assert first.zones[0].die_yield > first.zones[-1].die_yield
+    assert first.center_die_yield > first.edge_die_yield
+    assert first.edge_to_center_yield_ratio < 1.0
+    assert first.radial_yield_slope_per_mm < 0.0
+    densities = [zone.defect_density_per_cm2 for zone in first.zones]
+    assert densities == sorted(densities)
+    assert 0.0 < first.die_yield_mean < 1.0
+    assert first.die_yield_stderr is not None
+    assert first.good_packages_per_wafer > 0.0
+    assert first.cost_per_good_package_usd > 0.0
+
+
+def test_wafer_map_without_edge_boost_is_flat():
+    assumptions = replace(
+        _sensitivity_assumptions(),
+        spatial=SpatialSpec(edge_boost=0.0),
+    )
+    estimate = simulate_wafer_map(assumptions, 100.0, 100, samples=20, seed=4)
+    assert estimate.center_die_yield == pytest.approx(
+        estimate.edge_die_yield
+    )
+    assert estimate.edge_to_center_yield_ratio == pytest.approx(1.0)
+    assert estimate.radial_yield_slope_per_mm == pytest.approx(0.0, abs=1e-12)
+    assert estimate.die_yield_mean == pytest.approx(
+        poisson_die_yield(100.0, 0.5, 0.1), abs=0.002
+    )
+
+
+def test_wafer_map_requires_spatial_mapping():
+    with pytest.raises(ValueError, match="spatial mapping"):
+        simulate_wafer_map(_sensitivity_assumptions(), 100.0, 100)

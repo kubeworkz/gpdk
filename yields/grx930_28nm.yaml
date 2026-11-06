@@ -44,3 +44,12 @@ variation:
   defect_density_cv_lot: 0.15
   defect_density_cv_wafer: 0.10
   assembly_ppm_cv_lot: 0.10
+
+# Within-wafer radial planning profile: D(r) = D0 * (1 + edge_boost *
+# (r / R_usable) ** radial_exponent). With this block present,
+# defects.density_per_cm2 is the wafer-center density. The profile applies only
+# to the wafer-map session; it has no angular or clustering structure.
+spatial:
+  edge_boost: 2.0
+  radial_exponent: 3.0
+  radial_bins: 5

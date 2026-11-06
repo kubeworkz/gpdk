@@ -84,6 +84,7 @@ class YieldAssumptions:
     test_cost_usd: float
     description: str = ""
     variation: VariationSpec | None = None
+    spatial: SpatialSpec | None = None
 
     def __post_init__(self) -> None:
         if not self.id:
@@ -137,6 +138,9 @@ class YieldAssumptions:
                 VariationSpec.from_mapping(raw)
                 if "variation" in raw
                 else None
+            ),
+            spatial=(
+                SpatialSpec.from_mapping(raw) if "spatial" in raw else None
             ),
         )
 
@@ -215,6 +219,39 @@ class VariationSpec:
             assembly_ppm_cv_lot=float(
                 variation.get("assembly_ppm_cv_lot", 0.10)
             ),
+        )
+
+
+@dataclass(frozen=True)
+class SpatialSpec:
+    """Radial within-wafer defect-density profile.
+
+    D(r) = D0 * (1 + edge_boost * (r / R_usable) ** radial_exponent), where D0
+    is the nominal density in the yield assumptions. With this block present,
+    the nominal density is the wafer-center value.
+    """
+
+    edge_boost: float = 2.0
+    radial_exponent: float = 3.0
+    radial_bins: int = 5
+
+    def __post_init__(self) -> None:
+        if self.edge_boost < 0:
+            raise ValueError("edge boost must be non-negative")
+        if self.radial_exponent <= 0:
+            raise ValueError("radial exponent must be positive")
+        if self.radial_bins < 2:
+            raise ValueError("radial bins must be at least two")
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "SpatialSpec":
+        spatial = raw.get("spatial")
+        if not isinstance(spatial, Mapping):
+            raise ValueError("yield model needs a spatial mapping")
+        return cls(
+            edge_boost=float(spatial.get("edge_boost", 2.0)),
+            radial_exponent=float(spatial.get("radial_exponent", 3.0)),
+            radial_bins=int(spatial.get("radial_bins", 5)),
         )
 
 
@@ -301,6 +338,64 @@ class LotEstimate:
             "cost_per_good_package_stderr": (
                 self.cost_per_good_package_stderr
             ),
+        }
+
+
+@dataclass(frozen=True)
+class WaferZone:
+    index: int
+    r_min_mm: float
+    r_max_mm: float
+    r_mid_mm: float
+    normalized_mid: float
+    die_count: int
+    defect_density_per_cm2: float
+    die_yield: float
+
+
+@dataclass(frozen=True)
+class WaferMapEstimate:
+    die_area_mm2: float
+    critical_area_mm2: float
+    gross_dies_per_wafer: int
+    die_yield_mean: float
+    die_yield_stderr: float | None
+    center_die_yield: float
+    edge_die_yield: float
+    edge_to_center_yield_ratio: float
+    radial_yield_slope_per_mm: float
+    assembly_yield: float
+    good_packages_per_wafer: float
+    good_packages_stderr: float | None
+    cost_per_good_package_usd: float
+    cost_per_good_package_stderr: float | None
+    zones: tuple[WaferZone, ...]
+    samples: int
+
+    def as_dict(self) -> dict[str, float | int | None]:
+        return {
+            "die_area_mm2": self.die_area_mm2,
+            "critical_area_mm2": self.critical_area_mm2,
+            "gross_dies_per_wafer": self.gross_dies_per_wafer,
+            "die_yield_mean": self.die_yield_mean,
+            "die_yield_stderr": self.die_yield_stderr,
+            "center_die_yield": self.center_die_yield,
+            "edge_die_yield": self.edge_die_yield,
+            "edge_to_center_yield_ratio": (
+                self.edge_to_center_yield_ratio
+            ),
+            "radial_yield_slope_per_mm": (
+                self.radial_yield_slope_per_mm
+            ),
+            "assembly_yield": self.assembly_yield,
+            "good_packages_per_wafer": self.good_packages_per_wafer,
+            "good_packages_stderr": self.good_packages_stderr,
+            "cost_per_good_package_usd": self.cost_per_good_package_usd,
+            "cost_per_good_package_stderr": (
+                self.cost_per_good_package_stderr
+            ),
+            "zone_count": len(self.zones),
+            "samples": self.samples,
         }
 
 
@@ -619,6 +714,149 @@ def simulate_lot_yield(
         good_packages_stderr=package_stderr,
         cost_per_good_package_usd_mean=cost_mean,
         cost_per_good_package_stderr=cost_stderr,
+    )
+
+
+def simulate_wafer_map(
+    assumptions: YieldAssumptions,
+    die_area_mm2: float,
+    pad_count: int,
+    *,
+    samples: int = 200,
+    seed: int = 0,
+) -> WaferMapEstimate:
+    """Sample a radial within-wafer yield map.
+
+    Each die site gets its own Poisson critical-area yield from the radial
+    defect-density profile. Zone yields, center/edge values and the radial
+    slope use modelled expected yield; the wafer mean and package counts come
+    from sampled dice and therefore include sampling noise.
+    """
+    if die_area_mm2 <= 0:
+        raise ValueError("die area must be positive")
+    if pad_count < 0:
+        raise ValueError("pad count must be non-negative")
+    if samples < 1:
+        raise ValueError("samples must be at least one")
+    spatial = assumptions.spatial
+    if spatial is None:
+        raise ValueError("wafer map requires a spatial mapping")
+
+    side_mm = math.sqrt(die_area_mm2)
+    grid = die_grid(assumptions.wafer, side_mm, side_mm)
+    if grid.count == 0:
+        raise ValueError("die does not fit on the wafer")
+    radius = assumptions.wafer.usable_radius_mm
+    critical_cm2 = (
+        critical_area_mm2(die_area_mm2, assumptions.critical_area_fraction)
+        * _CM2_PER_MM2
+    )
+    assembly = package_assembly_yield(
+        pad_count,
+        assumptions.base_assembly_yield,
+        assumptions.per_pad_defect_ppm,
+    )
+    radii = tuple(math.hypot(x, y) for x, y in grid.positions)
+    densities = tuple(
+        assumptions.defect_density_per_cm2
+        * (1.0 + spatial.edge_boost * (r / radius) ** spatial.radial_exponent)
+        for r in radii
+    )
+    expected = tuple(
+        math.exp(-critical_cm2 * density) for density in densities
+    )
+    bin_edges = [
+        radius * index / spatial.radial_bins
+        for index in range(spatial.radial_bins + 1)
+    ]
+    assignments = [
+        min(int(r / radius * spatial.radial_bins), spatial.radial_bins - 1)
+        for r in radii
+    ]
+    zones: list[WaferZone] = []
+    for index in range(spatial.radial_bins):
+        members = [
+            position
+            for position, zone_index in enumerate(assignments)
+            if zone_index == index
+        ]
+        if not members:
+            continue
+        zones.append(
+            WaferZone(
+                index=index,
+                r_min_mm=bin_edges[index],
+                r_max_mm=bin_edges[index + 1],
+                r_mid_mm=(bin_edges[index] + bin_edges[index + 1]) / 2.0,
+                normalized_mid=(index + 0.5) / spatial.radial_bins,
+                die_count=len(members),
+                defect_density_per_cm2=statistics.fmean(
+                    densities[position] for position in members
+                ),
+                die_yield=statistics.fmean(
+                    expected[position] for position in members
+                ),
+            )
+        )
+
+    mean_radius = statistics.fmean(radii)
+    mean_expected = statistics.fmean(expected)
+    radius_variance = sum((r - mean_radius) ** 2 for r in radii)
+    covariance = sum(
+        (r - mean_radius) * (y - mean_expected)
+        for r, y in zip(radii, expected)
+    )
+    slope = 0.0 if radius_variance == 0.0 else covariance / radius_variance
+
+    rng = random.Random(seed)
+    sample_yields: list[float] = []
+    good_packages: list[float] = []
+    package_costs: list[float] = []
+    for _ in range(samples):
+        good_die_count = sum(1 for y in expected if rng.random() < y)
+        good_package_count = sum(
+            1 for _ in range(good_die_count) if rng.random() < assembly
+        )
+        sample_yields.append(good_die_count / grid.count)
+        good_packages.append(float(good_package_count))
+        cost = _wafer_cost(
+            assumptions,
+            grid.count,
+            good_die_count,
+            good_package_count,
+        )
+        if cost is not None:
+            package_costs.append(cost)
+
+    if not package_costs:
+        raise ValueError(
+            "no good packages in any sample; cost per good package is "
+            "undefined"
+        )
+    die_mean, die_stderr = _mean_stderr(sample_yields)
+    package_mean, package_stderr = _mean_stderr(good_packages)
+    cost_mean, cost_stderr = _mean_stderr(package_costs)
+    center = zones[0].die_yield
+    edge = zones[-1].die_yield
+    return WaferMapEstimate(
+        die_area_mm2=die_area_mm2,
+        critical_area_mm2=critical_area_mm2(
+            die_area_mm2, assumptions.critical_area_fraction
+        ),
+        gross_dies_per_wafer=grid.count,
+        die_yield_mean=die_mean,
+        die_yield_stderr=die_stderr,
+        center_die_yield=center,
+        edge_die_yield=edge,
+        edge_to_center_yield_ratio=(0.0 if center == 0.0 else edge / center),
+        radial_yield_slope_per_mm=slope,
+        assembly_yield=assembly,
+        good_packages_per_wafer=package_mean,
+        good_packages_stderr=package_stderr,
+        cost_per_good_package_usd=cost_mean,
+        cost_per_good_package_stderr=cost_stderr,
+        zones=tuple(zones),
+        samples=samples,
     )
 
 

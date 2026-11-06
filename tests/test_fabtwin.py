@@ -29,6 +29,9 @@ YIELD_SENSITIVITY_SCENARIO = (
 YIELD_VARIATION_SCENARIO = (
     ROOT / "scenarios" / "grx930_yield_variation_28nm.yaml"
 )
+YIELD_WAFER_MAP_SCENARIO = (
+    ROOT / "scenarios" / "grx930_yield_wafer_map_28nm.yaml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -322,6 +325,52 @@ def test_yield_variation_scenario_records_lot_statistics(tmp_path):
     assert not values["lot_to_lot_die_yield_sigma"]["uncertainty"]
     assert float(values["good_packages_per_wafer_mean"]["value"]) > 0.0
     assert float(values["cost_per_good_package_usd_mean"]["value"]) > 0.0
+
+
+def test_wafer_map_scenario_records_radial_zones(tmp_path):
+    loaded = load_scenario(YIELD_WAFER_MAP_SCENARIO)
+    assert loaded.engines == ("yield_wafer_map",)
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 28
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    engine = manifest["engines"][0]
+    assert engine["name"] == "yield_wafer_map"
+    assert engine["metadata"]["spatial"] == {
+        "edge_boost": 2.0,
+        "radial_exponent": 3.0,
+        "radial_bins": 5,
+    }
+    assert len(engine["metadata"]["zones"]) == 5
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 28
+    assert {row["entity_type"] for row in rows} == {
+        "wafer_map",
+        "wafer_zone",
+    }
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    aggregate = {
+        row["metric"]: row
+        for row in rows
+        if row["entity_type"] == "wafer_map"
+    }
+    zone_rows = [row for row in rows if row["entity_type"] == "wafer_zone"]
+    assert len(zone_rows) == 20
+    assert 0.0 < float(aggregate["edge_to_center_yield_ratio"]["value"]) < 1.0
+    assert float(aggregate["radial_yield_slope_per_mm"]["value"]) < 0.0
+    assert aggregate["die_yield_mean"]["uncertainty"]
+    assert aggregate["cost_per_good_package_usd"]["uncertainty"]
+    densities = [
+        float(row["value"])
+        for row in zone_rows
+        if row["metric"] == "defect_density_per_cm2"
+    ]
+    assert len(densities) == 5
+    assert densities == sorted(densities)
+    assert all(row["unit"] for row in rows)
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):
