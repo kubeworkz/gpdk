@@ -113,6 +113,10 @@ def test_export_writes_a_reproducible_browser_bundle(tmp_path):
     source = first / manifest["source"]["path"]
     assert sha256_file(source) == manifest["source"]["sha256"]
     assert sha256_file(source) == sha256_file(second / "browser" / "gpdk-src.zip")
+    inputs = json.loads((first / manifest["inputs"]["path"]).read_text("utf-8"))
+    refs = inputs["scenarios"]["grx930_yield_wafer_map_28nm"]
+    assert refs["yield"] == "yields/grx930_28nm.yaml"
+    assert inputs["files"][refs["yield"]]["defects"]["density_per_cm2"] == 0.08
     names = zipfile.ZipFile(source).namelist()
     assert "fabtwin/browser.py" in names
     assert "yields/grx930_28nm.yaml" in names

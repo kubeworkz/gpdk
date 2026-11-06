@@ -16,6 +16,7 @@ Layout::
     browser/manifest.json           what the site's Pyodide runner loads
     browser/gpdk-src.zip            fabtwin, gpdk and the input files they read
     browser/<wheel>                 pure-Python dependencies (``--wheel``)
+    browser/inputs.json             each scenario's inputs by role, parsed
 
 The browser files let the site rerun a scenario in the visitor's browser with
 ``fabtwin.browser.run_scenario`` (Pyodide), on the same code and inputs as the
@@ -27,6 +28,8 @@ from __future__ import annotations
 import csv
 import json
 import shutil
+
+import yaml
 import tempfile
 import zipfile
 from datetime import datetime, timezone
@@ -80,6 +83,24 @@ def _write_browser(out: Path, wheels: list[Path], scenarios: list[Any]) -> dict[
             raise FabTwinError(f"not a wheel file: {wheel}")
         shutil.copyfile(wheel, browser / wheel.name)
         wheel_records.append(_file_record(out, browser / wheel.name, "application/zip"))
+    # The site reads current input values (slider defaults) from here, so they
+    # always match the source in the zip.
+    roles = ("chip", "package", "yield", "factory", "photonic")
+    by_scenario: dict[str, dict[str, str]] = {}
+    files: dict[str, Any] = {}
+    for s in scenarios:
+        refs = {}
+        for role in roles:
+            path = getattr(s, f"{role}_path")
+            if path is None:
+                continue
+            refs[role] = display_path(path)
+            files[refs[role]] = yaml.safe_load(Path(path).read_text("utf-8"))
+        by_scenario[s.id] = refs
+    (browser / "inputs.json").write_text(
+        json.dumps({"scenarios": by_scenario, "files": files}, indent=1) + "\n",
+        encoding="utf-8",
+    )
     manifest = {
         "schema_version": BROWSER_SCHEMA_VERSION,
         "entry": "fabtwin.browser:run_scenario",
@@ -90,6 +111,7 @@ def _write_browser(out: Path, wheels: list[Path], scenarios: list[Any]) -> dict[
         },
         "wheels": wheel_records,
         "pyodide_packages": list(PYODIDE_PACKAGES),
+        "inputs": _file_record(out, browser / "inputs.json", "application/json"),
         "scenarios": {
             s.id: display_path(s.path) for s in scenarios
         },
