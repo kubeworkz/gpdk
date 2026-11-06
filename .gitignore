@@ -8,3 +8,6 @@ out/fabtwin/
 flow/vendor/
 flow/build/
 flow/test/build/
+
+# Yosys ABC scratch directories
+_tmp_yosys-abc-*/

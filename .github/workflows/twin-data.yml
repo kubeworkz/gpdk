@@ -1,0 +1,92 @@
+# Twin data: run every scenario fresh and publish the website data bundle.
+#
+# `python -m fabtwin export-site` runs each scenario in scenarios/ into a private
+# store and writes index.json plus each run's manifest, observations, report and
+# engine artifacts (fabtwin/site_export.py). On main the bundle is force-pushed
+# to the orphan branch `twin-data`, which gridworkz.com reads at build time from
+# raw.githubusercontent.com, and Netlify is asked to rebuild the site. Pull
+# requests build the bundle as a check and publish nothing.
+
+name: Twin data
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write         # push the twin-data branch
+
+concurrency:
+  group: twin-data-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: true
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Export the bundle
+        run: |
+          python -m fabtwin export-site "$RUNNER_TEMP/twin-data" \
+            --commit "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      - name: Summary
+        run: |
+          {
+            echo "| scenario | product | engines | observations | evidence |"
+            echo "|---|---|---|---|---|"
+            jq -r '.runs[] | "| \(.scenario_id) | \(.product) | \([.engines[] | "\(.name) (\(.fidelity))"] | join(", ")) | \(.observation_count) | \(.evidence_classes | to_entries | map("\(.key) \(.value)") | join(", ")) |"' \
+              "$RUNNER_TEMP/twin-data/index.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: twin-data
+          retention-days: 30
+          path: ${{ runner.temp }}/twin-data
+
+      - name: Publish to the twin-data branch
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/twin-data"
+          cat > "$out/README.md" <<MD
+          # twin-data
+
+          Written by \`.github/workflows/twin-data.yml\`, force-pushed on every run on main.
+          \`index.json\` lists every scenario's fresh run; \`runs/<scenario>/\` holds its
+          manifest, observations, report and engine artifacts, unchanged.
+          Every value is a scenario estimate, not foundry sign-off.
+          Source commit: ${GITHUB_SHA}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          MD
+          cd "$out"
+          git init -q -b twin-data
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Twin data for ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" twin-data
+          echo "published $(jq '.runs | length' index.json) runs to twin-data"
+
+      - name: Ask Netlify to rebuild gridworkz.com
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "${HOOK:-}" ]; then echo "NETLIFY_BUILD_HOOK not set; the site updates on its next deploy"; exit 0; fi
+          curl --silent --show-error --fail -X POST -d '{}' "$HOOK" && echo "Netlify rebuild requested"
