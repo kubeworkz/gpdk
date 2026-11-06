@@ -160,6 +160,13 @@ def _parser() -> argparse.ArgumentParser:
     export_parser.add_argument(
         "--run-url", default=None, help="URL of the CI run that built the bundle"
     )
+    export_parser.add_argument(
+        "--wheel",
+        dest="wheels",
+        action="append",
+        default=[],
+        help="pure-Python wheel the browser runner installs; repeatable",
+    )
     return parser
 
 
@@ -394,6 +401,7 @@ def _export_site(args: argparse.Namespace) -> int:
             args.out,
             commit=args.commit,
             run_url=args.run_url,
+            wheels=args.wheels,
         )
     except (ScenarioError, FabTwinError) as exc:
         print(f"error: {exc}", file=sys.stderr)

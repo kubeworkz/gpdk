@@ -177,6 +177,30 @@ at build time.
 python -m fabtwin export-site /tmp/twin-data --commit "$(git rev-parse HEAD)"
 ```
 
+The bundle's `browser/` directory is what lets gridworkz.com rerun a scenario
+in the visitor's browser: `gpdk-src.zip` (the `fabtwin` and `gpdk` packages and
+every input YAML), the pure-Python wheels passed with `--wheel` (SimPy in CI),
+and `manifest.json` with each file's hash. The site loads them into
+[Pyodide](https://pyodide.org) and calls `fabtwin.browser.run_scenario`, which
+runs a scenario's engines in memory with input overrides and returns the
+observations without touching the store:
+
+```python
+from fabtwin.browser import run_scenario
+run_scenario("scenarios/g100_factory_28nm.yaml",
+             {"factory": {"wafer_starts_per_week": 700, "tool_groups.litho.tools": 4}})
+```
+
+An override is a dotted path into one of the scenario's inputs (`yield`,
+`factory`, `package` or `photonic`); a list of entries is indexed by `id`.
+Every path must already exist and hold a number. `tests/pyodide_smoke.mjs` runs
+the bundle in Pyodide and checks that it reproduces the published runs:
+
+```bash
+mkdir -p /tmp/pyodide && cp tests/pyodide_smoke.mjs /tmp/pyodide/
+(cd /tmp/pyodide && npm install pyodide@314.0.7 && node pyodide_smoke.mjs /tmp/twin-data)
+```
+
 `query` reads the SQLite index and accepts `--run`, `--metric`, `--entity`,
 `--evidence`, `--product` and `--limit`; `--runs` lists indexed runs,
 `--reports` lists registered comparison reports, and `--json` is
@@ -239,6 +263,7 @@ gpdk/padring.py             pad-ring floorplan and TFBGA ball map
 gpdk/dtco.py                node-aware lever sweep at the target clock
 fabtwin/                    Phase 0 runner, strict schema, manifest, SQLite index, gpdk adapter
 fabtwin/site_export.py      website data bundle (`export-site`), published to `twin-data`
+fabtwin/browser.py          in-memory runner with input overrides, for the site's Pyodide runner
 scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
 scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
