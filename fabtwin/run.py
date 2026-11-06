@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from . import __version__ as FABTWIN_VERSION
+from .baseline import observation_fingerprint
 from .engines import build_engine
 from .errors import FabTwinError, ScenarioError
 from .model import EngineResult, Observation
@@ -305,6 +306,7 @@ def execute(
             "count": len(observations),
             "metrics": sorted({item.metric for item in observations}),
             "evidence_classes": dict(sorted(evidence_classes.items())),
+            "fingerprint_sha256": observation_fingerprint(rows),
             "uncertainty": (
                 "not_estimated"
                 if all(item.uncertainty is None for item in observations)

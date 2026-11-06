@@ -68,6 +68,11 @@ lane pitch and wavelength. It is a product-definition baseline, not an optical
 performance model; insertion loss, phase error, thermal tuning and tensor error
 are Phase 2 work. Its MCM package definition is a hashed scenario input.
 
+`baselines/phase0_baseline.json` holds the run-independent fingerprints for
+all three baselines: scenario and input hashes, observation rows, evidence
+classes and model versions. The clean-checkout test compares every fresh run
+against those fingerprints, not just against its own manifest.
+
 `verify-artifacts` recomputes the SHA-256 and byte count of every indexed run
 artifact, scenario/chip/technology input, and comparison report. It reports
 missing, unreadable, size-mismatched and hash-mismatched files, then exits
@@ -110,6 +115,7 @@ out/grx930_padring.csv      pad coordinates; out/grx930_ballmap.csv nets
 out/fabtwin/<run-id>/       run.json, observations.csv and report.md
 out/fabtwin/fabtwin.db      SQLite index for runs, observations and report hashes
 out/fabtwin/comparisons/    generated run-to-run comparison reports
+baselines/phase0_baseline.json  committed, run-independent baseline fingerprints
 docs/open-source-28nm-flow.md  tools, PDK reality, two-track plan
 docs/dtco-strategy.md       the 28 nm levers, results, and validation plan
 docs/fab-sim-architecture.md  foundry-twin architecture and phased plan

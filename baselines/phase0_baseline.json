@@ -1,0 +1,103 @@
+{
+  "description": "Run-independent Phase 0 fingerprints. Excludes run IDs, timestamps, paths and platform details.",
+  "products": {
+    "g100": {
+      "evidence_classes": {
+        "assumed": 40
+      },
+      "inputs": [
+        {
+          "path": "chips/g100.yaml",
+          "role": "chip",
+          "sha256": "b9e127cb2fa42f0875e592ef3730ceceb39294d4af440376533bf55d36f9ea39"
+        },
+        {
+          "path": "scenarios/g100_28nm_baseline.yaml",
+          "role": "scenario",
+          "sha256": "15ebff8492f7617bb810a48b216ceb6630b8386c00ca30731d6097ac76ddf0b0"
+        },
+        {
+          "path": "tech/grx28.yaml",
+          "role": "tech",
+          "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+        }
+      ],
+      "model_versions": [
+        "gpdk@0.1.0"
+      ],
+      "observation_count": 40,
+      "observations_sha256": "72f74dad41ce6c16fb9ee38884cfa60ceb6fa60f400ebc1a2523b9eb76b147fe",
+      "product": "g100",
+      "scenario": "g100_28nm_baseline",
+      "scenario_sha256": "15ebff8492f7617bb810a48b216ceb6630b8386c00ca30731d6097ac76ddf0b0"
+    },
+    "grx930": {
+      "evidence_classes": {
+        "assumed": 24,
+        "measured": 3
+      },
+      "inputs": [
+        {
+          "path": "chips/grx930.yaml",
+          "role": "chip",
+          "sha256": "3d2a312cd4196c527e8b75fc0a82327746cd59f77d38eb03d96a832cf4f6cbba"
+        },
+        {
+          "path": "scenarios/grx930_28nm_baseline.yaml",
+          "role": "scenario",
+          "sha256": "9a7bbfb08433969ba0e40a133276b03e36b90f98cc088d05a65faa2be419e0d2"
+        },
+        {
+          "path": "tech/grx28.yaml",
+          "role": "tech",
+          "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+        }
+      ],
+      "model_versions": [
+        "as_built",
+        "gpdk@0.1.0"
+      ],
+      "observation_count": 27,
+      "observations_sha256": "0d16b1e6747e9d4e05798bf61dcc39ffaafd5245a999b426de749285af689633",
+      "product": "grx930",
+      "scenario": "grx930_28nm_baseline",
+      "scenario_sha256": "9a7bbfb08433969ba0e40a133276b03e36b90f98cc088d05a65faa2be419e0d2"
+    },
+    "pta": {
+      "evidence_classes": {
+        "assumed": 8
+      },
+      "inputs": [
+        {
+          "path": "chips/pta.yaml",
+          "role": "chip",
+          "sha256": "c80fbe2fe91def530972a92cddd924fa396443b3af48bec9cc88f8aeb1ede957"
+        },
+        {
+          "path": "packages/mcm_si.yaml",
+          "role": "package",
+          "sha256": "66e840836c5a2d129c81a5dbee54afc5a2cbfb47a486e79114b2fc5a0d670b26"
+        },
+        {
+          "path": "scenarios/pta_28nm_baseline.yaml",
+          "role": "scenario",
+          "sha256": "88b2b9dc505b920266ad4410e7a62df7ba9f7dae20ed3b79da14210372688082"
+        },
+        {
+          "path": "tech/grx28.yaml",
+          "role": "tech",
+          "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+        }
+      ],
+      "model_versions": [
+        "pta-assumptions@0.1.0"
+      ],
+      "observation_count": 8,
+      "observations_sha256": "1962f11c16f23f351d0a9915584ca055aa6a8b4e2958123ff741a46027049dd5",
+      "product": "pta",
+      "scenario": "pta_28nm_baseline",
+      "scenario_sha256": "88b2b9dc505b920266ad4410e7a62df7ba9f7dae20ed3b79da14210372688082"
+    }
+  },
+  "schema_version": "0.1"
+}

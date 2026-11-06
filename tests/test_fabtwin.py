@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from fabtwin.adapters.gpdk import GpdkEngine
+from fabtwin.baseline import observation_fingerprint
 from fabtwin.cli import main
 from fabtwin.errors import ScenarioValidationError
 from fabtwin.provenance import ROOT, sha256_file
@@ -107,6 +108,9 @@ def test_run_writes_manifest_and_hashes(scenario, tmp_path):
     assert all(row["run_id"] == result.run_id for row in rows)
     assert all(row["unit"] for row in rows)
     assert {row["evidence_class"] for row in rows} == {"measured", "assumed"}
+    assert manifest["observations"]["fingerprint_sha256"] == (
+        observation_fingerprint(rows)
+    )
 
 
 def test_same_scenario_produces_same_observations(scenario, tmp_path):

@@ -7,6 +7,7 @@ depends on previously generated artifacts or local state.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import shutil
@@ -14,8 +15,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from fabtwin.baseline import baseline_record
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRECTORIES = (
+    "baselines",
     "chips",
     "fabtwin",
     "gpdk",
@@ -99,6 +103,30 @@ def test_clean_source_tree_reproduces_all_phase0_baselines(tmp_path):
         product: count for _filename, product, count in SCENARIOS
     }
     assert {row["status"] for row in runs} == {"succeeded"}
+
+    baseline = json.loads(
+        (workspace / "baselines" / "phase0_baseline.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(baseline["products"]) == {
+        product for _filename, product, _count in SCENARIOS
+    }
+    run_ids = {row["product"]: row["run_id"] for row in runs}
+    for _filename, product, _count in SCENARIOS:
+        run_dir = workspace / "out" / "fabtwin" / run_ids[product]
+        manifest = json.loads(
+            (run_dir / "run.json").read_text(encoding="utf-8")
+        )
+        with (run_dir / "observations.csv").open(
+            newline="", encoding="utf-8"
+        ) as handle:
+            rows = list(csv.DictReader(handle))
+        record = baseline_record(manifest, rows)
+        assert record == baseline["products"][product]
+        assert manifest["observations"]["fingerprint_sha256"] == (
+            record["observations_sha256"]
+        )
 
     verification = _run_json(workspace, "verify-artifacts", "--json")
     assert isinstance(verification, dict)

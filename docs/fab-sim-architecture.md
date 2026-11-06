@@ -272,6 +272,8 @@ baseline.
 
 **Exit gate:** a clean checkout reproduces the baseline report; every number
 points to an input, a model version, and an evidence class. No new physics.
+The committed baseline fingerprint is `baselines/phase0_baseline.json`; the
+clean-checkout test compares fresh observation rows and input hashes to it.
 
 ### Phase 1 — GRX930 die and package vertical slice
 
