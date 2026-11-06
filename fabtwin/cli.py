@@ -25,6 +25,7 @@ from .model import EVIDENCE_CLASSES
 from .provenance import display_path
 from .run import DEFAULT_STORE, execute, validate_scenario
 from .scenario import load_scenario
+from .site_export import default_scenarios, export_site
 from .store import ObservationStore
 
 
@@ -141,6 +142,23 @@ def _parser() -> argparse.ArgumentParser:
         dest="as_json",
         action="store_true",
         help="emit JSON instead of a report",
+    )
+
+    export_parser = subparsers.add_parser(
+        "export-site",
+        help="run scenarios fresh and write the website data bundle",
+    )
+    export_parser.add_argument("out", help="bundle directory (must be empty)")
+    export_parser.add_argument(
+        "--scenario",
+        dest="scenarios",
+        action="append",
+        default=None,
+        help="scenario YAML to include; repeatable (default: scenarios/*.yaml)",
+    )
+    export_parser.add_argument("--commit", default=None, help="source commit SHA")
+    export_parser.add_argument(
+        "--run-url", default=None, help="URL of the CI run that built the bundle"
     )
     return parser
 
@@ -369,6 +387,23 @@ def _verify_artifacts(args: argparse.Namespace) -> int:
     return 0 if result["failed"] == 0 else 1
 
 
+def _export_site(args: argparse.Namespace) -> int:
+    try:
+        index = export_site(
+            args.scenarios or default_scenarios(),
+            args.out,
+            commit=args.commit,
+            run_url=args.run_url,
+        )
+    except (ScenarioError, FabTwinError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    for run in index["runs"]:
+        print(f"{run['scenario_id']}: {run['observation_count']} observations")
+    print(f"bundle: {args.out} ({len(index['runs'])} runs)")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "query":
@@ -377,6 +412,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _compare(args)
     if args.command == "verify-artifacts":
         return _verify_artifacts(args)
+    if args.command == "export-site":
+        return _export_site(args)
 
     try:
         scenario = load_scenario(args.scenario)

@@ -164,6 +164,19 @@ Dependencies: Python 3.10+, PyYAML, SimPy 4.1+. Pillow is optional and only used
 for the PNG layout preview. Tested with Python 3.14, PyYAML 6.0, SimPy 4.1.2,
 pytest 9.2, Pillow 12.3.
 
+`export-site` runs scenarios fresh, each into a private store, and writes the
+website data bundle: `index.json` plus, under `runs/<scenario-id>/`, each run's
+`run.json`, `observations.csv`, `report.md` and engine artifacts unchanged, and
+an `observations.json` with the same rows as numbers. With no `--scenario` it
+exports every file in `scenarios/`. The
+[Twin data](.github/workflows/twin-data.yml) workflow force-pushes the bundle to
+the `twin-data` branch on every push to main; gridworkz.com reads it from there
+at build time.
+
+```bash
+python -m fabtwin export-site /tmp/twin-data --commit "$(git rev-parse HEAD)"
+```
+
 `query` reads the SQLite index and accepts `--run`, `--metric`, `--entity`,
 `--evidence`, `--product` and `--limit`; `--runs` lists indexed runs,
 `--reports` lists registered comparison reports, and `--json` is
@@ -225,6 +238,7 @@ gpdk/package.py             pin budget, package selection, assembly floor
 gpdk/padring.py             pad-ring floorplan and TFBGA ball map
 gpdk/dtco.py                node-aware lever sweep at the target clock
 fabtwin/                    Phase 0 runner, strict schema, manifest, SQLite index, gpdk adapter
+fabtwin/site_export.py      website data bundle (`export-site`), published to `twin-data`
 scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
 scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
