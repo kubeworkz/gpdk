@@ -15,7 +15,7 @@ from __future__ import annotations
 import math
 import random
 import statistics
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
 _CM2_PER_MM2 = 0.01
@@ -357,6 +357,8 @@ class WaferZone:
 class WaferMapEstimate:
     die_area_mm2: float
     critical_area_mm2: float
+    wafer_diameter_mm: float
+    usable_radius_mm: float
     gross_dies_per_wafer: int
     die_yield_mean: float
     die_yield_stderr: float | None
@@ -370,6 +372,9 @@ class WaferMapEstimate:
     cost_per_good_package_usd: float
     cost_per_good_package_stderr: float | None
     zones: tuple[WaferZone, ...]
+    die_positions: tuple[tuple[float, float], ...] = field(repr=False)
+    die_yields: tuple[float, ...] = field(repr=False)
+    die_defect_densities: tuple[float, ...] = field(repr=False)
     samples: int
 
     def as_dict(self) -> dict[str, float | int | None]:
@@ -843,6 +848,8 @@ def simulate_wafer_map(
         critical_area_mm2=critical_area_mm2(
             die_area_mm2, assumptions.critical_area_fraction
         ),
+        wafer_diameter_mm=assumptions.wafer.diameter_mm,
+        usable_radius_mm=radius,
         gross_dies_per_wafer=grid.count,
         die_yield_mean=die_mean,
         die_yield_stderr=die_stderr,
@@ -856,6 +863,9 @@ def simulate_wafer_map(
         cost_per_good_package_usd=cost_mean,
         cost_per_good_package_stderr=cost_stderr,
         zones=tuple(zones),
+        die_positions=grid.positions,
+        die_yields=expected,
+        die_defect_densities=densities,
         samples=samples,
     )
 

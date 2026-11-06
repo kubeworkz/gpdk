@@ -25,9 +25,11 @@ from gpdk.dieyield import (
 from gpdk.dtco import best_step, build_steps
 from gpdk.package import PinBudget, choose_package
 from gpdk.tech import load_tech
+from gpdk.wafermap import to_csv as wafer_map_csv
+from gpdk.wafermap import to_svg as wafer_map_svg
 
 from ..errors import EngineError
-from ..model import EngineResult, InputFile, Observation
+from ..model import EngineResult, GeneratedArtifact, InputFile, Observation
 from ..provenance import display_path
 from ..scenario import Scenario
 
@@ -941,6 +943,21 @@ class YieldWaferMapEngine:
                     ),
                 },
             },
+            artifacts=(
+                GeneratedArtifact(
+                    "wafer_map.csv",
+                    "text/csv",
+                    wafer_map_csv(simulation),
+                ),
+                GeneratedArtifact(
+                    "wafer_map.svg",
+                    "image/svg+xml",
+                    wafer_map_svg(
+                        simulation,
+                        title=f"{scenario.id} wafer map",
+                    ),
+                ),
+            ),
             warnings=(
                 "Wafer map is an F1 planning profile, not a measured "
                 "wafer map.",

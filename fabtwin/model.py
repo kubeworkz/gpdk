@@ -73,6 +73,28 @@ class InputFile:
 
 
 @dataclass(frozen=True)
+class GeneratedArtifact:
+    """A file an engine returns for the runner to write and index."""
+
+    filename: str
+    media_type: str
+    content: bytes
+
+    def __post_init__(self) -> None:
+        if (
+            not self.filename
+            or "/" in self.filename
+            or "\\" in self.filename
+            or self.filename in {".", ".."}
+        ):
+            raise ValueError("artifact filename must be a simple file name")
+        if not self.media_type:
+            raise ValueError("artifact media type must not be empty")
+        if not isinstance(self.content, bytes):
+            raise ValueError("artifact content must be bytes")
+
+
+@dataclass(frozen=True)
 class EngineResult:
     """What an engine returns; it never writes a report or a database."""
 
@@ -83,6 +105,7 @@ class EngineResult:
     observations: tuple[Observation, ...]
     inputs: tuple[InputFile, ...]
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    artifacts: tuple[GeneratedArtifact, ...] = ()
     warnings: tuple[str, ...] = ()
 
 

@@ -60,6 +60,7 @@ def render_report(
     input_records: Sequence[dict[str, Any]],
     reproduce: str,
     store_path: Path,
+    artifact_names: Sequence[str] = (),
 ) -> str:
     """Render all tables from the run's observation set."""
     evidence_counts = Counter(item.evidence_class for item in observations)
@@ -142,6 +143,10 @@ def render_report(
         else "- None."
     )
     outputs = ", ".join(f"`{output}`" for output in scenario.outputs)
+    artifact_links = " · ".join(
+        f"[{name}]({name})"
+        for name in ("observations.csv", *artifact_names, "run.json")
+    )
 
     return f"""# fabtwin run `{run_id}`
 
@@ -217,7 +222,7 @@ The run is indexed in SQLite at `{display_path(store_path)}`:
 python -m fabtwin query --db {display_path(store_path)} --run {run_id}
 ```
 
-Artifacts: [observations.csv](observations.csv) · [run.json](run.json)
+Artifacts: {artifact_links}
 
 ## Caveats
 

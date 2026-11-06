@@ -313,7 +313,8 @@ zone-level defect-density and yield observations plus center/edge yield, the
 edge-to-center ratio and a radial slope. At the planning profile the model gives
 99.35% mean die yield, 99.63% center yield, 99.11% edge yield and a slope of
 -5.7e-5 per mm. The map has no angular or clustering structure; the profile is
-an assumption, not measured map data.
+an assumption, not measured map data. The run writes `wafer_map.csv` (one row
+per die) and `wafer_map.svg` (2D heat map), both hashed into the run manifest.
 
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains

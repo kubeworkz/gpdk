@@ -371,6 +371,24 @@ def test_wafer_map_scenario_records_radial_zones(tmp_path):
     assert len(densities) == 5
     assert densities == sorted(densities)
     assert all(row["unit"] for row in rows)
+    artifact_paths = {item["path"] for item in manifest["artifacts"]}
+    assert {
+        "observations.csv",
+        "report.md",
+        "wafer_map.csv",
+        "wafer_map.svg",
+    } <= artifact_paths
+    map_csv = (result.run_dir / "wafer_map.csv").read_text(encoding="utf-8")
+    assert map_csv.startswith("die_index,x_mm,y_mm")
+    assert len(map_csv.splitlines()) == 4866
+    map_svg = (result.run_dir / "wafer_map.svg").read_text(encoding="utf-8")
+    assert map_svg.startswith("<?xml")
+    assert map_svg.count('class="die"') == 4865
+    report_text = (result.run_dir / "report.md").read_text(encoding="utf-8")
+    assert "wafer_map.svg" in report_text
+    verified = ObservationStore(result.store_path).verify_artifacts()
+    assert len(verified["run_artifacts"]) == 4
+    assert {row["status"] for row in verified["run_artifacts"]} == {"ok"}
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):

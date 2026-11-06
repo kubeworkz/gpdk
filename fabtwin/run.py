@@ -194,6 +194,18 @@ def execute(
     run_dir.mkdir(parents=True, exist_ok=False)
     store_path = out_root / "fabtwin.db"
 
+    generated_artifacts = []
+    seen_artifact_names = {"observations.csv", "report.md", "run.json"}
+    for result in results:
+        for artifact in result.artifacts:
+            if artifact.filename in seen_artifact_names:
+                raise FabTwinError(
+                    f"engine {result.engine} returned duplicate artifact "
+                    f"name {artifact.filename!r}"
+                )
+            seen_artifact_names.add(artifact.filename)
+            generated_artifacts.append(artifact)
+
     observations = _unique_observations(results)
     rows = _observation_rows(run_id, observations)
     csv_data = _csv_bytes(rows)
@@ -231,6 +243,7 @@ def execute(
         input_records,
         reproduce,
         store_path,
+        [artifact.filename for artifact in generated_artifacts],
     )
     report_data = report_text.encode("utf-8")
 
@@ -238,6 +251,18 @@ def execute(
     report_path = run_dir / "report.md"
     observations_path.write_bytes(csv_data)
     report_path.write_bytes(report_data)
+    generated_records: list[dict[str, Any]] = []
+    for generated in generated_artifacts:
+        path = run_dir / generated.filename
+        path.write_bytes(generated.content)
+        generated_records.append(
+            {
+                "path": generated.filename,
+                "media_type": generated.media_type,
+                "bytes": len(generated.content),
+                "sha256": sha256_bytes(generated.content),
+            }
+        )
     finished = datetime.now(timezone.utc)
 
     artifacts = [
@@ -253,6 +278,7 @@ def execute(
             "bytes": len(report_data),
             "sha256": sha256_bytes(report_data),
         },
+        *generated_records,
     ]
     evidence_classes: dict[str, int] = {}
     for item in observations:

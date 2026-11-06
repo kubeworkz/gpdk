@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -42,6 +43,8 @@ from gpdk.dtco import build_steps, lever_table, reference_pair
 from gpdk.gds import read_gds, write_gds
 from gpdk.layout import inverter_layout
 from gpdk.tech import load_tech
+from gpdk.wafermap import to_csv as wafer_map_csv
+from gpdk.wafermap import to_svg as wafer_map_svg
 
 
 @pytest.fixture(scope="module")
@@ -719,3 +722,26 @@ def test_wafer_map_without_edge_boost_is_flat():
 def test_wafer_map_requires_spatial_mapping():
     with pytest.raises(ValueError, match="spatial mapping"):
         simulate_wafer_map(_sensitivity_assumptions(), 100.0, 100)
+
+
+def test_wafer_map_renders_csv_and_svg():
+    assumptions = replace(
+        _sensitivity_assumptions(),
+        spatial=SpatialSpec(edge_boost=2.0),
+    )
+    estimate = simulate_wafer_map(assumptions, 100.0, 100, samples=5, seed=2)
+    csv_data = wafer_map_csv(estimate)
+    lines = csv_data.decode("utf-8").splitlines()
+    assert lines[0] == (
+        "die_index,x_mm,y_mm,radius_mm,normalized_radius,"
+        "defect_density_per_cm2,expected_die_yield"
+    )
+    assert len(lines) == estimate.gross_dies_per_wafer + 1
+    assert "nan" not in csv_data.decode("utf-8").lower()
+    svg_data = wafer_map_svg(estimate, title="GRX930 test map")
+    root = ET.fromstring(svg_data)
+    assert root.tag == "{http://www.w3.org/2000/svg}svg"
+    svg_text = svg_data.decode("utf-8")
+    assert svg_text.count('class="die"') == estimate.gross_dies_per_wafer
+    assert "GRX930 test map" in svg_text
+    assert wafer_map_svg(estimate, title="GRX930 test map") == svg_data
