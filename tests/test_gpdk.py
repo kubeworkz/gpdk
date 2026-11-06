@@ -23,6 +23,7 @@ from gpdk.block import (
 from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
 from gpdk.dieyield import (
+    DefectCluster,
     SensitivitySpec,
     SpatialSpec,
     VariationSpec,
@@ -662,17 +663,56 @@ def test_spatial_spec_parses_and_rejects_bad_profile():
                 "edge_boost": 1.5,
                 "radial_exponent": 2.0,
                 "radial_bins": 4,
+                "angular_amplitude": 0.2,
+                "angular_harmonics": 2,
+                "angular_phase_deg": 15.0,
+                "clusters": [
+                    {
+                        "x_mm": 30.0,
+                        "y_mm": -10.0,
+                        "sigma_mm": 8.0,
+                        "strength": 1.5,
+                    }
+                ],
             }
         }
     )
     assert spec.edge_boost == 1.5
     assert spec.radial_bins == 4
+    assert spec.angular_amplitude == 0.2
+    assert spec.angular_harmonics == 2
+    assert spec.angular_phase_deg == 15.0
+    assert spec.clusters == (DefectCluster(30.0, -10.0, 8.0, 1.5),)
     with pytest.raises(ValueError, match="spatial mapping"):
         SpatialSpec.from_mapping({})
     with pytest.raises(ValueError, match="radial exponent"):
         SpatialSpec.from_mapping({"spatial": {"radial_exponent": 0.0}})
     with pytest.raises(ValueError, match="radial bins"):
         SpatialSpec.from_mapping({"spatial": {"radial_bins": 1}})
+    with pytest.raises(ValueError, match="angular amplitude"):
+        SpatialSpec.from_mapping({"spatial": {"angular_amplitude": 1.0}})
+    with pytest.raises(ValueError, match="angular harmonics"):
+        SpatialSpec.from_mapping({"spatial": {"angular_harmonics": 0}})
+    with pytest.raises(ValueError, match="cluster sigma"):
+        SpatialSpec.from_mapping(
+            {
+                "spatial": {
+                    "clusters": [
+                        {"x_mm": 0.0, "y_mm": 0.0, "sigma_mm": 0.0, "strength": 1.0}
+                    ]
+                }
+            }
+        )
+    with pytest.raises(ValueError, match="cluster strength"):
+        SpatialSpec.from_mapping(
+            {
+                "spatial": {
+                    "clusters": [
+                        {"x_mm": 0.0, "y_mm": 0.0, "sigma_mm": 5.0, "strength": -1.0}
+                    ]
+                }
+            }
+        )
 
 
 def test_wafer_map_is_seeded_and_edge_limited():
@@ -724,24 +764,83 @@ def test_wafer_map_requires_spatial_mapping():
         simulate_wafer_map(_sensitivity_assumptions(), 100.0, 100)
 
 
+def test_wafer_map_has_angular_and_cluster_structure():
+    angular = replace(
+        _sensitivity_assumptions(),
+        spatial=SpatialSpec(
+            edge_boost=0.0,
+            angular_amplitude=0.5,
+            angular_harmonics=1,
+            angular_phase_deg=0.0,
+        ),
+    )
+    estimate = simulate_wafer_map(angular, 100.0, 100, samples=10, seed=5)
+    positions = estimate.die_positions
+
+    def nearest(x_mm: float, y_mm: float) -> int:
+        return min(
+            range(len(positions)),
+            key=lambda index: (positions[index][0] - x_mm) ** 2
+            + (positions[index][1] - y_mm) ** 2,
+        )
+
+    right = estimate.die_defect_densities[nearest(50.0, 0.0)]
+    left = estimate.die_defect_densities[nearest(-50.0, 0.0)]
+    assert right > left * 1.5
+    assert estimate.angular_amplitude == 0.5
+    assert estimate.angular_harmonics == 1
+
+    clustered = replace(
+        _sensitivity_assumptions(),
+        spatial=SpatialSpec(
+            edge_boost=0.0,
+            clusters=(DefectCluster(40.0, 0.0, 8.0, 3.0),),
+        ),
+    )
+    cluster_estimate = simulate_wafer_map(
+        clustered, 100.0, 100, samples=10, seed=5
+    )
+    cluster_positions = cluster_estimate.die_positions
+    cluster_index = min(
+        range(len(cluster_positions)),
+        key=lambda index: (cluster_positions[index][0] - 40.0) ** 2
+        + cluster_positions[index][1] ** 2,
+    )
+    center_index = nearest(0.0, 0.0)
+    assert (
+        cluster_estimate.die_defect_densities[cluster_index]
+        > 2.5 * cluster_estimate.die_defect_densities[center_index]
+    )
+    assert cluster_estimate.clusters == (
+        DefectCluster(40.0, 0.0, 8.0, 3.0),
+    )
+
+
 def test_wafer_map_renders_csv_and_svg():
     assumptions = replace(
         _sensitivity_assumptions(),
-        spatial=SpatialSpec(edge_boost=2.0),
+        spatial=SpatialSpec(
+            edge_boost=2.0,
+            angular_amplitude=0.2,
+            clusters=(DefectCluster(30.0, 0.0, 10.0, 1.5),),
+        ),
     )
     estimate = simulate_wafer_map(assumptions, 100.0, 100, samples=5, seed=2)
     csv_data = wafer_map_csv(estimate)
     lines = csv_data.decode("utf-8").splitlines()
     assert lines[0] == (
-        "die_index,x_mm,y_mm,radius_mm,normalized_radius,"
+        "die_index,x_mm,y_mm,radius_mm,theta_deg,normalized_radius,"
         "defect_density_per_cm2,expected_die_yield"
     )
     assert len(lines) == estimate.gross_dies_per_wafer + 1
+    assert all(len(line.split(",")) == 8 for line in lines)
     assert "nan" not in csv_data.decode("utf-8").lower()
     svg_data = wafer_map_svg(estimate, title="GRX930 test map")
     root = ET.fromstring(svg_data)
     assert root.tag == "{http://www.w3.org/2000/svg}svg"
     svg_text = svg_data.decode("utf-8")
     assert svg_text.count('class="die"') == estimate.gross_dies_per_wafer
+    assert svg_text.count('class="cluster"') == 1
+    assert "angular 3θ" in svg_text
     assert "GRX930 test map" in svg_text
     assert wafer_map_svg(estimate, title="GRX930 test map") == svg_data

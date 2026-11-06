@@ -49,12 +49,13 @@ and $2.55 per good package. The sigmas describe the modelled expected yield, not
 measured distributions.
 
 The wafer-map session `scenarios/grx930_yield_wafer_map_28nm.yaml` adds a radial
-defect-density profile, D(r) = D0 * (1 + 2 * (r/R)^3), and reports a five-zone
-map. At the planning profile the mean die yield is 99.35%, with 99.63% at the
-center and 99.11% at the edge (edge/center 0.995), 4,803 good packages per wafer
-and $2.55 per good package. The radial yield slope is -5.7e-5 per mm. The
-profile is an assumption; it has no angular or clustering structure. Each map
-run writes `wafer_map.svg` and `wafer_map.csv` beside the standard artifacts.
+defect-density profile, a three-lobe angular term and two Gaussian clusters, and
+reports a five-zone map. At the planning profile the mean die yield is 99.31%,
+with 99.63% at the center and 99.10% at the edge (edge/center 0.9947), 4,801
+good packages per wafer and $2.55 per good package. The radial yield slope is
+-5.6e-5 per mm. The lobes and clusters are planning assumptions, not measured
+signatures. Each map run writes `wafer_map.svg` and `wafer_map.csv` beside the
+standard artifacts.
 
 ## Quick start
 
@@ -142,7 +143,7 @@ scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
 scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
 scenarios/grx930_yield_sensitivity_28nm.yaml  GRX930 yield sensitivity curves
 scenarios/grx930_yield_variation_28nm.yaml   GRX930 lot/wafer variation session
-scenarios/grx930_yield_wafer_map_28nm.yaml   GRX930 radial wafer-map session
+scenarios/grx930_yield_wafer_map_28nm.yaml   GRX930 radial/angular/cluster map session
 gpdk/dieyield.py             wafer grid, yield, variation, maps and curves
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
@@ -152,8 +153,8 @@ out/REPORT.md               generated node, library and chip report
 out/grx930_package.png      pad ring and TFBGA-196 ball map
 out/grx930_padring.csv      pad coordinates; out/grx930_ballmap.csv nets
 out/fabtwin/<run-id>/       run.json, observations.csv and report.md
-out/fabtwin/<run-id>/wafer_map.csv  per-die radius, density and expected yield
-out/fabtwin/<run-id>/wafer_map.svg  2D radial yield map
+out/fabtwin/<run-id>/wafer_map.csv  per-die position, angle, density and yield
+out/fabtwin/<run-id>/wafer_map.svg  2D radial/angular/clustered yield map
 out/fabtwin/fabtwin.db      SQLite index for runs, observations and report hashes
 out/fabtwin/comparisons/    generated run-to-run comparison reports
 baselines/phase0_baseline.json  committed, run-independent baseline fingerprints

@@ -1,10 +1,12 @@
-# Phase 1 wafer map: GRX930 radial defect-density and yield profile. The radial
-# profile in the yield YAML is a planning assumption, not a measured wafer map.
+# Phase 1 wafer map: GRX930 radial, angular and clustered defect-density and
+# yield profile. The spatial terms in the yield YAML are planning assumptions,
+# not a measured wafer map.
 schema_version: "0.1"
 id: grx930_yield_wafer_map_28nm
 description: >-
-  Sample GRX930 radial die yield, edge-to-center yield ratio, radial yield
-  slope and zone-level defect density under a planning edge-boost profile.
+  Sample GRX930 die yield, edge-to-center yield ratio, radial yield slope and
+  zone-level defect density under a planning radial, angular and clustered
+  defect profile.
 product: grx930
 process: grx28@0.1.0
 seed: 20261106

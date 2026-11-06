@@ -308,13 +308,16 @@ expected yield and exclude die-sampling noise; the distributions are
 assumptions, not calibration.
 
 The wafer-map session `scenarios/grx930_yield_wafer_map_28nm.yaml` adds a radial
-within-wafer profile, D(r) = D0 * (1 + edge_boost * (r/R)^p), and emits
-zone-level defect-density and yield observations plus center/edge yield, the
-edge-to-center ratio and a radial slope. At the planning profile the model gives
-99.35% mean die yield, 99.63% center yield, 99.11% edge yield and a slope of
--5.7e-5 per mm. The map has no angular or clustering structure; the profile is
-an assumption, not measured map data. The run writes `wafer_map.csv` (one row
-per die) and `wafer_map.svg` (2D heat map), both hashed into the run manifest.
+within-wafer profile, a three-lobe angular term and two Gaussian defect
+clusters, and emits zone-level defect-density and yield observations plus
+center/edge yield, the edge-to-center ratio and a radial slope. The density is
+D0 times a radial factor (1 + edge_boost * (r/R)^p), an angular factor (1 +
+amplitude * cos(h * (theta - phase))), and a cluster factor (1 + the sum of
+Gaussian hotspot strengths). At the planning profile the model gives 99.31%
+mean die yield, 99.63% center yield, 99.10% edge yield and a slope of -5.6e-5 per
+mm. The lobes and clusters are assumptions, not measured map data. The run
+writes `wafer_map.csv` (one row per die, including angle) and `wafer_map.svg`
+(2D heat map with cluster rings), both hashed into the run manifest.
 
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains

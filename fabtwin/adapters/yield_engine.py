@@ -918,6 +918,18 @@ class YieldWaferMapEngine:
                     "edge_boost": spatial.edge_boost,
                     "radial_exponent": spatial.radial_exponent,
                     "radial_bins": spatial.radial_bins,
+                    "angular_amplitude": spatial.angular_amplitude,
+                    "angular_harmonics": spatial.angular_harmonics,
+                    "angular_phase_deg": spatial.angular_phase_deg,
+                    "clusters": [
+                        {
+                            "x_mm": cluster.x_mm,
+                            "y_mm": cluster.y_mm,
+                            "sigma_mm": cluster.sigma_mm,
+                            "strength": cluster.strength,
+                        }
+                        for cluster in spatial.clusters
+                    ],
                 },
                 "zones": [
                     {
@@ -937,9 +949,10 @@ class YieldWaferMapEngine:
                     "samples": scenario.samples,
                     "seed": scenario.seed,
                     "scope": (
-                        "radial defect-density profile plus die and "
-                        "assembly sampling; no angular or clustering "
-                        "structure"
+                        "radial, angular and Gaussian-cluster defect-density "
+                        "profile plus die and assembly sampling; the spatial "
+                        "terms are planning assumptions, not measured "
+                        "signatures"
                     ),
                 },
             },
@@ -961,8 +974,8 @@ class YieldWaferMapEngine:
             warnings=(
                 "Wafer map is an F1 planning profile, not a measured "
                 "wafer map.",
-                "The radial density profile is an assumption; it carries "
-                "no angular or spatial-clustering structure.",
+                "The radial, angular and cluster density terms are planning "
+                "assumptions; they are not a measured wafer signature.",
                 "Zone yields use modelled expected yield; the wafer mean "
                 "and package counts include sampling noise.",
             ),

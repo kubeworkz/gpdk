@@ -14,6 +14,7 @@ _CSV_FIELDS = [
     "x_mm",
     "y_mm",
     "radius_mm",
+    "theta_deg",
     "normalized_radius",
     "defect_density_per_cm2",
     "expected_die_yield",
@@ -36,12 +37,14 @@ def to_csv(estimate: WaferMapEstimate) -> bytes:
     ):
         x, y = position
         radius = math.hypot(x, y)
+        theta = math.degrees(math.atan2(y, x))
         writer.writerow(
             {
                 "die_index": index,
                 "x_mm": f"{x:.3f}",
                 "y_mm": f"{y:.3f}",
                 "radius_mm": f"{radius:.3f}",
+                "theta_deg": f"{theta:.2f}",
                 "normalized_radius": (
                     f"{radius / estimate.usable_radius_mm:.3f}"
                 ),
@@ -140,6 +143,16 @@ def to_svg(
             f'width="{die_side:.2f}" height="{die_side:.2f}" '
             f'fill="{_colour(fraction)}"/>'
         )
+    for cluster in estimate.clusters:
+        cluster_x = center_x + cluster.x_mm * scale
+        cluster_y = center_y - cluster.y_mm * scale
+        cluster_radius = max(2.0 * cluster.sigma_mm * scale, 2.5)
+        parts.append(
+            f'<circle class="cluster" cx="{cluster_x:.1f}" '
+            f'cy="{cluster_y:.1f}" r="{cluster_radius:.1f}" '
+            'fill="none" stroke="#6a3d9a" stroke-width="1.2" '
+            'stroke-dasharray="4 3"/>'
+        )
     parts.extend(
         [
             (
@@ -170,6 +183,14 @@ def to_svg(
                 f"wafer Ø {estimate.wafer_diameter_mm:.0f} mm · "
                 f"{estimate.gross_dies_per_wafer} die · "
                 f"{estimate.samples} samples</text>"
+            ),
+            (
+                '<text x="450" y="800" font-family="sans-serif" '
+                'font-size="12" fill="#555555">'
+                f"angular {estimate.angular_harmonics}θ "
+                f"±{estimate.angular_amplitude * 100:.1f}% · "
+                f"purple rings: {len(estimate.clusters)} assumed "
+                "clusters</text>"
             ),
             "</svg>",
         ]

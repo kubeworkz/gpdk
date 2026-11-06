@@ -5,7 +5,7 @@
 # calibrated data before using the output for a schedule or contract.
 schema_version: "0.1"
 id: grx930_28nm_yield
-revision: "0.1.0"
+revision: "0.2.0"
 product: grx930
 process: grx28@0.1.0
 description: >-
@@ -45,11 +45,26 @@ variation:
   defect_density_cv_wafer: 0.10
   assembly_ppm_cv_lot: 0.10
 
-# Within-wafer radial planning profile: D(r) = D0 * (1 + edge_boost *
-# (r / R_usable) ** radial_exponent). With this block present,
-# defects.density_per_cm2 is the wafer-center density. The profile applies only
-# to the wafer-map session; it has no angular or clustering structure.
+# Within-wafer planning profile:
+#   D(r, theta) = D0 * (1 + edge_boost * (r / R_usable) ** radial_exponent)
+#     * (1 + angular_amplitude * cos(angular_harmonics * (theta - phase)))
+#     * (1 + sum(cluster strength * exp(-0.5 * (distance / sigma) ** 2))).
+# With this block present, defects.density_per_cm2 is the wafer-center density.
+# The angular lobes and Gaussian clusters are planning assumptions, not measured
+# signatures. The profile applies only to the wafer-map session.
 spatial:
   edge_boost: 2.0
   radial_exponent: 3.0
   radial_bins: 5
+  angular_amplitude: 0.18
+  angular_harmonics: 3
+  angular_phase_deg: 20.0
+  clusters:
+    - x_mm: 62.0
+      y_mm: 48.0
+      sigma_mm: 15.0
+      strength: 1.4
+    - x_mm: -94.0
+      y_mm: -46.0
+      sigma_mm: 11.0
+      strength: 2.0

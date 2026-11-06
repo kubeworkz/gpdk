@@ -223,17 +223,47 @@ class VariationSpec:
 
 
 @dataclass(frozen=True)
-class SpatialSpec:
-    """Radial within-wafer defect-density profile.
+class DefectCluster:
+    """A smooth Gaussian defect-density hotspot.
 
-    D(r) = D0 * (1 + edge_boost * (r / R_usable) ** radial_exponent), where D0
-    is the nominal density in the yield assumptions. With this block present,
-    the nominal density is the wafer-center value.
+    ``strength`` multiplies the local radial and angular density; a strength of
+    1.0 doubles the density at the cluster center. All values are planning
+    assumptions, not measured hotspots.
+    """
+
+    x_mm: float
+    y_mm: float
+    sigma_mm: float
+    strength: float
+
+    def __post_init__(self) -> None:
+        for name in ("x_mm", "y_mm", "sigma_mm", "strength"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"cluster {name} must be finite")
+        if self.sigma_mm <= 0:
+            raise ValueError("cluster sigma must be positive")
+        if self.strength < 0:
+            raise ValueError("cluster strength must be non-negative")
+
+
+@dataclass(frozen=True)
+class SpatialSpec:
+    """Within-wafer defect-density profile with angular and cluster terms.
+
+    D(r, theta) = D0 * radial(r) * angular(theta) * (1 + cluster_boost(x, y)),
+    where radial(r) = 1 + edge_boost * (r / R_usable) ** radial_exponent,
+    angular(theta) = 1 + angular_amplitude * cos(angular_harmonics *
+    (theta - angular_phase)), and cluster_boost sums Gaussian hotspots. With
+    this block present, the nominal density is the wafer-center value.
     """
 
     edge_boost: float = 2.0
     radial_exponent: float = 3.0
     radial_bins: int = 5
+    angular_amplitude: float = 0.0
+    angular_harmonics: int = 3
+    angular_phase_deg: float = 0.0
+    clusters: tuple[DefectCluster, ...] = ()
 
     def __post_init__(self) -> None:
         if self.edge_boost < 0:
@@ -242,16 +272,41 @@ class SpatialSpec:
             raise ValueError("radial exponent must be positive")
         if self.radial_bins < 2:
             raise ValueError("radial bins must be at least two")
+        if not 0.0 <= self.angular_amplitude < 1.0:
+            raise ValueError("angular amplitude must be in [0, 1)")
+        if self.angular_harmonics < 1:
+            raise ValueError("angular harmonics must be positive")
+        if not math.isfinite(self.angular_phase_deg):
+            raise ValueError("angular phase must be finite")
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> "SpatialSpec":
         spatial = raw.get("spatial")
         if not isinstance(spatial, Mapping):
             raise ValueError("yield model needs a spatial mapping")
+        raw_clusters = spatial.get("clusters", [])
+        if not isinstance(raw_clusters, list):
+            raise ValueError("spatial clusters must be a list")
+        clusters: list[DefectCluster] = []
+        for item in raw_clusters:
+            if not isinstance(item, Mapping):
+                raise ValueError("spatial cluster must be a mapping")
+            clusters.append(
+                DefectCluster(
+                    x_mm=float(item["x_mm"]),
+                    y_mm=float(item["y_mm"]),
+                    sigma_mm=float(item["sigma_mm"]),
+                    strength=float(item["strength"]),
+                )
+            )
         return cls(
             edge_boost=float(spatial.get("edge_boost", 2.0)),
             radial_exponent=float(spatial.get("radial_exponent", 3.0)),
             radial_bins=int(spatial.get("radial_bins", 5)),
+            angular_amplitude=float(spatial.get("angular_amplitude", 0.0)),
+            angular_harmonics=int(spatial.get("angular_harmonics", 3)),
+            angular_phase_deg=float(spatial.get("angular_phase_deg", 0.0)),
+            clusters=tuple(clusters),
         )
 
 
@@ -372,6 +427,10 @@ class WaferMapEstimate:
     cost_per_good_package_usd: float
     cost_per_good_package_stderr: float | None
     zones: tuple[WaferZone, ...]
+    angular_amplitude: float
+    angular_harmonics: int
+    angular_phase_deg: float
+    clusters: tuple[DefectCluster, ...]
     die_positions: tuple[tuple[float, float], ...] = field(repr=False)
     die_yields: tuple[float, ...] = field(repr=False)
     die_defect_densities: tuple[float, ...] = field(repr=False)
@@ -762,11 +821,34 @@ def simulate_wafer_map(
         assumptions.per_pad_defect_ppm,
     )
     radii = tuple(math.hypot(x, y) for x, y in grid.positions)
-    densities = tuple(
-        assumptions.defect_density_per_cm2
-        * (1.0 + spatial.edge_boost * (r / radius) ** spatial.radial_exponent)
-        for r in radii
-    )
+    phase = math.radians(spatial.angular_phase_deg)
+    densities_list: list[float] = []
+    for (x, y), r in zip(grid.positions, radii):
+        radial = 1.0 + spatial.edge_boost * (
+            r / radius
+        ) ** spatial.radial_exponent
+        theta = math.atan2(y, x)
+        angular = 1.0 + spatial.angular_amplitude * math.cos(
+            spatial.angular_harmonics * (theta - phase)
+        )
+        cluster_boost = sum(
+            cluster.strength
+            * math.exp(
+                -0.5
+                * (
+                    ((x - cluster.x_mm) ** 2 + (y - cluster.y_mm) ** 2)
+                    / cluster.sigma_mm**2
+                )
+            )
+            for cluster in spatial.clusters
+        )
+        densities_list.append(
+            assumptions.defect_density_per_cm2
+            * radial
+            * angular
+            * (1.0 + cluster_boost)
+        )
+    densities = tuple(densities_list)
     expected = tuple(
         math.exp(-critical_cm2 * density) for density in densities
     )
@@ -863,6 +945,10 @@ def simulate_wafer_map(
         cost_per_good_package_usd=cost_mean,
         cost_per_good_package_stderr=cost_stderr,
         zones=tuple(zones),
+        angular_amplitude=spatial.angular_amplitude,
+        angular_harmonics=spatial.angular_harmonics,
+        angular_phase_deg=spatial.angular_phase_deg,
+        clusters=spatial.clusters,
         die_positions=grid.positions,
         die_yields=expected,
         die_defect_densities=densities,

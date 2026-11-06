@@ -237,7 +237,7 @@ def test_yield_scenario_records_wafer_package_and_uncertainty(tmp_path):
     assert uncertainties["cost_per_good_package_usd"]
     assert {row["evidence_class"] for row in rows} == {"assumed"}
     assert {row["model_version"] for row in rows} == {
-        "yield-assumptions@0.1.0"
+        "yield-assumptions@0.2.0"
     }
     assert {row["source_artifact"] for row in rows} == {
         "yields/grx930_28nm.yaml"
@@ -340,6 +340,23 @@ def test_wafer_map_scenario_records_radial_zones(tmp_path):
         "edge_boost": 2.0,
         "radial_exponent": 3.0,
         "radial_bins": 5,
+        "angular_amplitude": 0.18,
+        "angular_harmonics": 3,
+        "angular_phase_deg": 20.0,
+        "clusters": [
+            {
+                "x_mm": 62.0,
+                "y_mm": 48.0,
+                "sigma_mm": 15.0,
+                "strength": 1.4,
+            },
+            {
+                "x_mm": -94.0,
+                "y_mm": -46.0,
+                "sigma_mm": 11.0,
+                "strength": 2.0,
+            },
+        ],
     }
     assert len(engine["metadata"]["zones"]) == 5
     with (result.run_dir / "observations.csv").open(
@@ -384,6 +401,8 @@ def test_wafer_map_scenario_records_radial_zones(tmp_path):
     map_svg = (result.run_dir / "wafer_map.svg").read_text(encoding="utf-8")
     assert map_svg.startswith("<?xml")
     assert map_svg.count('class="die"') == 4865
+    assert map_svg.count('class="cluster"') == 2
+    assert "angular 3θ" in map_svg
     report_text = (result.run_dir / "report.md").read_text(encoding="utf-8")
     assert "wafer_map.svg" in report_text
     verified = ObservationStore(result.store_path).verify_artifacts()
