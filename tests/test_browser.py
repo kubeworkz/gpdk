@@ -64,6 +64,12 @@ def test_a_list_entry_is_selected_by_id():
     result = run_scenario(FACTORY, {"factory": {"tool_groups.litho.tools": 4}})
     assert result["overrides"][0]["from"] == 3.0
     assert _value(result, "tool_group", "baseline:litho", "tool_utilization") < 0.7
+    cases = result["engines"][0]["metadata"]["cases"]
+    assert next(c for c in cases if c["id"] == "baseline")["tool_counts"]["litho"] == 4
+
+
+def test_the_result_is_json(wafer_map):
+    assert json.loads(json.dumps(wafer_map)) == wafer_map
 
 
 def test_overrides_do_not_touch_the_input_files():

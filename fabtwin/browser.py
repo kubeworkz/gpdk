@@ -73,7 +73,11 @@ def run_scenario(
     scenario_path: str | Path,
     overrides: Mapping[str, Mapping[str, float]] | None = None,
 ) -> dict[str, Any]:
-    """Run ``scenario_path`` with ``overrides`` applied; return plain data."""
+    """Run ``scenario_path`` with ``overrides`` applied; return plain data.
+
+    The result is JSON-serializable: engine metadata is the same mapping
+    ``run.json`` records.
+    """
     scenario = load_scenario(scenario_path)
     applied: list[dict[str, Any]] = []
     with tempfile.TemporaryDirectory(prefix="fabtwin-browser-") as work:
@@ -106,7 +110,10 @@ def run_scenario(
         "scenario_id": scenario.id,
         "overrides": applied,
         "engines": [
-            {"name": r.engine, "version": r.engine_version, "fidelity": r.fidelity, "model_version": r.model_version}
+            {
+                "name": r.engine, "version": r.engine_version, "fidelity": r.fidelity,
+                "model_version": r.model_version, "metadata": dict(r.metadata),
+            }
             for r in results
         ],
         "observations": [asdict(o) for o in observations],
