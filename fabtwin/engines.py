@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from .adapters.gpdk import GpdkEngine
 from .adapters.pta import PtaEngine
-from .adapters.yield_engine import YieldEngine
+from .adapters.yield_engine import YieldEngine, YieldSensitivityEngine
 from .model import Engine
 
 ENGINE_CLASSES = {
     GpdkEngine.name: GpdkEngine,
     PtaEngine.name: PtaEngine,
     YieldEngine.name: YieldEngine,
+    YieldSensitivityEngine.name: YieldSensitivityEngine,
 }
 
 

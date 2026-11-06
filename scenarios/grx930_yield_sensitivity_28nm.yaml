@@ -1,0 +1,25 @@
+# Phase 1 sensitivity: GRX930 yield versus defect density, pad count, and
+# assembly per-pad defect rate. Curves use the same assumptions as the yield
+# baseline; they are planning sensitivities, not measured process corners.
+schema_version: "0.1"
+id: grx930_yield_sensitivity_28nm
+description: >-
+  Sweep GRX930 die yield, good packages per wafer, and cost per good package
+  over the planning defect-density, pad-count, and assembly-tolerance points
+  in yields/grx930_28nm.yaml.
+product: grx930
+process: grx28@0.1.0
+seed: 20261106
+samples: 100
+engines:
+  - yield_sensitivity
+inputs:
+  chip: chips/grx930.yaml
+  yield: yields/grx930_28nm.yaml
+outputs:
+  - defect_density_per_cm2
+  - pad_count
+  - assembly_per_pad_ppm
+  - die_yield
+  - good_packages_per_wafer
+  - cost_per_good_package_usd

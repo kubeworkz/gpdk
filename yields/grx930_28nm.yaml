@@ -29,3 +29,9 @@ assembly:
   per_pad_defect_ppm: 8.0
   package_cost_usd: 1.20
   test_cost_usd: 0.40
+
+# Sensitivity points are planning inputs, not measured process corners.
+sensitivity:
+  defect_density_per_cm2: [0.02, 0.05, 0.08, 0.12, 0.20]
+  pad_counts: [57, 112, 178, 220]
+  assembly_per_pad_ppm: [2.0, 5.0, 8.0, 12.0, 20.0]

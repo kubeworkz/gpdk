@@ -25,9 +25,21 @@ scenarios are
 Each run is indexed in `out/fabtwin/fabtwin.db`; `python -m fabtwin query`
 provides the cross-run observation path. Phase 0 now defines three products:
 GRX930, G100 and PTA. G100 is the digital GPU profile; PTA is a separate
-photonic chiplet with an MCM package definition. Phase 1 starts with the
-GRX930 die/package yield slice; its assumptions are in `yields/grx930_28nm.yaml`
+photonic chiplet with an MCM package definition. Phase 1 implements the GRX930
+die/package planning slice: a 300 mm wafer grid, Poisson critical-area die
+yield, exponential per-pad assembly yield, and cost per good package, with
+seeded sampling uncertainty. Its assumptions are in `yields/grx930_28nm.yaml`
 and its session is `scenarios/grx930_yield_28nm.yaml`.
+
+At those assumptions the model gives 4,865 gross dies per wafer, 99.63% die
+yield, 4,816 good packages and $2.55 per good package. The sensitivity session
+`scenarios/grx930_yield_sensitivity_28nm.yaml` sweeps defect density
+(0.02–0.20 cm⁻²), pad count (57–220) and assembly tolerance (2–20 ppm per pad).
+Density takes die yield from 99.91% to 99.11% and cost from $2.543 to $2.553;
+57 → 220 pads takes good packages from 4,822 to 4,815; 2 → 20 ppm takes them
+from 4,822 to 4,805. The defect-density effect is small because the modelled
+critical area is 4.55 mm² of a 12.99 mm² die. Every value is `assumed`: this is
+scenario yield under stated assumptions, not a foundry yield prediction.
 
 ## Quick start
 
@@ -40,6 +52,7 @@ python -m fabtwin run scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/g100_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_28nm_baseline.yaml
 python -m fabtwin run scenarios/grx930_yield_28nm.yaml
+python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml
 python -m fabtwin query --runs
 python -m fabtwin query --reports
 python -m fabtwin query --run RUN_ID --metric die_area_m2
@@ -110,7 +123,8 @@ scenarios/grx930_28nm_baseline.yaml  GRX930 Phase 0 baseline
 scenarios/g100_28nm_baseline.yaml    G100 Phase 0 baseline
 scenarios/pta_28nm_baseline.yaml     PTA topology/package baseline
 scenarios/grx930_yield_28nm.yaml    GRX930 die/package yield vertical slice
-gpdk/dieyield.py             wafer grid, Poisson yield, assembly and cost model
+scenarios/grx930_yield_sensitivity_28nm.yaml  GRX930 yield sensitivity curves
+gpdk/dieyield.py             wafer grid, Poisson yield, assembly, cost and curves
 gpdk/layout.py              abstract FinFET inverter layout, SVG/PNG
 gpdk/drc.py                 fin/gate grid, COAG, enclosure, width/space checks
 gpdk/gds.py                 GDSII writer and reader

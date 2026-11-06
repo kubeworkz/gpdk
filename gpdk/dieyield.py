@@ -136,6 +136,39 @@ class YieldAssumptions:
 
 
 @dataclass(frozen=True)
+class SensitivitySpec:
+    defect_density_per_cm2: tuple[float, ...]
+    pad_counts: tuple[int, ...]
+    assembly_per_pad_ppm: tuple[float, ...]
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "SensitivitySpec":
+        sensitivity = raw.get("sensitivity")
+        if not isinstance(sensitivity, Mapping):
+            raise ValueError("yield model needs a sensitivity mapping")
+        densities = tuple(
+            float(value)
+            for value in sensitivity.get("defect_density_per_cm2", [])
+        )
+        pads = tuple(
+            int(value) for value in sensitivity.get("pad_counts", [])
+        )
+        ppm = tuple(
+            float(value)
+            for value in sensitivity.get("assembly_per_pad_ppm", [])
+        )
+        if not densities or not pads or not ppm:
+            raise ValueError("sensitivity lists must not be empty")
+        if any(value < 0 for value in densities):
+            raise ValueError("defect densities must be non-negative")
+        if any(value <= 0 for value in pads):
+            raise ValueError("pad counts must be positive")
+        if any(value < 0 for value in ppm):
+            raise ValueError("assembly ppm values must be non-negative")
+        return cls(densities, pads, ppm)
+
+
+@dataclass(frozen=True)
 class YieldEstimate:
     die_area_mm2: float
     critical_area_mm2: float
@@ -306,6 +339,11 @@ def simulate_yield(
             )
             package_costs.append(total_cost / good_package_count)
 
+    if not package_costs:
+        raise ValueError(
+            "no good packages in any sample; cost per good package is "
+            "undefined"
+        )
     die_mean, die_stderr = _mean_stderr(die_yields)
     good_die_mean, good_die_stderr = _mean_stderr(good_dies)
     package_mean, package_stderr = _mean_stderr(good_packages)
@@ -363,8 +401,92 @@ def defect_density_curve(
                 "die_yield": estimate.die_yield,
                 "die_yield_stderr": estimate.die_yield_stderr or 0.0,
                 "good_packages_per_wafer": estimate.good_packages_per_wafer,
+                "good_packages_stderr": (
+                    estimate.good_packages_stderr or 0.0
+                ),
                 "cost_per_good_package_usd": (
                     estimate.cost_per_good_package_usd
+                ),
+                "cost_per_good_package_stderr": (
+                    estimate.cost_per_good_package_stderr or 0.0
+                ),
+            }
+        )
+    return rows
+
+
+def pad_count_curve(
+    assumptions: YieldAssumptions,
+    die_area_mm2: float,
+    pad_counts: tuple[int, ...],
+    *,
+    samples: int = 200,
+    seed: int = 0,
+) -> list[dict[str, float]]:
+    """Return a seeded assembly-yield curve over pad counts."""
+    rows: list[dict[str, float]] = []
+    for index, pad_count in enumerate(pad_counts):
+        estimate = simulate_yield(
+            assumptions,
+            die_area_mm2,
+            pad_count,
+            samples=samples,
+            seed=seed + index,
+        )
+        rows.append(
+            {
+                "pad_count": float(pad_count),
+                "die_yield": estimate.die_yield,
+                "die_yield_stderr": estimate.die_yield_stderr or 0.0,
+                "good_packages_per_wafer": estimate.good_packages_per_wafer,
+                "good_packages_stderr": (
+                    estimate.good_packages_stderr or 0.0
+                ),
+                "cost_per_good_package_usd": (
+                    estimate.cost_per_good_package_usd
+                ),
+                "cost_per_good_package_stderr": (
+                    estimate.cost_per_good_package_stderr or 0.0
+                ),
+            }
+        )
+    return rows
+
+
+def assembly_tolerance_curve(
+    assumptions: YieldAssumptions,
+    die_area_mm2: float,
+    pad_count: int,
+    ppm_values: tuple[float, ...],
+    *,
+    samples: int = 200,
+    seed: int = 0,
+) -> list[dict[str, float]]:
+    """Return a seeded assembly-yield curve over per-pad defect ppm."""
+    rows: list[dict[str, float]] = []
+    for index, ppm in enumerate(ppm_values):
+        scenario = replace(assumptions, per_pad_defect_ppm=ppm)
+        estimate = simulate_yield(
+            scenario,
+            die_area_mm2,
+            pad_count,
+            samples=samples,
+            seed=seed + index,
+        )
+        rows.append(
+            {
+                "assembly_per_pad_ppm": ppm,
+                "die_yield": estimate.die_yield,
+                "die_yield_stderr": estimate.die_yield_stderr or 0.0,
+                "good_packages_per_wafer": estimate.good_packages_per_wafer,
+                "good_packages_stderr": (
+                    estimate.good_packages_stderr or 0.0
+                ),
+                "cost_per_good_package_usd": (
+                    estimate.cost_per_good_package_usd
+                ),
+                "cost_per_good_package_stderr": (
+                    estimate.cost_per_good_package_stderr or 0.0
                 ),
             }
         )

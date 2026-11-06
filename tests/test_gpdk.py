@@ -22,10 +22,13 @@ from gpdk.block import (
 from gpdk.cells import Library, load_libraries
 from gpdk.device import DeviceModel
 from gpdk.dieyield import (
+    SensitivitySpec,
     WaferSpec,
     YieldAssumptions,
+    assembly_tolerance_curve,
     defect_density_curve,
     die_grid,
+    pad_count_curve,
     package_assembly_yield,
     poisson_die_yield,
     simulate_yield,
@@ -486,3 +489,89 @@ def test_defect_density_curve_is_monotonic():
     yields = [row["die_yield"] for row in rows]
     assert yields == sorted(yields, reverse=True)
     assert all("die_yield_stderr" in row for row in rows)
+
+
+def _sensitivity_assumptions() -> YieldAssumptions:
+    return YieldAssumptions(
+        id="test_sensitivity",
+        product="grx930",
+        process="grx28@0.1.0",
+        revision="0.1.0",
+        wafer=WaferSpec(100.0, 0.0, 0.0, 1000.0),
+        defect_density_per_cm2=0.1,
+        critical_area_fraction=0.5,
+        base_assembly_yield=0.99,
+        per_pad_defect_ppm=10.0,
+        package_cost_usd=1.0,
+        test_cost_usd=0.2,
+    )
+
+
+def test_sensitivity_spec_parses_and_rejects_bad_points():
+    spec = SensitivitySpec.from_mapping(
+        {
+            "sensitivity": {
+                "defect_density_per_cm2": [0.02, 0.2],
+                "pad_counts": [57, 220],
+                "assembly_per_pad_ppm": [2.0, 20.0],
+            }
+        }
+    )
+    assert spec.defect_density_per_cm2 == (0.02, 0.2)
+    assert spec.pad_counts == (57, 220)
+    with pytest.raises(ValueError, match="sensitivity mapping"):
+        SensitivitySpec.from_mapping({})
+    with pytest.raises(ValueError, match="pad counts must be positive"):
+        SensitivitySpec.from_mapping(
+            {
+                "sensitivity": {
+                    "defect_density_per_cm2": [0.1],
+                    "pad_counts": [0],
+                    "assembly_per_pad_ppm": [8.0],
+                }
+            }
+        )
+
+
+def test_pad_count_curve_is_monotonic_and_reproducible():
+    assumptions = replace(_sensitivity_assumptions(), per_pad_defect_ppm=2000.0)
+    first = pad_count_curve(
+        assumptions, 100.0, (57, 112, 178, 220), samples=20, seed=5
+    )
+    second = pad_count_curve(
+        assumptions, 100.0, (57, 112, 178, 220), samples=20, seed=5
+    )
+    assert first == second
+    packages = [row["good_packages_per_wafer"] for row in first]
+    assert packages == sorted(packages, reverse=True)
+    costs = [row["cost_per_good_package_usd"] for row in first]
+    assert costs == sorted(costs)
+    assert all(row["good_packages_stderr"] > 0.0 for row in first)
+    assert all(row["cost_per_good_package_stderr"] > 0.0 for row in first)
+
+
+def test_assembly_tolerance_curve_is_monotonic():
+    rows = assembly_tolerance_curve(
+        _sensitivity_assumptions(),
+        100.0,
+        178,
+        (0.0, 500.0, 2000.0),
+        samples=20,
+        seed=9,
+    )
+    packages = [row["good_packages_per_wafer"] for row in rows]
+    assert packages == sorted(packages, reverse=True)
+    assert rows[0]["assembly_per_pad_ppm"] == 0.0
+    assert rows[0]["good_packages_per_wafer"] > rows[-1][
+        "good_packages_per_wafer"
+    ]
+    assert rows[0]["cost_per_good_package_usd"] < rows[-1][
+        "cost_per_good_package_usd"
+    ]
+    assert all(row["die_yield_stderr"] > 0.0 for row in rows)
+
+
+def test_zero_good_packages_is_reported_clearly():
+    assumptions = replace(_sensitivity_assumptions(), base_assembly_yield=0.0)
+    with pytest.raises(ValueError, match="no good packages"):
+        simulate_yield(assumptions, 100.0, 100, samples=5)

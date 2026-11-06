@@ -23,6 +23,9 @@ SCENARIO = ROOT / "scenarios" / "grx930_28nm_baseline.yaml"
 G100_SCENARIO = ROOT / "scenarios" / "g100_28nm_baseline.yaml"
 PTA_SCENARIO = ROOT / "scenarios" / "pta_28nm_baseline.yaml"
 YIELD_SCENARIO = ROOT / "scenarios" / "grx930_yield_28nm.yaml"
+YIELD_SENSITIVITY_SCENARIO = (
+    ROOT / "scenarios" / "grx930_yield_sensitivity_28nm.yaml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -233,6 +236,48 @@ def test_yield_scenario_records_wafer_package_and_uncertainty(tmp_path):
     assert {row["source_artifact"] for row in rows} == {
         "yields/grx930_28nm.yaml"
     }
+
+
+def test_yield_sensitivity_scenario_records_curves(tmp_path):
+    loaded = load_scenario(YIELD_SENSITIVITY_SCENARIO)
+    assert loaded.engines == ("yield_sensitivity",)
+    assert validate_scenario(loaded) == []
+    result = execute(loaded, tmp_path)
+    assert result.observation_count == 56
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    engine = manifest["engines"][0]
+    assert engine["name"] == "yield_sensitivity"
+    assert engine["metadata"]["curves"] == {
+        "defect_density_per_cm2": [0.02, 0.05, 0.08, 0.12, 0.2],
+        "pad_counts": [57, 112, 178, 220],
+        "assembly_per_pad_ppm": [2.0, 5.0, 8.0, 12.0, 20.0],
+    }
+    with (result.run_dir / "observations.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 56
+    assert {row["entity_type"] for row in rows} == {"sensitivity_point"}
+    assert {row["evidence_class"] for row in rows} == {"assumed"}
+    assert {row["source_artifact"] for row in rows} == {
+        "yields/grx930_28nm.yaml"
+    }
+    points = {row["entity_id"] for row in rows}
+    assert "defect_density:0.2" in points
+    assert "pad_count:178" in points
+    assert "assembly_tolerance:20" in points
+    assert len(points) == 14
+    by_metric = {}
+    for row in rows:
+        assert row["unit"]
+        by_metric.setdefault(row["metric"], []).append(row)
+    assert float(by_metric["pad_count"][0]["value"]) == 57.0
+    assert all(0.0 < float(row["value"]) <= 1.0 for row in by_metric["die_yield"])
+    assert all(float(row["uncertainty"]) > 0.0 for row in by_metric["die_yield"])
+    assert all(
+        float(row["uncertainty"]) > 0.0
+        for row in by_metric["cost_per_good_package_usd"]
+    )
 
 
 def test_sqlite_store_indexes_run(scenario, tmp_path):

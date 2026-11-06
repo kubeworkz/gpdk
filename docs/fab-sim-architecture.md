@@ -287,15 +287,25 @@ measured data.
   DRC deck.
 - Sensitivity: defect density, die area, pad count, assembly tolerance.
 
-The first implemented slice covers the projected GRX930 die grid, Poisson
+The implemented slice covers the projected GRX930 die grid, Poisson
 critical-area yield, package assembly, cost per good package, and seeded
 sampling uncertainty. It lives in `gpdk/dieyield.py`, `yields/grx930_28nm.yaml`,
-and `scenarios/grx930_yield_28nm.yaml`; defect-density and pad-count curves are
-the next part of the slice.
+and `scenarios/grx930_yield_28nm.yaml`. Three sensitivity curves — defect
+density, pad count, and assembly per-pad defect rate — are emitted by
+`scenarios/grx930_yield_sensitivity_28nm.yaml` as 56 `sensitivity_point`
+observations, each with the standard error of the sampled mean. The sweep points
+are listed under `sensitivity` in the yield assumptions; they are planning
+points, not measured process corners.
 
 **Exit gate:** yield-versus-defect-density and yield-versus-pad-count curves with
 uncertainty; a synthetic case with a known answer passes. Absolute yield remains
 an assumption-driven estimate.
+
+The curves and their uncertainty are in place, and the known-answer tests cover
+the wafer-grid count, the Poisson yield equation, assembly-yield monotonicity,
+curve monotonicity, and seeded reproducibility. The gate is met locally for the
+F1 planning model. Absolute yield is still set by the assumptions in
+`yields/grx930_28nm.yaml`, not by measured fab data.
 
 ### Phase 2 — PTA photonic and thermal vertical slice
 
