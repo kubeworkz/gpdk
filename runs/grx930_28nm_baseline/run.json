@@ -1,0 +1,169 @@
+{
+  "artifacts": [
+    {
+      "bytes": 4770,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "c142497ef0d58e837b54725088b1d59a518a9606c8654d8cb4151214cc449fa4"
+    },
+    {
+      "bytes": 5911,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "7cb120d3782500e14630e87dec2077da1c08363f4831b70e1832f3d2ca5c7725"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F0",
+      "metadata": {
+        "best_design_point": "pin_aware",
+        "chip": "GRX930",
+        "description": "Four RV64IMAC cores with 8 KB L1 per core, 64 KB shared L2, two NPUs and operand banks, re-targeted from the measured legacy-node test chip to GRX28. A small, latency-oriented control chip: 1.35M NAND2-equivalent gates and 96 KB of on-chip SRAM.",
+        "design_points": [
+          {
+            "best": false,
+            "binding": "pad ring",
+            "isolation": "DDB",
+            "key": "node9t",
+            "label": "GRX28 9T / 1-finger",
+            "library": "grx28_9t_1f",
+            "tracks": 9.0
+          },
+          {
+            "best": false,
+            "binding": "pad ring",
+            "isolation": "DDB",
+            "key": "track7t5",
+            "label": "+ 7.5T track shrink",
+            "library": "grx28_7t5_1f",
+            "tracks": 7.5
+          },
+          {
+            "best": false,
+            "binding": "pad ring",
+            "isolation": "DDB",
+            "key": "mbff",
+            "label": "+ multibit flip-flops",
+            "library": "grx28_7t5_1f",
+            "tracks": 7.5
+          },
+          {
+            "best": true,
+            "binding": "pad ring",
+            "isolation": "DDB",
+            "key": "pin_aware",
+            "label": "+ pin-density-aware placement",
+            "library": "grx28_7t5_1f",
+            "tracks": 7.5
+          }
+        ],
+        "parameter_evidence": {
+          "as_built": "measured",
+          "planning_assumptions": "assumed",
+          "technology": "literature"
+        },
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        }
+      },
+      "model_version": "gpdk@0.1.0",
+      "name": "gpdk",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T04:34:08+00:00",
+  "inputs": [
+    {
+      "bytes": 865,
+      "path": "scenarios/grx930_28nm_baseline.yaml",
+      "role": "scenario",
+      "sha256": "9a7bbfb08433969ba0e40a133276b03e36b90f98cc088d05a65faa2be419e0d2"
+    },
+    {
+      "bytes": 4763,
+      "path": "chips/grx930.yaml",
+      "role": "chip",
+      "sha256": "3d2a312cd4196c527e8b75fc0a82327746cd59f77d38eb03d96a832cf4f6cbba"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-jjg9y_2q/grx930_28nm_baseline-20261107T043408Z-ad329cf8/run.json",
+  "observations": {
+    "count": 27,
+    "evidence_classes": {
+      "assumed": 24,
+      "measured": 3
+    },
+    "fingerprint_sha256": "0d16b1e6747e9d4e05798bf61dcc39ffaafd5245a999b426de749285af689633",
+    "metrics": [
+      "as_built_clock_frequency_hz",
+      "as_built_content_area_m2",
+      "as_built_die_area_m2",
+      "content_area_m2",
+      "die_area_m2",
+      "native_frequency_hz",
+      "pad_floor_area_m2",
+      "power_at_target_w",
+      "power_density_at_target_w_per_m2"
+    ],
+    "uncertainty": "not_estimated"
+  },
+  "report_path": "/tmp/fabtwin-site-jjg9y_2q/grx930_28nm_baseline-20261107T043408Z-ad329cf8/report.md",
+  "reproduce": "python -m fabtwin run scenarios/grx930_28nm_baseline.yaml --out /tmp/fabtwin-site-jjg9y_2q",
+  "run_dir": "/tmp/fabtwin-site-jjg9y_2q/grx930_28nm_baseline-20261107T043408Z-ad329cf8",
+  "run_id": "grx930_28nm_baseline-20261107T043408Z-ad329cf8",
+  "scenario": {
+    "factory": null,
+    "id": "grx930_28nm_baseline",
+    "mes": null,
+    "outputs": [
+      "as_built_die_area_m2",
+      "as_built_content_area_m2",
+      "as_built_clock_frequency_hz",
+      "die_area_m2",
+      "content_area_m2",
+      "pad_floor_area_m2",
+      "native_frequency_hz",
+      "power_at_target_w",
+      "power_density_at_target_w_per_m2"
+    ],
+    "package": null,
+    "path": "scenarios/grx930_28nm_baseline.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "grx930",
+    "samples": 1,
+    "seed": 20261105,
+    "sha256": "9a7bbfb08433969ba0e40a133276b03e36b90f98cc088d05a65faa2be419e0d2",
+    "yield": null
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T04:34:08+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-jjg9y_2q/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "gpdk is an uncalibrated F0 analytical model; these are scenario estimates, not silicon predictions.",
+    "Uncertainty is not estimated in Phase 0; the uncertainty column is intentionally blank.",
+    "The as-built rows are measured source data, not model outputs."
+  ]
+}

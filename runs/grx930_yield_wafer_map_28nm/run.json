@@ -1,0 +1,225 @@
+{
+  "artifacts": [
+    {
+      "bytes": 5250,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "de07a7c01aab69a7580dbc3a5857f45ca697977c6639956f07d997c092a6bda2"
+    },
+    {
+      "bytes": 5511,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "b651deae208b3c01535106beea1f7999d9dfe593864025da3f6b992f9e07070f"
+    },
+    {
+      "bytes": 284079,
+      "media_type": "text/csv",
+      "path": "wafer_map.csv",
+      "sha256": "8c18aa1506416633696e557ce054e99065339a57885ff4f6c24dad4c6b8a25f4"
+    },
+    {
+      "bytes": 410886,
+      "media_type": "image/svg+xml",
+      "path": "wafer_map.svg",
+      "sha256": "b2e50e13670d3760b94152518306159cc885676e0183c5330e8a78ac55a61ba4"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F1",
+      "metadata": {
+        "chip": "GRX930",
+        "die_area_mm2": 12.992420250000004,
+        "package": {
+          "body_mm": 12.0,
+          "kind": "TFBGA",
+          "name": "TFBGA-196",
+          "pads": 196
+        },
+        "pad_count": 178,
+        "simulation": {
+          "samples": 200,
+          "scope": "radial, angular and Gaussian-cluster defect-density profile plus die and assembly sampling; the spatial terms are planning assumptions, not measured signatures",
+          "seed": 20261106
+        },
+        "spatial": {
+          "angular_amplitude": 0.18,
+          "angular_harmonics": 3,
+          "angular_phase_deg": 20.0,
+          "clusters": [
+            {
+              "sigma_mm": 15.0,
+              "strength": 1.4,
+              "x_mm": 62.0,
+              "y_mm": 48.0
+            },
+            {
+              "sigma_mm": 11.0,
+              "strength": 2.0,
+              "x_mm": -94.0,
+              "y_mm": -46.0
+            }
+          ],
+          "edge_boost": 2.0,
+          "radial_bins": 5,
+          "radial_exponent": 3.0
+        },
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        },
+        "zones": [
+          {
+            "defect_density_per_cm2": 0.08054203187432733,
+            "die_count": 193,
+            "die_yield": 0.9963442813037038,
+            "index": 0,
+            "r_max_mm": 29.4,
+            "r_mid_mm": 14.7,
+            "r_min_mm": 0.0
+          },
+          {
+            "defect_density_per_cm2": 0.08698326467642051,
+            "die_count": 600,
+            "die_yield": 0.996052588969311,
+            "index": 1,
+            "r_max_mm": 58.8,
+            "r_mid_mm": 44.099999999999994,
+            "r_min_mm": 29.4
+          },
+          {
+            "defect_density_per_cm2": 0.11230127398537887,
+            "die_count": 996,
+            "die_yield": 0.9949076730673478,
+            "index": 2,
+            "r_max_mm": 88.2,
+            "r_mid_mm": 73.5,
+            "r_min_mm": 58.8
+          },
+          {
+            "defect_density_per_cm2": 0.1484216608975448,
+            "die_count": 1408,
+            "die_yield": 0.9932748433944684,
+            "index": 3,
+            "r_max_mm": 117.6,
+            "r_mid_mm": 102.9,
+            "r_min_mm": 88.2
+          },
+          {
+            "defect_density_per_cm2": 0.19774048484692244,
+            "die_count": 1668,
+            "die_yield": 0.9910493860021055,
+            "index": 4,
+            "r_max_mm": 147.0,
+            "r_mid_mm": 132.3,
+            "r_min_mm": 117.6
+          }
+        ]
+      },
+      "model_version": "yield-assumptions@0.2.0",
+      "name": "yield_wafer_map",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T04:34:10+00:00",
+  "inputs": [
+    {
+      "bytes": 792,
+      "path": "scenarios/grx930_yield_wafer_map_28nm.yaml",
+      "role": "scenario",
+      "sha256": "225ba8bd71d939ae8fed3ec2561abd2d60e3397d9ab0eb055243da8eb9ada440"
+    },
+    {
+      "bytes": 2279,
+      "path": "yields/grx930_28nm.yaml",
+      "role": "yield",
+      "sha256": "3ebfeb60d2096a28e5066c091201870b2c7ca4acdfcc07bd0ad4444aa5a72a56"
+    },
+    {
+      "bytes": 4763,
+      "path": "chips/grx930.yaml",
+      "role": "chip",
+      "sha256": "3d2a312cd4196c527e8b75fc0a82327746cd59f77d38eb03d96a832cf4f6cbba"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-jjg9y_2q/grx930_yield_wafer_map_28nm-20261107T043410Z-6858144a/run.json",
+  "observations": {
+    "count": 28,
+    "evidence_classes": {
+      "assumed": 28
+    },
+    "fingerprint_sha256": "9f0f65e8e70803c836b1f0dd052d5c33fa18557d0827d3bbc67fe3e85f659769",
+    "metrics": [
+      "assembly_yield",
+      "center_die_yield",
+      "cost_per_good_package_usd",
+      "defect_density_per_cm2",
+      "die_count",
+      "die_yield",
+      "die_yield_mean",
+      "edge_die_yield",
+      "edge_to_center_yield_ratio",
+      "good_packages_per_wafer",
+      "radial_yield_slope_per_mm",
+      "radius_mm"
+    ],
+    "uncertainty": "mixed"
+  },
+  "report_path": "/tmp/fabtwin-site-jjg9y_2q/grx930_yield_wafer_map_28nm-20261107T043410Z-6858144a/report.md",
+  "reproduce": "python -m fabtwin run scenarios/grx930_yield_wafer_map_28nm.yaml --out /tmp/fabtwin-site-jjg9y_2q",
+  "run_dir": "/tmp/fabtwin-site-jjg9y_2q/grx930_yield_wafer_map_28nm-20261107T043410Z-6858144a",
+  "run_id": "grx930_yield_wafer_map_28nm-20261107T043410Z-6858144a",
+  "scenario": {
+    "factory": null,
+    "id": "grx930_yield_wafer_map_28nm",
+    "mes": null,
+    "outputs": [
+      "die_yield_mean",
+      "center_die_yield",
+      "edge_die_yield",
+      "edge_to_center_yield_ratio",
+      "radial_yield_slope_per_mm",
+      "assembly_yield",
+      "good_packages_per_wafer",
+      "cost_per_good_package_usd"
+    ],
+    "package": null,
+    "path": "scenarios/grx930_yield_wafer_map_28nm.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "grx930",
+    "samples": 200,
+    "seed": 20261106,
+    "sha256": "225ba8bd71d939ae8fed3ec2561abd2d60e3397d9ab0eb055243da8eb9ada440",
+    "yield": "yields/grx930_28nm.yaml"
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T04:34:10+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-jjg9y_2q/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "Wafer map is an F1 planning profile, not a measured wafer map.",
+    "The radial, angular and cluster density terms are planning assumptions; they are not a measured wafer signature.",
+    "Zone yields use modelled expected yield; the wafer mean and package counts include sampling noise."
+  ]
+}

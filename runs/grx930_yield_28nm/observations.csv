@@ -1,0 +1,10 @@
+observation_id,run_id,entity_type,entity_id,metric,value,unit,uncertainty,evidence_class,source_artifact,model_version
+obs-66c86be63302f759,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,die_area_m2,1.299242025e-05,m2,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-dc90d65a97af562e,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,critical_area_m2,4.5473470875e-06,m2,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-5062f7db76e72ece,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,gross_dies_per_wafer,4865,1,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-dc7908a1498d0deb,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,die_yield,0.996339157245632,1,2.71958878700683e-05,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-7f1e20bd29c553b0,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,assembly_yield,0.993584128339878,1,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-f8b93c831ea4ac53,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,known_good_dies_per_wafer,4847.19,1,0.132307994487882,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-6c70408f8c6bf965,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,good_packages_per_wafer,4816,1,0.212219313534459,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-fe60fdda05ef480b,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,cost_per_known_good_die_usd,0.928372933596579,USD,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-b6bc2f5e3720003f,grx930_yield_28nm-20261107T043408Z-8161c102,product,grx930,cost_per_good_package_usd,2.54623082478261,USD,9.64293961087436e-05,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0

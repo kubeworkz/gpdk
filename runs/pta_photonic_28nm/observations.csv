@@ -1,0 +1,16 @@
+observation_id,run_id,entity_type,entity_id,metric,value,unit,uncertainty,evidence_class,source_artifact,model_version
+obs-623f0f181cd4c756,pta_photonic_28nm-20261107T043410Z-3b0cbf38,product,pta,insertion_loss_db,3.20501195695919,dB,0.0358350147315118,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-c7090e697bf81f45,pta_photonic_28nm-20261107T043410Z-3b0cbf38,product,pta,phase_error_rad,1.62458127311027,rad,0.056531524862339,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-22ff5dfee8d0df16,pta_photonic_28nm-20261107T043410Z-3b0cbf38,product,pta,tuning_power_w,0.0827392448224076,W,0.00287912691915636,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-ff6e9e3aaafa5eef,pta_photonic_28nm-20261107T043410Z-3b0cbf38,product,pta,tensor_error,0.517120280140048,1,0.0179945432447273,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-f62614f24499f4f8,pta_photonic_28nm-20261107T043410Z-3b0cbf38,product,pta,temperature_rise_k,6.26620341811614,K,0.240346365590698,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-080a47b57d683eba,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,width_nm,phase_error_swing,1.21610038203471,rad,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-b61f471fa42c074b,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,width_nm,insertion_loss_swing,0,dB,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-37c9138368d3b38e,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,etch_depth_nm,phase_error_swing,1.01341698502893,rad,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-89befd9c2cad39bf,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,etch_depth_nm,insertion_loss_swing,0,dB,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-8570364ffd710b9e,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,ler_nm,phase_error_swing,0,rad,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-814205d0c54bc3b1,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,ler_nm,insertion_loss_swing,0.0903,dB,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-f08d38ae009c3cc5,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,alignment_um,phase_error_swing,0,rad,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-26ff0ee2facbf5a1,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,alignment_um,insertion_loss_swing,0.45,dB,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-d291b50d7d8c5ae8,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,ambient_c,phase_error_swing,0.125947813565745,rad,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
+obs-45ba60015ff1faad,pta_photonic_28nm-20261107T043410Z-3b0cbf38,sensitivity,ambient_c,insertion_loss_swing,0,dB,,assumed,photonic/pta_siph_28nm.yaml,pta-photonic@0.1.0
