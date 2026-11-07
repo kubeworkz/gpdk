@@ -918,7 +918,9 @@ When configuring your digital twin for tape-out validation, keep these physical 
 
 When you step back from localized chiplet heating and factor in **global ambient temperature changes**, your digital twin must account for a double-whammy failure mode: **Simultaneous Laser Wavelength Drift and Silicon Refractive Index Variation.**
 
-In an electro-optic system, the laser source (whether it is an external laser module coupled via fiber or an integrated InP chiplet) has a specific emission wavelength (typically targeted at$$. However, as the global ambient temperature changes (e.g., your data center or device enclosure heats up), the laser's cavity dimensions and gain medium shift, causing the emission wavelength to drift. Concurrently, the PTA’s silicon waveguides are also shifting in temperature.
+In an electro-optic system, the laser source (whether it is an external laser module coupled via fiber or an integrated InP chiplet) has a specific emission wavelength (typically targeted at
+
+$$. However, as the global ambient temperature changes (e.g., your data center or device enclosure heats up), the laser's cavity dimensions and gain medium shift, causing the emission wavelength to drift. Concurrently, the PTA’s silicon waveguides are also shifting in temperature.
 
 Because wavelength $$ sits in the denominator of the phase equation, **wavelength drift non-linearly compounds your localized thermal phase errors**, potentially triggering a complete mathematical failure in your tensor accelerator.
 
@@ -4416,3 +4418,354 @@ chmod +x git_tag_release.sh
 ./git_tag_release.sh
 
 ```
+
+---
+
+## MES Data
+
+Finding public, production-grade **Semiconductor Manufacturing Execution System (MES)** datasets that feature full lot, route, and tool genealogies is exceptionally rare due to strict corporate intellectual property protection and export control (ITAR/EAR) compliance.
+
+However, if you are looking to benchmark, simulate, or build a schema for a mixed front-end/back-end environment—such as a **University Cleanroom** running R&D lots alongside an **OSAT (Outsourced Semiconductor Assembly and Test)** packing and testing line - you can structure your relational tables or graph database using the industry-standard semiconductor schema outline below.
+
+### Core Data Schema for Semiconductor MES Genealogy
+
+To model lot splitting, merging, routing, and tool interactions, your dataset must cross-reference four foundational dimensions:
+
+```plaintext
+      [ Route Step ] ── Defines ──► [ Tool Requirement ]
+             │                               │
+             ▼                               ▼
+       [ Lot History ]  ── Runs On ──► [ Specific Tool ID ]
+             │
+             ├─ Split ──► Sub-Lots (e.g., Wafer-level or Strip-level)
+             └─ Merge ──► Assembly Lots (e.g., Multi-Chip Modules)
+```
+
+#### **1. The Route / Workflow Table (**`dim_routes`**)**
+
+Defines the sequential manufacturing steps. Fabs use hundreds of re-entrant loops (e.g., repeating photolithography/etch), while OSAT workflows are more linear (grinding, dicing, wire bonding, molding, final test).
+
+<table class="NRefec">
+  <tr><th>Column Name</th><th>Data Type</th><th>Description</th><th>Example</th></tr>
+  <tr><td>route_id</td><td>VARCHAR</td><td>Unique ID of the process flow</td><td>ROUTE_MEMS_OSAT_V1</td></tr>
+  <tr><td>step_seq</td><td>INT</td><td>Step index order</td><td>140</td></tr>
+  <tr><td>step_name</td><td>VARCHAR</td><td>Operation name</td><td>WIRE_BOND_GOLD</td></tr>
+  <tr><td>tool_type</td><td>VARCHAR</td><td>Required tool classification</td><td>ASSEMBLY_BONDER</td></tr>
+  <tr><td>recipe_id</td><td>VARCHAR</td><td>Program parameters pushed to tool</td><td>RECIPE_AU_CHIP_A</td></tr>
+</table>
+
+#### 2. The Equipment / Tool Table (`dim_tools`)
+
+Tracks the individual physical machines in the cleanroom or OSAT floor.
+
+<table class="NRefec">
+  <tr><th>Column Name</th><th>Data Type</th><th>Description</th><th>Example</th></tr>
+  <tr><td>tool_id</td><td>VARCHAR</td><td>Unique identifier for physical asset</td><td>WB_04_ASSEMBLY</td></tr>
+  <tr><td>tool_type</td><td>VARCHAR</td><td>Maps back to route requirements</td><td>ASSEMBLY_BONDER</td></tr>
+  <tr><td>bay_location</td><td>VARCHAR</td><td>Cleanroom bay or OSAT area</td><td>BAY_03_PACKAGING</td></tr>
+  <tr><td>secs_gem_id</td><td>VARCHAR</td><td>Network address for IoT automated tracking</td><td>IP_10_200_4_14</td></tr>
+</table>
+
+#### 3. The Lot Transaction / Execution Table (`fact_lot_history`)
+
+The heart of the genealogy. It tracks whenever a lot moves into or out of a step ("Track-In" and "Track-Out").
+
+<table class="NRefec">
+  <tr><th>Column Name</th><th>Data Type</th><th>Description</th><th>Example / Value</th></tr>
+  <tr><td>tx_id</td><td>VARCHAR (PK)</td><td>Unique transaction entry</td><td>TX_987654321</td></tr>
+  <tr><td>lot_id</td><td>VARCHAR</td><td>Current identifier of the carrier/lot</td><td>LOT_MESA_77A</td></tr>
+  <tr><td>parent_lot_id</td><td>VARCHAR</td><td>Previous lot ID (if split or merged)</td><td>LOT_MESA_77</td></tr>
+  <tr><td>route_id</td><td>VARCHAR</td><td>Current route</td><td>ROUTE_MEMS_OSAT_V1</td></tr>
+  <tr><td>step_seq</td><td>INT</td><td>Current sequence index</td><td>140</td></tr>
+  <tr><td>tool_id</td><td>VARCHAR</td><td>Machine used for this exact run</td><td>WB_04_ASSEMBLY</td></tr>
+  <tr><td>qty_in</td><td>INT</td><td>Units (wafers/dies) entering step</td><td>25</td></tr>
+  <tr><td>qty_out</td><td>INT</td><td>Units exiting step (minus scrap)</td><td>24</td></tr>
+  <tr><td>track_in_time</td><td>TIMESTAMP</td><td>Process start time</td><td>2026-11-06 08:00:00</td></tr>
+  <tr><td>track_out_time</td><td>TIMESTAMP</td><td>Process end time</td><td>2026-11-06 09:30:00</td></tr>
+</table>
+
+#### 4. Granular Wafer / Die Component Genealogy (`fact_unit_genealogy`)
+
+Crucial for OSAT operations where individual dies from different wafers (and potentially different parent lots) are merged into a single package (e.g., Multi-Chip Modules, System-in-Package).
+
+<table class="NRefec">
+  <tr><th>Column Name</th><th>Data Type</th><th>Description</th><th>Example</th></tr>
+  <tr><td>assembly_lot_id</td><td>VARCHAR</td><td>The OSAT finished package lot ID</td><td>LOT_PKG_99X</td></tr>
+  <tr><td>unit_id</td><td>VARCHAR</td><td>Individual item ECID (Electronic Chip ID)</td><td>ECID_100234X7F</td></tr>
+  <tr><td>source_fab_lot</td><td>VARCHAR</td><td>Fab parent wafer lot</td><td>LOT_MESA_77A</td></tr>
+  <tr><td>wafer_id</td><td>VARCHAR</td><td>Specific physical wafer number</td><td>WAFER_04</td></tr>
+  <tr><td>die_coordinate_x</td><td>INT</td><td>Location of the die on the fab wafer</td><td>42</td></tr>
+  <tr><td>die_coordinate_y</td><td>INT</td><td>Location of the die on the fab wafer</td><td>118</td></tr>
+</table>
+
+---
+
+### **Synthetic Data Generator**
+
+Because real data is heavily guarded, academic researchers and systems engineers rely on synthetic data generators to stress-test genealogy trees. You can run this quick Python script to generate a highly realistic subset of an MES dataset modeling an OSAT/University cleanroom split-and-run sequence:
+
+```python
+import pandas as pd
+import random
+from datetime import datetime, timedelta
+
+# Seed for reproducibility
+random.seed(42)
+
+# Generate baseline Master Data
+tools = ['PHOTO_LITH_01', 'PLASMA_ETCH_02', 'RECON_MOLD_01', 'WIRE_BONDER_01', 'FINAL_TEST_01']
+routes = [
+    (10, 'PHOTOLITHOGRAPHY', 'PHOTO_LITH_01'),
+    (20, 'ETCH', 'PLASMA_ETCH_02'),
+    (30, 'RECONSTITUTION_MOLDING', 'RECON_MOLD_01'),
+    (40, 'WIRE_BONDING', 'WIRE_BONDER_01'),
+    (50, 'FINAL_TEST', 'FINAL_TEST_01')
+]
+
+data = []
+base_time = datetime(2026, 11, 1, 8, 0, 0)
+
+# Simulate 5 initial university cleanroom fab lots
+for i in range(1, 6):
+    parent_lot = f"UNIV_FAB_LOT_{i:03d}"
+    current_time = base_time + timedelta(hours=random.randint(0, 24))
+    
+    qty = 25 # Start with a standard 25-wafer lot slot
+    
+    for seq, step, tool in routes:
+        # Simulate tracking in and out
+        duration = random.randint(30, 120) # process time in minutes
+        track_in = current_time
+        track_out = track_in + timedelta(minutes=duration)
+        
+        # Introduce a Genealogy Event: Split before entering OSAT packaging/testing phase (Step 40)
+        lot_id = parent_lot
+        if seq >= 40:
+            lot_id = f"{parent_lot}_OSAT_SUB_A" # Genealogy Split Trace
+            qty = 12 # Sub-lot size
+            
+        data.append({
+            "Transaction_ID": f"TX_{random.randint(100000, 999999)}",
+            "Lot_ID": lot_id,
+            "Parent_Lot_ID": parent_lot if lot_id != parent_lot else "NONE",
+            "Route_Step_Seq": seq,
+            "Step_Name": step,
+            "Assigned_Tool": tool,
+            "Qty_In": qty,
+            "Qty_Out": qty if random.random() > 0.05 else qty - 1, # random scrap
+            "Track_In": track_in.strftime('%Y-%m-%d %H:%M:%S'),
+            "Track_Out": track_out.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+        # Advance time for next sequential step
+        current_time = track_out + timedelta(minutes=random.randint(15, 60))
+
+# Create DataFrame and display snippet
+df_mes = pd.DataFrame(data)
+print(df_mes.to_string(index=False))
+
+```
+
+### Where to Look for Real-World Open-Source Proxies
+
+If you must use a pre-existing public dataset rather than building one, explore these proxies:
+
+- **The SEMATECH/MIMAC Dataset:** Look up the "Measurement and Improvement of Manufacturing Management Tools" (MIMAC) datasets. They contain historical, sanitized industrial fab data specifically formatted for factory simulation software (like AutoSched AP).
+- **Kaggle Semiconductor Manufacturing Data:** Search for datasets tagged with **SPC (Statistical Process Control)** or **Wafer Maps** (e.g., the *WM-811K wafer map dataset*). While they focus heavily on sensor/parametric info rather than transactional genealogy, they can be appended to `fact_unit_genealogy` records to recreate a full MES environment.
+
+---
+
+## Database Schema Design
+
+To design a production-grade MES schema for an actual cleanroom software deployment handling both **University R&D** (highly dynamic, split/merge intensive, manual overrides) and **OSAT operations** (high volume, discrete unit serialization, strict packaging genealogy), a relational or hybrid relational-JSON architecture is ideal. PostgreSQL or Microsoft SQL Server handles this best due to strong ACID compliance and native support for recursive CTEs (essential for tracing genealogy trees).
+
+### Production Architecture Design
+
+In a real deployment, you must separate **Master Data** (definitions of recipes, tools, routes) from **Transactional Data** (the living history of lots and wafers).
+
+```plaintext
+   [ Master Data ]                     [ Transactional Data ]
+  ┌───────────────┐                   ┌───────────────────────┐
+  │ dim_equipment │                   │     fact_lot_state    │
+  └───────┬───────┘                   └───────────┬───────────┘
+          │ (1:N)                                 │ (1:N)
+  ┌───────▼───────┐                   ┌───────────▼───────────┐
+  │  dim_recipes  │                   │   fact_lot_history    │
+  └───────┬───────┘                   └───────────┬───────────┘
+          │ (1:N)                                 │ (1:N)
+  ┌───────▼───────┐                   ┌───────────▼───────────┐
+  │  dim_routes   │◄──────────────────┤  fact_unit_genealogy  │
+  └───────────────┘  (Ensures Route   └───────────────────────┘
+                      Compliance)
+```
+
+---
+
+### 1. SQL DDL Implementation (PostgreSQL Dialect)
+
+This production DDL includes critical constraints, automated timestamps, indexing strategies for performance, and handling of **split/merge parent-child arrays** or relationships.
+
+```sql
+-- ============================================================================
+-- 1. MASTER DATA TABLES
+-- ============================================================================
+
+-- Equipment/Tool definition table
+CREATE TABLE dim_equipment (
+    tool_id VARCHAR(50) PRIMARY KEY,
+    tool_name VARCHAR(100) NOT NULL,
+    tool_type VARCHAR(50) NOT NULL,        -- e.g., 'PHOTOLITHOGRAPHY', 'WIRE_BONDER'
+    bay_location VARCHAR(50) NOT NULL,     -- e.g., 'BAY_3_YELLOW_ROOM'
+    status VARCHAR(20) DEFAULT 'DOWN'      -- 'UP', 'DOWN', 'PM' (Preventative Maintenance)
+);
+
+-- Recipe master table versioned control
+CREATE TABLE dim_recipes (
+    recipe_id VARCHAR(50) PRIMARY KEY,
+    recipe_name VARCHAR(100) NOT NULL,
+    version VARCHAR(10) NOT NULL,
+    tool_type VARCHAR(50) NOT NULL,
+    parameters JSONB NOT NULL,              -- Flexible storage for step-specific physical variables
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Process Route / Workflow Master definition
+CREATE TABLE dim_routes (
+    route_id VARCHAR(50) NOT NULL,
+    step_seq INT NOT NULL,                 -- e.g., 10, 20, 30... allows injection of steps later
+    step_name VARCHAR(100) NOT NULL,       -- e.g., 'GATE_OXIDE_GROWTH'
+    required_tool_type VARCHAR(50) NOT NULL,
+    default_recipe_id VARCHAR(50) REFERENCES dim_recipes(recipe_id),
+    PRIMARY KEY (route_id, step_seq)
+);
+
+-- ============================================================================
+-- 2. TRANSACTIONAL DATA TABLES
+-- ============================================================================
+
+-- Active / Current Lot State table (The Operational Dashboard view)
+CREATE TABLE fact_lot_state (
+    lot_id VARCHAR(50) PRIMARY KEY,
+    lot_type VARCHAR(20) NOT NULL,         -- 'R&D', 'PRODUCTION', 'OSAT_TEST', 'REWORK'
+    current_route_id VARCHAR(50) NOT NULL,
+    current_step_seq INT NOT NULL,
+    current_tool_id VARCHAR(50) REFERENCES dim_equipment(tool_id),
+    current_qty INT NOT NULL CHECK (current_qty >= 0),
+    uom VARCHAR(10) DEFAULT 'WAFERS',      -- 'WAFERS', 'STRIPS', 'DIES', 'UNITS'
+    lot_status VARCHAR(20) DEFAULT 'QUEUED',-- 'QUEUED', 'PROCESSING', 'HOLD', 'SHIPPED', 'SCRAPPED'
+    hold_reason TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (current_route_id, current_step_seq) REFERENCES dim_routes(route_id, step_seq)
+);
+
+-- Comprehensive Lot Transaction History (The Core Genealogy)
+CREATE TABLE fact_lot_history (
+    tx_id BIGSERIAL PRIMARY KEY,
+    lot_id VARCHAR(50) NOT NULL,
+    route_id VARCHAR(50) NOT NULL,
+    step_seq INT NOT NULL,
+    tool_id VARCHAR(50) REFERENCES dim_equipment(tool_id),
+    recipe_id VARCHAR(50) REFERENCES dim_recipes(recipe_id),
+    operator_id VARCHAR(50) NOT NULL,
+    qty_in INT NOT NULL,
+    qty_out INT,
+    track_in_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    track_out_time TIMESTAMP WITH TIME ZONE,
+    tx_type VARCHAR(20) NOT NULL,          -- 'STANDARD', 'SPLIT', 'MERGE', 'REWORK_START', 'REWORK_END'
+    parent_lot_ids TEXT[],                  -- Array to track single or multiple parent IDs if a merge event occurs
+    child_lot_ids TEXT[],                   -- Array to track generated lots if a split event occurs
+    scrap_reason TEXT,
+    FOREIGN KEY (route_id, step_seq) REFERENCES dim_routes(route_id, step_seq)
+);
+
+-- Granular Individual Unit/Component Tracking (Crucial for OSAT & Package Singulation)
+CREATE TABLE fact_unit_genealogy (
+    unit_id VARCHAR(100) PRIMARY KEY,      -- ECID, serial number, or Laser Marked ID
+    current_lot_id VARCHAR(50) REFERENCES fact_lot_state(lot_id) ON DELETE SET NULL,
+    source_wafer_lot_id VARCHAR(50),       -- Tracking back to front-end cleanroom wafer
+    wafer_id VARCHAR(30),                  -- Physical wafer slot index (1 to 25)
+    die_x INT,                             -- Wafer map physical layout X coordinate
+    die_y INT,                             -- Wafer map physical layout Y coordinate
+    package_lot_id VARCHAR(50),            -- The OSAT aggregate strip or tray lot container
+    assembled_at TIMESTAMP WITH TIME ZONE
+);
+
+-- ============================================================================
+-- 3. HIGH-PERFORMANCE INDEXING
+-- ============================================================================
+
+-- Speed up routing verification & execution state checks
+CREATE INDEX idx_lot_state_routing ON fact_lot_state (current_route_id, current_step_seq);
+CREATE INDEX idx_lot_state_status ON fact_lot_state (lot_status);
+
+-- Crucial for recursive genealogy trace lookup performance
+CREATE INDEX idx_lot_history_lot_id ON fact_lot_history (lot_id);
+CREATE INDEX idx_lot_history_parents ON fact_lot_history USING GIN (parent_lot_ids);
+CREATE INDEX idx_lot_history_children ON fact_lot_history USING GIN (child_lot_ids);
+CREATE INDEX idx_lot_history_track_in ON fact_lot_history (track_in_time DESC);
+
+-- Speed up individual unit lookup during failure analysis / RMA tracking
+CREATE INDEX idx_unit_genealogy_source ON fact_unit_genealogy (source_wafer_lot_id, wafer_id);
+CREATE INDEX idx_unit_genealogy_pkg ON fact_unit_genealogy (package_lot_id);
+
+```
+
+---
+
+### 2. How to Query the Genealogy: Recursive Trace-Back (Upstream Lineage)
+
+When a lot fails structural or electrical tests inside an OSAT final test step, you must query backward to find every tool it touched across both the packaging floor and the original cleanroom.
+
+This **Recursive Common Table Expression (CTE)** traverses the `parent_lot_ids` array backward to build an entire history map for any given target lot:
+
+```sql
+WITH RECURSIVE upstream_genealogy AS (
+    -- Anchor Member: Find the initial transaction record for the target lot
+    SELECT 
+        tx_id,
+        lot_id,
+        parent_lot_ids,
+        route_id,
+        step_seq,
+        tool_id,
+        track_in_time,
+        1 AS generation_level
+    FROM fact_lot_history
+    WHERE lot_id = 'LOT_OSAT_SUB_A_001'  -- <--- Insert failing lot ID here
+
+    UNION ALL
+
+    -- Recursive Member: Find transactions belonging to parent lots listed in the array
+    SELECT 
+        h.tx_id,
+        h.lot_id,
+        h.parent_lot_ids,
+        h.route_id,
+        h.step_seq,
+        h.tool_id,
+        h.track_in_time,
+        g.generation_level + 1
+    FROM fact_lot_history h
+    INNER JOIN upstream_genealogy g 
+       ON h.lot_id = ANY(g.parent_lot_ids)  -- PostgreSQL array operator matching
+)
+SELECT 
+    generation_level,
+    lot_id,
+    parent_lot_ids,
+    route_id,
+    step_seq,
+    tool_id,
+    track_in_time
+FROM upstream_genealogy
+ORDER BY generation_level ASC, track_in_time DESC;
+
+```
+
+---
+
+### 3. Core Cleanroom System Architecture Principles
+
+1. **Avoid Hardcoding Workflow Paths:** In an R&D/University cleanroom, users change their minds mid-process. The design uses `dim_routes.step_seq` as an integer value step index (10, 20, 30). If an engineer needs an unscheduled metrology run between steps 20 and 30, the system can dynamically execute a route fork or insert a temporary step `25`.
+2. **Utilize JSONB for Process Parameters:** Do not create separate columns for `exposure_energy`, `gas_flow_sccm`, or `bond_force`. Every machine class records unique process endpoints. Storing these inside the `dim_recipes.parameters` field as unstructured binary JSON (`JSONB`) lets you keep a strict primary schema while comfortably ingesting wide variations of engineering logs.
+3. **Establish a Lock Mechanism on State Transitions:** Ensure your backend API wraps updates to `fact_lot_state` and inserts into `fact_lot_history` within a strict **database transaction envelope**. If a tool's automated SECS/GEM message triggers a "Track-Out" drop, the state modification must succeed entirely, or fail completely, avoiding split-state orphans.
