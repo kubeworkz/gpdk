@@ -1,0 +1,32 @@
+# Event-derived factory metrics from a synthetic MES extract.
+# The manifest, not this scenario, carries the evidence class.
+schema_version: "0.1"
+id: mes_line_replay
+description: >-
+  Replay a deterministic synthetic front-end and OSAT MES event log. Cycle
+  time, queue time, WIP, throughput and tool utilization are derived from the
+  verified event timestamps instead of the YAML factory assumptions. The log
+  is a synthetic fixture and is not a G100 route card or measured line
+  performance.
+product: mes_line
+process: mes_fixture@0.1.0
+seed: 20261106
+samples: 1
+engines:
+  - factory_replay
+inputs:
+  chip: chips/g100.yaml
+  mes: factory/mes_smoke/manifest.json
+outputs:
+  - cycle_time_s
+  - queue_time_s
+  - wip_lots
+  - peak_wip_lots
+  - throughput_wafers_per_s
+  - completed_lots
+  - completed_wafers
+  - open_lots
+  - observation_window_s
+  - step_queue_time_s
+  - tool_utilization
+  - tool_group_utilization

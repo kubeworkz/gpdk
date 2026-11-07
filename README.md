@@ -134,6 +134,17 @@ not a capacity-expansion business case. Only lithography scanners are
 capital-priced; other tool-group capex is not included. These are F1 planning
 estimates, not a foundry MES route card or measured line performance.
 
+The separate replay path reads events instead of simulating them. `fabtwin.mes`
+generates a deterministic synthetic front-end/OSAT log with lot splits, an MCM
+merge, scrap, hold, rework and tiling tool states. `factory_replay` verifies the
+extract manifest (SHA-256, byte count, row count and column contract), traces
+split and merge ancestry back to the fab lot, and derives 33.8 h cycle time,
+2.3 h queue time, 0.61 lots WIP, 3 finished lots and 50 wafers from the event
+timestamps in `factory/mes_smoke/`. The 58.3 wafers/week is a completion rate
+for that two-lot, six-day fixture, not line capacity. Every replay observation
+inherits the manifest's `assumed` evidence class; the fixture proves the event
+contract and genealogy join, not measured performance.
+
 ## Quick start
 
 ```bash
@@ -141,12 +152,16 @@ python -m gpdk          # regenerate out/REPORT.md, CSVs, GDS, SVG, PNG
 python -m gpdk padring  # rebuild the GRX930 pad ring and ball map
 python -m gpdk drc      # check the 12 nm FinFET demo inverter
 python -m fabtwin validate scenarios/grx930_28nm_baseline.yaml
+python -m fabtwin catalog catalog/gpdk.yaml
+python -m fabtwin mes-synth --out out/mes
+python -m fabtwin mes-check factory/mes_smoke/manifest.json --no-report
 python -m fabtwin run scenarios/grx930_28nm_baseline.yaml
 python -m fabtwin run scenarios/g100_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_28nm_baseline.yaml
 python -m fabtwin run scenarios/pta_photonic_28nm.yaml
 python -m fabtwin run scenarios/g100_mcm_28nm.yaml
 python -m fabtwin run scenarios/g100_factory_28nm.yaml
+python -m fabtwin run scenarios/mes_line_replay.yaml
 python -m fabtwin run scenarios/grx930_yield_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml
 python -m fabtwin run scenarios/grx930_yield_variation_28nm.yaml
@@ -206,6 +221,22 @@ mkdir -p /tmp/pyodide && cp tests/pyodide_smoke.mjs /tmp/pyodide/
 `--reports` lists registered comparison reports, and `--json` is
 machine-readable. The store path defaults to `out/fabtwin/fabtwin.db`.
 
+`mes-synth` writes deterministic synthetic MES route and equipment events that
+follow the contracts in `catalog/templates/`: front-end and OSAT routes, lot
+splits and merges, scrap, hold and rework events, and tiling tool states. Its
+manifest marks the files `assumed`; they exercise the schema and genealogy
+plumbing and are not measured line data.
+
+`mes-manifest` is the provider path: it verifies the exact headers, rejects
+duplicate event IDs and bad timestamps, hashes the files and writes the manifest
+that `mes-check` and `factory_replay` consume. `mes-check` runs the full
+verification and prints event-derived metrics before a scenario uses the
+extract. The fillable manifest is
+`catalog/templates/mes_manifest.template.json`; the ingest and acceptance
+runbook is `docs/mes-ingest-checklist.md`. `mes-check` writes
+`acceptance.json` beside the manifest by default; use `--no-report` when
+checking the synthetic fixture.
+
 `compare` matches observations by entity and metric. It reports value deltas,
 added and removed rows, unit and model-version changes, and evidence transitions
 such as `assumed -> measured`. `--only-changes` limits the table to flagged
@@ -235,6 +266,23 @@ nonzero if any check fails; `--json` returns the detailed result. It modifies
 neither indexed records nor artifact files, and it verifies only what the index
 claims; it does not discover unindexed files.
 
+`catalog/gpdk.yaml` is the source registry and dataset-contract catalog for
+calibration. It lists one connected measured dataset (the normalized GRX930
+as-built baseline) and 14 planned sources across MES, equipment, metrology,
+test, package, optical, commercial and simulation domains. The GRX930 extract
+is legacy silicon data with an undisclosed node, not 28 nm process data. Raw
+data stays under `catalog/data/` (ignored) or another approved store; the
+normalized baseline is tracked under `catalog/datasets/`.
+`python -m fabtwin catalog catalog/gpdk.yaml` validates the schema, hashes, byte
+sizes, row counts and exact CSV headers without modifying the data. See
+[catalog/README.md](catalog/README.md) for the contract and registration rules.
+
+The partner-facing MES request package is in
+[docs/mes-data-request.md](docs/mes-data-request.md). It includes the proposed
+NDA scope, de-identification checklist, acceptance criteria, request email and
+header-only route/equipment templates. The templates are contracts, not data;
+they are never registered as measured datasets.
+
 ## What is in the box
 
 ```
@@ -247,6 +295,12 @@ chips/grx930.yaml           measured quad-core RV64 + dual-NPU baseline
 chips/g100.yaml             digital GPU planning profile (pre-split block)
 chips/pta.yaml              photonic tensor accelerator product definition
 packages/mcm_si.yaml        2.5D silicon-interposer package definition
+catalog/gpdk.yaml           data-source registry and dataset contracts
+catalog/datasets/           normalized measured datasets tracked with the model
+catalog/templates/          header-only MES request contracts and manifest template
+catalog/README.md           catalog schema and registration rules
+docs/mes-data-request.md    NDA-ready MES request scope and de-identification rules
+docs/mes-ingest-checklist.md  real MES extract ingest and acceptance runbook
 photonic/pta_siph_28nm.yaml Phase 2 PTA optical, process and 1D thermal assumptions
 photonic/<name>_calibration.yaml  optional measured-coefficient calibration input
 yields/grx930_28nm.yaml      Phase 1 wafer, defect, assembly and cost assumptions
@@ -434,6 +488,14 @@ Tool versions and the specific 28 nm blockers are in
   bottleneck ranking and
   sensitivity direction, not the absolute cycle time, until the route is
   calibrated against a real line.
+- **The MES replay is a fixture, not a calibration.** The only event log in the
+  repository is synthetic (`assumed`), generated by `fabtwin.mes`. The
+  `factory_replay` engine verifies its manifest and derives event statistics,
+  but it does not calibrate the SimPy model or provide measured cycle time,
+  queue time or WIP. The provider path is `mes-manifest` plus `mes-check`; no
+  real extract is included. A real MES extract still requires the request
+  package in `docs/mes-data-request.md` and the ingest checklist in
+  `docs/mes-ingest-checklist.md`.
 - **The PTA optical model is not calibrated by default.** There is no qualified
   SiPh PDK or measured PTA data behind `photonic/pta_siph_28nm.yaml`. The optional
   calibration input can replace coefficient assumptions with measured test-

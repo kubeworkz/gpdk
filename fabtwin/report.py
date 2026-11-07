@@ -576,6 +576,11 @@ def render_report(
         else []
     ),
     *(
+        [["MES extract", f"`{scenario.mes_ref}`"]]
+        if scenario.mes_ref
+        else []
+    ),
+    *(
         [["Photonic model", f"`{scenario.photonic_ref}`"]]
         if scenario.photonic_ref
         else []

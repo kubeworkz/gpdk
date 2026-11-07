@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .adapters.factory import FactoryAtpEngine
+from .adapters.factory_replay import FactoryMesReplayEngine
 from .adapters.gpdk import GpdkEngine
 from .adapters.mcm_yield import McmYieldEngine
 from .adapters.pta import PtaEngine
@@ -17,6 +18,7 @@ from .model import Engine
 
 ENGINE_CLASSES = {
     FactoryAtpEngine.name: FactoryAtpEngine,
+    FactoryMesReplayEngine.name: FactoryMesReplayEngine,
     GpdkEngine.name: GpdkEngine,
     McmYieldEngine.name: McmYieldEngine,
     PtaEngine.name: PtaEngine,

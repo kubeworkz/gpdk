@@ -1,0 +1,127 @@
+schema_version: "0.1"
+id: mes_equipment_events
+description: >-
+  De-identified MES equipment state-transition log for availability, downtime,
+  maintenance and tool-state calibration. This is a contract template, not
+  measured data.
+grain: one row per tool state transition
+format: csv
+encoding: utf-8
+timezone: UTC
+timestamp_format: ISO 8601 with explicit offset
+null_representation: empty string
+primary_key: [event_id]
+time_column: event_time_utc
+state_semantics: >-
+  A state starts at event_time_utc and ends at the next state event for the same
+  tool. The last state at the window boundary remains open.
+columns:
+  - name: event_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: generated
+    description: Unique state-transition identifier generated for this extract.
+  - name: event_time_utc
+    type: datetime
+    required: true
+    nullable: false
+    pii: false
+    deidentification: shifted
+    description: State start timestamp after the agreed constant time shift.
+  - name: tool_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous tool token.
+  - name: tool_group_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous tool-group token.
+  - name: tool_class
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: generalized
+    description: Generic tool class such as litho_scanner, furnace or metrology.
+  - name: state
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: preserved
+    allowed_values:
+      - productive
+      - standby
+      - engineering
+      - scheduled_down
+      - unscheduled_down
+      - non_scheduled
+      - setup
+    description: Equipment state category.
+  - name: reason_code
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: generalized
+    description: Generalized reason category for the state.
+  - name: failure_mode_code
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Generalized or tokenized failure mode; no free text.
+  - name: maintenance_type
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: generalized
+    allowed_values: [pm, cm, calibration, qualification, other]
+    description: Maintenance category when the state is a down state.
+  - name: lot_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous lot token when the state is lot-related.
+  - name: wafer_count
+    type: integer
+    unit: "1"
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Wafers affected by the state, when applicable.
+  - name: recipe_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous recipe token; no recipe parameters.
+  - name: alarm_code
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Generalized or tokenized alarm code.
+  - name: data_quality_flag
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    allowed_values: [ok, late, estimated, missing, duplicate, other]
+    description: Explicit quality marker for the row.

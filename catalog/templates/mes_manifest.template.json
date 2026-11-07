@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1",
+  "generator": "<provider export tool>",
+  "generator_version": "<export version>",
+  "evidence_class": "measured",
+  "synthetic": false,
+  "measured": true,
+  "provider": "<provider or site token>",
+  "source_system": "<MES or OSAT system and version>",
+  "extract_id": "<extract name and version>",
+  "extract_time_utc": "<ISO 8601 extraction time with an offset>",
+  "window": {
+    "start_utc": "<inclusive ISO 8601 window start with an offset>",
+    "end_utc": "<inclusive ISO 8601 window end with an offset>"
+  },
+  "files": [
+    {
+      "path": "mes_route_events.csv",
+      "contract": "catalog/templates/mes_route_events.schema.yaml",
+      "rows": 0,
+      "bytes": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "path": "mes_equipment_events.csv",
+      "contract": "catalog/templates/mes_equipment_events.schema.yaml",
+      "rows": 0,
+      "bytes": 0,
+      "sha256": "<64 lowercase hex characters>"
+    }
+  ],
+  "note": "<known exclusions, outages, transfer reference or de-identification attestation>"
+}

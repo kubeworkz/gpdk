@@ -480,6 +480,22 @@ flow, ramp and hurdle rate constant. The lower $88.55 cost in the higher-starts
 case is fixed-cost dilution,
 not a capacity-expansion business case.
 
+The separate replay path is `fabtwin/mes.py`, `fabtwin/mes_replay.py`,
+`fabtwin/adapters/factory_replay.py` and `scenarios/mes_line_replay.yaml`. The
+generator emits a deterministic front-end/OSAT event log with lot splits, an
+MCM merge, scrap, hold, rework and tiling tool states. The replay verifies the
+manifest's SHA-256, byte count, row count and column contract, traces split and
+merge ancestry back to the fab lot, and derives cycle time, queue time, WIP,
+throughput and tool utilization from the event timestamps. Over the committed
+two-lot fixture it gives 33.8 h cycle time, 2.3 h queue time, 0.61 lots WIP and
+50 completed wafers across 3 finished lots. Every observation inherits the
+manifest's evidence class, so the synthetic fixture stays `assumed`. This path
+proves the event contract and genealogy join; it does not calibrate the SimPy
+model, which still uses the YAML assumptions above. Provider extracts enter
+through `fabtwin mes-manifest` and `fabtwin mes-check`, documented in
+`docs/mes-ingest-checklist.md`; the fillable manifest is
+`catalog/templates/mes_manifest.template.json`.
+
 These are F1 planning estimates from a simplified route, not a foundry MES
 route card or measured line. Failure sampling, dispatch rules, reticle changes,
 maintenance calendars, transport time and operator constraints are not
@@ -508,6 +524,25 @@ capacity.
 
 **Exit gate:** a back-test against measured data with stated residuals. If the
 model cannot pass that gate, it remains a planning tool.
+
+The first data-plane slice is implemented as `catalog/gpdk.yaml` and
+`fabtwin/catalog.py`. It inventories planned sources and validates dataset
+contracts. One measured dataset is registered: a normalized GRX930 as-built
+baseline extracted from `chips/grx930.yaml`. It is legacy silicon data with an
+undisclosed node, not 28 nm process data; the original measurement date is not
+recorded, so the catalog uses the source baseline commit date. No MES, PCM,
+metrology, package or optical dataset is connected yet. `python -m fabtwin
+catalog catalog/gpdk.yaml` checks source metadata plus dataset hashes, sizes,
+row counts and exact CSV headers without modifying the files. The catalog holds
+no access credentials; sensitive raw data remains outside Git.
+
+The MES request package is in `docs/mes-data-request.md` with header-only
+contracts in `catalog/templates/`. It defines the route/event and equipment
+state fields, data-quality checks, de-identification rules and a proposed NDA
+term sheet for a fab or OSAT. The templates are not datasets and are never
+registered as measured. A received extract must match the schema, pass the
+manifest/hash checks and carry a signed de-identification attestation before
+it can enter the catalog.
 
 ## 8. Acceptance tests
 

@@ -1,0 +1,245 @@
+schema_version: "0.1"
+id: mes_route_events
+description: >-
+  De-identified MES route event log for factory cycle-time, queue, throughput
+  and WIP calibration. This is a contract template, not measured data.
+grain: one row per lot/wafer route event
+format: csv
+encoding: utf-8
+timezone: UTC
+timestamp_format: ISO 8601 with explicit offset
+null_representation: empty string
+primary_key: [event_id]
+time_column: event_time_utc
+conditional_requirements:
+  - when: "event_type in (process_start, process_end)"
+    require: [tool_id, tool_group_id, tool_class]
+  - when: "event_type == process_end"
+    require: [process_time_s]
+  - when: "event_type == scrap"
+    require: [scrap_qty]
+  - when: "event_type == rework"
+    require: [rework_qty]
+columns:
+  - name: event_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: generated
+    description: Unique event identifier generated for this extract.
+  - name: event_type
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: preserved
+    allowed_values:
+      - lot_start
+      - move_in
+      - process_start
+      - process_end
+      - move_out
+      - hold_start
+      - hold_end
+      - rework
+      - scrap
+      - split
+      - merge
+      - lot_complete
+    description: Route event category.
+  - name: event_time_utc
+    type: datetime
+    required: true
+    nullable: false
+    pii: false
+    deidentification: shifted
+    description: Event timestamp after the agreed constant time shift.
+  - name: lot_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous lot token.
+  - name: parent_lot_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: >-
+      Contributing parent lot for a split or merge edge. For a split, lot_id is
+      the child and this is its parent; for a merge, lot_id is the merged lot
+      and one row is sent per contributing parent. Empty for ordinary events.
+  - name: wafer_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous wafer token when the MES tracks wafers.
+  - name: product_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous product token.
+  - name: route_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous route token.
+  - name: route_revision
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous route revision token.
+  - name: operation_seq
+    type: integer
+    unit: "1"
+    required: true
+    nullable: false
+    pii: false
+    deidentification: preserved
+    description: Positive route position for the operation.
+  - name: operation_id
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous operation token.
+  - name: operation_type
+    type: string
+    required: true
+    nullable: false
+    pii: false
+    deidentification: generalized
+    allowed_values:
+      - clean
+      - oxidation
+      - lithography
+      - etch
+      - deposition
+      - implant
+      - anneal
+      - cmp
+      - metrology
+      - inspection
+      - test
+      - assembly
+      - mold
+      - final_test
+      - other
+    description: Generic operation class used to map to a tool group.
+  - name: tool_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous tool token.
+  - name: tool_group_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous tool-group token.
+  - name: tool_class
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: generalized
+    description: Generic tool class such as litho_scanner, furnace or metrology.
+  - name: chamber_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous chamber token.
+  - name: recipe_id
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous recipe token; no recipe parameters.
+  - name: recipe_revision
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: tokenized
+    description: Stable pseudonymous recipe revision token.
+  - name: process_time_s
+    type: number
+    unit: s
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Measured process duration in seconds.
+  - name: queue_time_s
+    type: number
+    unit: s
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Measured queue duration in seconds at move-in.
+  - name: setup_time_s
+    type: number
+    unit: s
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Measured setup or changeover duration in seconds.
+  - name: wafer_count
+    type: integer
+    unit: "1"
+    required: true
+    nullable: false
+    pii: false
+    deidentification: preserved
+    description: Number of wafers represented by the event.
+  - name: scrap_qty
+    type: integer
+    unit: "1"
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Wafers scrapped by a scrap event.
+  - name: rework_qty
+    type: integer
+    unit: "1"
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    description: Wafers sent to rework by a rework event.
+  - name: hold_reason_code
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: generalized
+    description: Generalized hold reason category.
+  - name: data_quality_flag
+    type: string
+    required: false
+    nullable: true
+    pii: false
+    deidentification: preserved
+    allowed_values: [ok, late, estimated, missing, duplicate, other]
+    description: Explicit quality marker for the row.

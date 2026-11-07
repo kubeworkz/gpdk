@@ -5,6 +5,8 @@ out/*.gds
 out/*.svg
 out/*.png
 out/fabtwin/
+out/mes/
+catalog/data/
 flow/vendor/
 flow/build/
 flow/test/build/

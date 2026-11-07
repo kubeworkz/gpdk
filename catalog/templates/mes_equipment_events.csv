@@ -1,0 +1,1 @@
+event_id,event_time_utc,tool_id,tool_group_id,tool_class,state,reason_code,failure_mode_code,maintenance_type,lot_id,wafer_count,recipe_id,alarm_code,data_quality_flag

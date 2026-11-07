@@ -1,0 +1,278 @@
+schema_version: "0.1"
+data_root: .
+# Most sources are inventoried but not connected. Add datasets only after the
+# file is hashed and its column/unit contract is declared. Never put access
+# credentials or connection strings in this catalog.
+sources:
+  - id: grx930_as_built
+    name: GRX930 measured as-built baseline
+    domain: test
+    evidence_class: measured
+    status: connected
+    access: local_file
+    format: csv
+    owner: gpdk
+    license: internal
+    sensitivity: internal
+    personal_data: absent
+    refresh: static
+    description: Normalized extract of the measured as-built block in chips/grx930.yaml; legacy node is undisclosed and this is not 28 nm process data.
+  - id: mes_route_events
+    name: MES route and queue events
+    domain: factory
+    evidence_class: measured
+    status: planned
+    access: database
+    format: sql
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: Lot, wafer, step, queue and dispatch timestamps from the MES.
+  - id: mes_lot_genealogy
+    name: MES lot and wafer genealogy
+    domain: factory
+    evidence_class: measured
+    status: planned
+    access: database
+    format: sql
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: Parent-child lot, wafer, die and rework relationships.
+  - id: equipment_state_events
+    name: Equipment state and failure events
+    domain: equipment
+    evidence_class: measured
+    status: planned
+    access: database
+    format: sql
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: daily
+    description: Tool states, alarms, downs, repairs and preventive maintenance.
+  - id: fdc_traces
+    name: Fault-detection and classification traces
+    domain: equipment
+    evidence_class: measured
+    status: planned
+    access: api
+    format: json
+    owner: unassigned
+    license: unassigned
+    sensitivity: restricted
+    personal_data: unverified
+    refresh: per_run
+    description: High-rate sensor and actuator traces keyed by tool and run.
+  - id: pcm_wat
+    name: PCM and wafer-acceptance test data
+    domain: process
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: Electrical test structures and process-control monitors.
+  - id: inline_metrology
+    name: Inline metrology
+    domain: metrology
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: CD, overlay, thickness, resistivity and defect measurements.
+  - id: defect_inspection
+    name: Defect inspection and review
+    domain: metrology
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: internal
+    personal_data: unverified
+    refresh: lot
+    description: Defect maps, classifications and review dispositions.
+  - id: wafer_sort
+    name: Wafer sort and binning
+    domain: test
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: Die-level pass/fail, bin, test temperature and test time.
+  - id: package_assembly
+    name: Package and assembly yield
+    domain: package
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: lot
+    description: Assembly step yields, rework, scrap and final test outcomes.
+  - id: optical_test
+    name: Photonic and thermal test structures
+    domain: metrology
+    evidence_class: measured
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: restricted
+    personal_data: unverified
+    refresh: lot
+    description: Cutback loss, phase, alignment, heater and thermal test data.
+  - id: tool_cost_quotes
+    name: Tool and consumable cost quotes
+    domain: commercial
+    evidence_class: vendor
+    status: planned
+    access: manual
+    format: xlsx
+    owner: unassigned
+    license: unassigned
+    sensitivity: confidential
+    personal_data: unverified
+    refresh: static
+    description: Tool price, installation, service, consumables and lead time.
+  - id: market_price
+    name: Package price and demand assumptions
+    domain: commercial
+    evidence_class: literature
+    status: planned
+    access: manual
+    format: text
+    owner: unassigned
+    license: unassigned
+    sensitivity: internal
+    personal_data: unverified
+    refresh: monthly
+    description: Planning price, demand, mix and residual-value evidence.
+  - id: tcad_response
+    name: TCAD process and device response surfaces
+    domain: simulation
+    evidence_class: assumed
+    status: planned
+    access: local_file
+    format: csv
+    owner: unassigned
+    license: unassigned
+    sensitivity: internal
+    personal_data: unverified
+    refresh: per_run
+    description: Simulated process/device sweeps, not measured silicon data.
+  - id: external_pdk
+    name: Qualified foundry PDK and decks
+    domain: design
+    evidence_class: vendor
+    status: planned
+    access: local_file
+    format: binary
+    owner: unassigned
+    license: unassigned
+    sensitivity: restricted
+    personal_data: unverified
+    refresh: static
+    description: LEF, Liberty, SPICE, GDS, DRC/LVS/RCX and reliability decks.
+datasets:
+  - id: grx930_as_built_2026_11
+    source: grx930_as_built
+    path: datasets/grx930_as_built.csv
+    media_type: text/csv
+    sha256: 79a58d602e2f6b82d48fdd3d2cee9e226b4721fc4b45697fbb8ffee72a10eedd
+    bytes: 448
+    rows: 1
+    collected_at: "2026-11-05T18:21:54-05:00"
+    evidence_class: measured
+    keys: [chip]
+    description: Normalized measured as-built baseline read from chips/grx930.yaml; original silicon measurement date is not recorded, so collected_at is the source baseline commit date.
+    columns:
+      - name: chip
+        type: string
+      - name: source
+        type: string
+      - name: die_area
+        type: number
+        unit: mm2
+      - name: die_width
+        type: number
+        unit: mm
+      - name: die_height
+        type: number
+        unit: mm
+      - name: core_area
+        type: number
+        unit: mm2
+      - name: content_area
+        type: number
+        unit: mm2
+      - name: logic_area
+        type: number
+        unit: mm2
+      - name: sram_area
+        type: number
+        unit: mm2
+      - name: sram_capacity
+        type: number
+        unit: kB
+      - name: sram_macros
+        type: integer
+        unit: "1"
+      - name: sram_macro_area
+        type: number
+        unit: mm2
+      - name: nand2_equivalent_gates
+        type: integer
+        unit: "1"
+      - name: combinational_nand2_equivalent_gates
+        type: integer
+        unit: "1"
+      - name: flip_flops
+        type: integer
+        unit: "1"
+      - name: clock_frequency
+        type: number
+        unit: MHz
+      - name: fpga_clock_frequency
+        type: number
+        unit: MHz
+      - name: offchip_memory
+        type: number
+        unit: kB
+      - name: stated_utilization
+        type: number
+        unit: "1"
+      - name: core_block_area
+        type: number
+        unit: mm2
+      - name: npu_block_area
+        type: number
+        unit: mm2
+      - name: operand_bank_area
+        type: number
+        unit: mm2

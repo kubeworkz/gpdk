@@ -233,6 +233,11 @@ def execute(
         seen_inputs.add(
             ("factory", display_path(scenario.factory_path))
         )
+    if scenario.mes_path is not None:
+        input_records.append(_input_record("mes", scenario.mes_path))
+        seen_inputs.add(
+            ("mes", display_path(scenario.mes_path))
+        )
     if scenario.photonic_path is not None:
         input_records.append(
             _input_record("photonic", scenario.photonic_path)
@@ -340,6 +345,7 @@ def execute(
             "package": scenario.package_ref,
             "yield": scenario.yield_ref,
             "factory": scenario.factory_ref,
+            "mes": scenario.mes_ref,
             "photonic": scenario.photonic_ref,
             "photonic_calibration": scenario.photonic_calibration_ref,
             "seed": scenario.seed,

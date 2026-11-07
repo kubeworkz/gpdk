@@ -38,6 +38,7 @@ INPUT_FIELDS = frozenset(
         "package",
         "yield",
         "factory",
+        "mes",
         "photonic",
         "photonic_calibration",
     }
@@ -73,6 +74,8 @@ class Scenario:
     yield_path: Path | None
     factory_ref: str | None
     factory_path: Path | None
+    mes_ref: str | None
+    mes_path: Path | None
     photonic_ref: str | None
     photonic_path: Path | None
     photonic_calibration_ref: str | None
@@ -221,6 +224,8 @@ def load_scenario(path: str | Path) -> Scenario:
     yield_path: Path | None = None
     factory_ref: str | None = None
     factory_path: Path | None = None
+    mes_ref: str | None = None
+    mes_path: Path | None = None
     photonic_ref: str | None = None
     photonic_path: Path | None = None
     photonic_calibration_ref: str | None = None
@@ -318,6 +323,28 @@ def load_scenario(path: str | Path) -> Scenario:
                         f"{display_path(factory_path)}",
                     )
 
+        mes_value = inputs.get("mes")
+        if mes_value is not None:
+            if not isinstance(mes_value, str) or not mes_value.strip():
+                _add(
+                    errors,
+                    path,
+                    "'inputs.mes' must be a non-empty path string",
+                )
+            else:
+                mes_ref = mes_value.strip()
+                candidate = Path(mes_ref)
+                if not candidate.is_absolute():
+                    candidate = ROOT / candidate
+                mes_path = candidate.resolve()
+                if not mes_path.is_file():
+                    _add(
+                        errors,
+                        path,
+                        "'inputs.mes' does not exist: "
+                        f"{display_path(mes_path)}",
+                    )
+
         photonic_value = inputs.get("photonic")
         if photonic_value is not None:
             if (
@@ -398,6 +425,8 @@ def load_scenario(path: str | Path) -> Scenario:
         yield_path=yield_path,
         factory_ref=factory_ref,
         factory_path=factory_path,
+        mes_ref=mes_ref,
+        mes_path=mes_path,
         photonic_ref=photonic_ref,
         photonic_path=photonic_path,
         photonic_calibration_ref=photonic_calibration_ref,

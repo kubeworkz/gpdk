@@ -1,0 +1,1 @@
+event_id,event_type,event_time_utc,lot_id,parent_lot_id,wafer_id,product_id,route_id,route_revision,operation_seq,operation_id,operation_type,tool_id,tool_group_id,tool_class,chamber_id,recipe_id,recipe_revision,process_time_s,queue_time_s,setup_time_s,wafer_count,scrap_qty,rework_qty,hold_reason_code,data_quality_flag

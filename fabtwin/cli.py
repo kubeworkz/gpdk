@@ -6,8 +6,11 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 
+from .catalog import load_catalog
 from .compare_report import (
     default_comparison_report_path,
     evidence_transition,
@@ -16,11 +19,18 @@ from .compare_report import (
     write_comparison_report,
 )
 from .errors import (
+    CatalogError,
     FabTwinError,
+    MesError,
+    MesIngestError,
+    MesReplayError,
     ScenarioError,
     ScenarioValidationError,
     StoreError,
 )
+from .mes import EVIDENCE_CLASS, generate as generate_mes
+from .mes_ingest import ACCEPTANCE_FILE, build_manifest, write_acceptance_report
+from .mes_replay import load_replay
 from .model import EVIDENCE_CLASSES
 from .provenance import display_path
 from .run import DEFAULT_STORE, execute, validate_scenario
@@ -41,6 +51,143 @@ def _parser() -> argparse.ArgumentParser:
         help="validate a scenario and its engine inputs",
     )
     validate_parser.add_argument("scenario", help="path to the scenario YAML")
+
+    catalog_parser = subparsers.add_parser(
+        "catalog",
+        help="validate a data-source catalog and registered datasets",
+    )
+    catalog_parser.add_argument("catalog", help="path to the catalog YAML")
+    catalog_parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="emit JSON instead of a report",
+    )
+
+    mes_parser = subparsers.add_parser(
+        "mes-synth",
+        help="generate synthetic MES events for schema smoke tests",
+    )
+    mes_parser.add_argument(
+        "--out",
+        default="out/mes",
+        help="output directory (default: out/mes)",
+    )
+    mes_parser.add_argument(
+        "--seed", type=int, default=42, help="random seed (default: 42)"
+    )
+    mes_parser.add_argument(
+        "--lots",
+        type=int,
+        default=4,
+        help="number of fab lots, at least 2 (default: 4)",
+    )
+    mes_parser.add_argument(
+        "--days",
+        type=int,
+        default=14,
+        help="event window in days (default: 14)",
+    )
+    mes_parser.add_argument(
+        "--start",
+        default="2026-11-01T00:00:00+00:00",
+        help="window start as ISO 8601 with an offset",
+    )
+
+    manifest_parser = subparsers.add_parser(
+        "mes-manifest",
+        help="hash a provider MES export and write its manifest",
+    )
+    manifest_parser.add_argument(
+        "data_dir", help="directory containing the event CSVs"
+    )
+    manifest_parser.add_argument(
+        "--route",
+        default="mes_route_events.csv",
+        help="route CSV relative to data_dir (default: mes_route_events.csv)",
+    )
+    manifest_parser.add_argument(
+        "--equipment",
+        default="mes_equipment_events.csv",
+        help=(
+            "equipment CSV relative to data_dir "
+            "(default: mes_equipment_events.csv)"
+        ),
+    )
+    manifest_parser.add_argument(
+        "--evidence-class",
+        choices=sorted(EVIDENCE_CLASSES),
+        default="measured",
+        help="evidence class for the extract (default: measured)",
+    )
+    manifest_parser.add_argument("--provider", help="provider or site token")
+    manifest_parser.add_argument(
+        "--source-system", help="MES/OSAT source system and version"
+    )
+    manifest_parser.add_argument(
+        "--extract-id", help="extract name and version"
+    )
+    manifest_parser.add_argument(
+        "--extract-time",
+        help="extraction time as ISO 8601 with an offset",
+    )
+    manifest_parser.add_argument(
+        "--window-start",
+        help="inclusive window start; inferred from events if omitted",
+    )
+    manifest_parser.add_argument(
+        "--window-end",
+        help="inclusive window end; inferred from events if omitted",
+    )
+    manifest_parser.add_argument(
+        "--generator",
+        default="provider.export",
+        help="provider export tool (default: provider.export)",
+    )
+    manifest_parser.add_argument(
+        "--generator-version",
+        default="unspecified",
+        help="provider export version (default: unspecified)",
+    )
+    manifest_parser.add_argument(
+        "--note", help="known exclusions, outages or transfer reference"
+    )
+    manifest_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="replace an existing manifest.json",
+    )
+    manifest_parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="emit the manifest as JSON",
+    )
+
+    check_parser = subparsers.add_parser(
+        "mes-check",
+        help="verify a manifested MES extract before replay",
+    )
+    check_parser.add_argument("manifest", help="path to manifest.json")
+    report_group = check_parser.add_mutually_exclusive_group()
+    report_group.add_argument(
+        "--report",
+        help=(
+            "acceptance report path "
+            "(default: acceptance.json beside the manifest)"
+        ),
+    )
+    report_group.add_argument(
+        "--no-report",
+        action="store_true",
+        help="verify without writing an acceptance report",
+    )
+    check_parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="emit the verification summary as JSON",
+    )
 
     run_parser = subparsers.add_parser(
         "run",
@@ -372,6 +519,272 @@ def _compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def _catalog(args: argparse.Namespace) -> int:
+    try:
+        catalog = load_catalog(args.catalog)
+    except CatalogError as exc:
+        print(
+            f"invalid catalog: {display_path(Path(args.catalog))}",
+            file=sys.stderr,
+        )
+        for error in exc.errors:
+            print(f"  {error}", file=sys.stderr)
+        return 2
+
+    checks = [asdict(check) for check in catalog.verify()]
+    failed = sum(1 for check in checks if check["status"] != "ok")
+    result = {
+        **catalog.summary(),
+        "checks": checks,
+        "checked": len(checks),
+        "ok": len(checks) - failed,
+        "failed": failed,
+    }
+    if args.as_json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"catalog: {result['catalog']}")
+        print(f"sha256: {result['sha256']}")
+        print(
+            f"schema: {result['schema_version']}  "
+            f"sources: {result['sources']['total']} "
+            f"(connected={result['sources']['connected']}, "
+            f"planned={result['sources']['planned']}, "
+            f"blocked={result['sources']['blocked']})  "
+            f"datasets: {result['datasets']}"
+        )
+        for check in checks:
+            if check["status"] == "ok":
+                print(f"  ok  {check['dataset_id']}  {check['path']}")
+                continue
+            print(
+                f"  {check['status']}  {check['dataset_id']}  "
+                f"{check['path']}"
+            )
+            if check["error"]:
+                print(f"    {check['error']}")
+        print(
+            f"checked: {result['checked']}  ok: {result['ok']}  "
+            f"failed: {result['failed']}"
+        )
+    return 0 if failed == 0 else 1
+
+
+def _mes_synth(args: argparse.Namespace) -> int:
+    try:
+        start = datetime.fromisoformat(args.start.replace("Z", "+00:00"))
+    except ValueError:
+        print(
+            "error: --start must be ISO 8601 with an offset",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        dataset = generate_mes(
+            seed=args.seed,
+            fab_lots=args.lots,
+            days=args.days,
+            start=start,
+        )
+        route_path, equipment_path, manifest_path = dataset.write(args.out)
+    except (MesError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    summary = dataset.summary()
+    print(f"synthetic MES events: {display_path(Path(args.out))}")
+    print(f"  evidence: {EVIDENCE_CLASS} (synthetic, not measured)")
+    print(
+        f"  window: {summary['window']['start_utc']} to "
+        f"{summary['window']['end_utc']}"
+    )
+    print(
+        f"  route events: {summary['route_events']}  "
+        f"{display_path(route_path)}"
+    )
+    print(
+        f"  equipment events: {summary['equipment_events']}  "
+        f"{display_path(equipment_path)}"
+    )
+    print(f"  manifest: {display_path(manifest_path)}")
+    return 0
+
+
+def _mes_manifest(args: argparse.Namespace) -> int:
+    try:
+        path, manifest = build_manifest(
+            args.data_dir,
+            evidence_class=args.evidence_class,
+            route=args.route,
+            equipment=args.equipment,
+            provider=args.provider,
+            source_system=args.source_system,
+            extract_id=args.extract_id,
+            extract_time=args.extract_time,
+            window_start=args.window_start,
+            window_end=args.window_end,
+            generator=args.generator,
+            generator_version=args.generator_version,
+            note=args.note,
+            overwrite=args.force,
+        )
+    except (MesIngestError, MesReplayError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.as_json:
+        print(json.dumps(manifest, indent=2))
+        return 0
+
+    print(f"MES manifest: {display_path(path)}")
+    print(
+        f"  evidence: {manifest['evidence_class']} "
+        f"(synthetic={str(manifest['synthetic']).lower()}, "
+        f"measured={str(manifest['measured']).lower()})"
+    )
+    print(
+        f"  window: {manifest['window']['start_utc']} to "
+        f"{manifest['window']['end_utc']}"
+    )
+    for entry in manifest["files"]:
+        print(
+            f"  {entry['path']}: {entry['rows']} rows, "
+            f"{entry['bytes']} bytes, sha256 {entry['sha256']}"
+        )
+    print(f"  next: python -m fabtwin mes-check {display_path(path)}")
+    return 0
+
+
+def _mes_check(args: argparse.Namespace) -> int:
+    report_path: Path | None = None
+    if not args.no_report:
+        report_path = (
+            Path(args.report)
+            if args.report
+            else Path(args.manifest).parent / ACCEPTANCE_FILE
+        )
+        if not report_path.is_absolute():
+            report_path = Path.cwd() / report_path
+
+    try:
+        result = load_replay(args.manifest)
+    except (MesReplayError, OSError) as exc:
+        if report_path is not None:
+            try:
+                written, _report = write_acceptance_report(
+                    args.manifest,
+                    error=str(exc),
+                    report_path=report_path,
+                )
+            except (MesIngestError, OSError) as report_exc:
+                print(
+                    f"warning: cannot write acceptance report: "
+                    f"{report_exc}",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    f"acceptance: {display_path(written)}",
+                    file=sys.stderr,
+                )
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    report_ref: str | None = None
+    if report_path is not None:
+        try:
+            written, _report = write_acceptance_report(
+                args.manifest,
+                result=result,
+                report_path=report_path,
+            )
+        except (MesIngestError, OSError) as exc:
+            print(
+                f"error: cannot write acceptance report: {exc}",
+                file=sys.stderr,
+            )
+            return 2
+        report_ref = display_path(written)
+
+    payload = {
+        "manifest": display_path(result.manifest_path),
+        "manifest_sha256": result.manifest_sha256,
+        "evidence_class": result.evidence_class,
+        "synthetic": result.synthetic,
+        "generator": result.generator,
+        "generator_version": result.generator_version,
+        "window": {
+            "start_utc": result.window_start.isoformat(),
+            "end_utc": result.window_end.isoformat(),
+        },
+        "route": {
+            "path": display_path(result.route_path),
+            "rows": result.route_rows,
+            "sha256": result.route_sha256,
+        },
+        "equipment": {
+            "path": display_path(result.equipment_path),
+            "rows": result.equipment_rows,
+            "sha256": result.equipment_sha256,
+        },
+        "lots": result.lot_count,
+        "completed_lots": result.completed_lots,
+        "completed_wafers": result.completed_wafers,
+        "open_lots": result.open_lots,
+        "cycle_time_hours": result.cycle_time_hours,
+        "queue_time_hours": result.queue_time_hours,
+        "wip_lots": result.wip_lots,
+        "peak_wip_lots": result.peak_wip_lots,
+        "throughput_wafers_per_week": (
+            result.throughput_wafers_per_week
+        ),
+        "tool_count": len(result.tool_utilization),
+        "tool_group_count": len(result.tool_group_utilization),
+        "acceptance_report": report_ref,
+    }
+    if args.as_json:
+        print(json.dumps(payload, indent=2))
+        return 0
+
+    print(f"extract: {payload['manifest']}")
+    print(f"  manifest sha256: {payload['manifest_sha256']}")
+    print(
+        f"  evidence: {payload['evidence_class']} "
+        f"(synthetic={str(payload['synthetic']).lower()})"
+    )
+    print(
+        f"  window: {payload['window']['start_utc']} to "
+        f"{payload['window']['end_utc']}"
+    )
+    print(
+        f"  route events: {payload['route']['rows']}  "
+        f"equipment events: {payload['equipment']['rows']}"
+    )
+    print(
+        f"  lots: {payload['lots']}  "
+        f"completed: {payload['completed_lots']}  "
+        f"open: {payload['open_lots']}"
+    )
+    print(f"  cycle time: {payload['cycle_time_hours']:.2f} h")
+    print(f"  queue time: {payload['queue_time_hours']:.2f} h")
+    print(
+        f"  WIP: {payload['wip_lots']:.3f} lots  "
+        f"peak: {payload['peak_wip_lots']}"
+    )
+    print(
+        f"  throughput: "
+        f"{payload['throughput_wafers_per_week']:.2f} wafers/week"
+    )
+    print(
+        f"  tools: {payload['tool_count']}  "
+        f"groups: {payload['tool_group_count']}"
+    )
+    if report_ref:
+        print(f"  acceptance: {report_ref}")
+    print("status: ok")
+    return 0
+
+
 def _verify_artifacts(args: argparse.Namespace) -> int:
     path = _resolve_store(args.db)
     if not path.is_file():
@@ -414,6 +827,14 @@ def _export_site(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "catalog":
+        return _catalog(args)
+    if args.command == "mes-synth":
+        return _mes_synth(args)
+    if args.command == "mes-manifest":
+        return _mes_manifest(args)
+    if args.command == "mes-check":
+        return _mes_check(args)
     if args.command == "query":
         return _query(args)
     if args.command == "compare":

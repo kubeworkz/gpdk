@@ -1,0 +1,4 @@
+# Hashed datasets and contract fixtures must keep stable LF bytes on Windows.
+catalog/datasets/*.csv text eol=lf
+catalog/templates/*.csv text eol=lf
+factory/mes_smoke/*.csv text eol=lf

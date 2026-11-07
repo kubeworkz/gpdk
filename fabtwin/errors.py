@@ -27,3 +27,23 @@ class EngineError(FabTwinError):
 
 class StoreError(FabTwinError):
     """The SQLite observation index could not be read or written."""
+
+
+class MesError(FabTwinError):
+    """Synthetic MES events could not be generated or validated."""
+
+
+class MesReplayError(FabTwinError):
+    """An MES extract could not be verified or replayed."""
+
+
+class MesIngestError(FabTwinError):
+    """A provider MES extract could not be inventoried or manifested."""
+
+
+class CatalogError(FabTwinError):
+    """A data-source catalog failed validation or could not be read."""
+
+    def __init__(self, errors: Sequence[str]) -> None:
+        self.errors = tuple(str(error) for error in errors)
+        super().__init__("\n".join(self.errors))

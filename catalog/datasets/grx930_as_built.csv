@@ -1,0 +1,2 @@
+chip,source,die_area,die_width,die_height,core_area,content_area,logic_area,sram_area,sram_capacity,sram_macros,sram_macro_area,nand2_equivalent_gates,combinational_nand2_equivalent_gates,flip_flops,clock_frequency,fpga_clock_frequency,offchip_memory,stated_utilization,core_block_area,npu_block_area,operand_bank_area
+GRX930,chips/grx930.yaml,165.0,12.9,12.9,140.6,86.4,46.2,40.2,96,192,0.2094,1350000,1006000,67007,25,121,64,0.46,23.79,17.73,2.7
