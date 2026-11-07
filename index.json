@@ -1,0 +1,618 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-11-07T14:36:38+00:00",
+  "commit": "9652460275176c07ac276171a6c5ea1afcb0acb0",
+  "run_url": "https://github.com/kubeworkz/gpdk/actions/runs/42382388634",
+  "claim": "scenario estimate; not foundry sign-off",
+  "browser": "browser/manifest.json",
+  "runs": [
+    {
+      "scenario_id": "g100_28nm_baseline",
+      "run_id": "g100_28nm_baseline-20261107T143633Z-af71ea55",
+      "description": "Reproduce the G100 digital block projection from the pre-split planning profile, with every projected value marked as an assumption.",
+      "product": "g100",
+      "process": "grx28@0.1.0",
+      "seed": 20261105,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:33+00:00",
+      "engines": [
+        {
+          "name": "gpdk",
+          "version": "0.1.0",
+          "fidelity": "F0",
+          "model_version": "gpdk@0.1.0"
+        }
+      ],
+      "observation_count": 40,
+      "evidence_classes": {
+        "assumed": 40
+      },
+      "fingerprint_sha256": "72f74dad41ce6c16fb9ee38884cfa60ceb6fa60f400ebc1a2523b9eb76b147fe",
+      "warnings": [
+        "gpdk is an uncalibrated F0 analytical model; these are scenario estimates, not silicon predictions.",
+        "Uncertainty is not estimated in Phase 0; the uncertainty column is intentionally blank."
+      ],
+      "files": [
+        {
+          "path": "runs/g100_28nm_baseline/run.json",
+          "media_type": "application/json",
+          "bytes": 5209,
+          "sha256": "7d71fdb97a891ffb5106f30dcf91124a0c2b701e6ec70749ebe9a5daee227a80"
+        },
+        {
+          "path": "runs/g100_28nm_baseline/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 6611,
+          "sha256": "38bd8e19b309780a249dbe27f8b433f33f699fe926b496bd3d2d1d2dc5a80e56"
+        },
+        {
+          "path": "runs/g100_28nm_baseline/report.md",
+          "media_type": "text/markdown",
+          "bytes": 6759,
+          "sha256": "975cf57c09d09bf5a0b9e3cf3f587888c0439fe011c2832cbd23ad32d00c280b"
+        },
+        {
+          "path": "runs/g100_28nm_baseline/observations.json",
+          "media_type": "application/json",
+          "bytes": 15023,
+          "sha256": "0f0fed1c413e415497bd6d8d9934501a0c5c9dea23c679303ead24fb9ce111c2"
+        }
+      ]
+    },
+    {
+      "scenario_id": "g100_factory_28nm",
+      "run_id": "g100_factory_28nm-20261107T143633Z-73a2b208",
+      "description": "Simulate the G100 28 nm fab and ATP route with finite tool groups, batching, setup and availability loss. Report cycle time, queue time, WIP, throughput, tool utilization, bottleneck step and fully loaded cost per good package for a baseline and two what-if cases.",
+      "product": "g100",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:33+00:00",
+      "engines": [
+        {
+          "name": "factory_atp",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "factory-atp@0.1.0"
+        }
+      ],
+      "observation_count": 316,
+      "evidence_classes": {
+        "assumed": 316
+      },
+      "fingerprint_sha256": "6b458368f30bb3b0eb20c6073971c005d91c502f99da88012493ab165fd03d19",
+      "warnings": [
+        "Phase 4 route, tool counts, process times, MTBF/MTTR and operating cost are planning assumptions, not a foundry MES route card or measured line performance.",
+        "Downtime is an availability factor applied to effective process time; random failures, maintenance calendars, reticle changes, dispatch rules and transport time are not modelled.",
+        "Cost per good package is the Phase 3 package cost plus factory operating cost and straight-line depreciation for priced tool groups; it is not a qualified product cost. Only tool groups with a declared capex are depreciated, so the absolute cost is partial. Payback and ROI are reported only when a package price, gross margin or sensitivity block is supplied; they are planning economics, not a market forecast.",
+        "Scanner DCF uses the declared five-year cash-flow ramp and terminal value; taxes, working capital, price erosion and replacement capex are not modelled.",
+        "Discount-rate and terminal-value sensitivity hold the base scanner cash flow, ramp and hurdle rate fixed.",
+        "Price/margin sensitivity is one-at-a-time and holds output, cost and margin constant; it is not a demand forecast."
+      ],
+      "files": [
+        {
+          "path": "runs/g100_factory_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 25926,
+          "sha256": "9adfdb6e2c52f78794cf6da75135303ba330b6ff7122e2b653f31dbad5431d14"
+        },
+        {
+          "path": "runs/g100_factory_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 58441,
+          "sha256": "e03d2e4fce9cd361d02b342e3fd220f26acc14fe73db6527fe8e1a1ba3a65fd4"
+        },
+        {
+          "path": "runs/g100_factory_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 40159,
+          "sha256": "cf925dc592127f96a12317af38b5d6c0212e15209fed56af8ff4a93ab9bcfac8"
+        },
+        {
+          "path": "runs/g100_factory_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 125689,
+          "sha256": "666a636233111eba39eb307e4b3725a64578365c5855032414a87456106200f3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "g100_mcm_28nm",
+      "run_id": "g100_mcm_28nm-20261107T143634Z-4bc28d8f",
+      "description": "Combine G100 Poisson die yield with PTA known-good-die supply, matched-pair KGD yield and three package assembly options, then compare good packages per G100 wafer and cost per good package.",
+      "product": "g100",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:34+00:00",
+      "engines": [
+        {
+          "name": "mcm_yield",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "mcm-yield@0.1.0"
+        }
+      ],
+      "observation_count": 17,
+      "evidence_classes": {
+        "assumed": 17
+      },
+      "fingerprint_sha256": "839289a602436b794b684c0d54d28fa01cdcef9ddd5100284b1c057499dd247c",
+      "warnings": [
+        "Phase 3 MCM yield and package costs are F1 planning estimates, not measured OSAT data or vendor quotes.",
+        "KGD matching assumes the test-yield factors in the assumptions file; test escapes and handling damage are not separately modelled.",
+        "Package assembly, interconnect ppm and package costs are explicit assumptions; replace them with qualified package and assembly data before commitments."
+      ],
+      "files": [
+        {
+          "path": "runs/g100_mcm_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 6351,
+          "sha256": "1ca57e1fd4b8ca214524df031b371e4c3904e5a1e4b8b6d04fdca2d69e857c1b"
+        },
+        {
+          "path": "runs/g100_mcm_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 3118,
+          "sha256": "1148c1747e793dc734dac40d9f88f8104287542a4a9d63499de620b8986eb6e0"
+        },
+        {
+          "path": "runs/g100_mcm_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 4961,
+          "sha256": "506d654c6725f24e60e5766e8f2b21637f521fcdb0828a9949ccd6e7cd6f2423"
+        },
+        {
+          "path": "runs/g100_mcm_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 6623,
+          "sha256": "3588ea79149135494aa63db58d40354ee2ea245f0c306720116304fb69da9916"
+        }
+      ]
+    },
+    {
+      "scenario_id": "grx930_28nm_baseline",
+      "run_id": "grx930_28nm_baseline-20261107T143634Z-032ae66d",
+      "description": "Reproduce the GRX930 measured-baseline projection and the four-point DTCO ladder from the existing gpdk model, with measured and modelled evidence kept in separate observation rows.",
+      "product": "grx930",
+      "process": "grx28@0.1.0",
+      "seed": 20261105,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:34+00:00",
+      "engines": [
+        {
+          "name": "gpdk",
+          "version": "0.1.0",
+          "fidelity": "F0",
+          "model_version": "gpdk@0.1.0"
+        }
+      ],
+      "observation_count": 27,
+      "evidence_classes": {
+        "assumed": 24,
+        "measured": 3
+      },
+      "fingerprint_sha256": "0d16b1e6747e9d4e05798bf61dcc39ffaafd5245a999b426de749285af689633",
+      "warnings": [
+        "gpdk is an uncalibrated F0 analytical model; these are scenario estimates, not silicon predictions.",
+        "Uncertainty is not estimated in Phase 0; the uncertainty column is intentionally blank.",
+        "The as-built rows are measured source data, not model outputs."
+      ],
+      "files": [
+        {
+          "path": "runs/grx930_28nm_baseline/run.json",
+          "media_type": "application/json",
+          "bytes": 5366,
+          "sha256": "9f2f146b91b9468603f49e48d6bd00b7907e2f5eeb8a8c5ba2df3b839753c665"
+        },
+        {
+          "path": "runs/grx930_28nm_baseline/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 4770,
+          "sha256": "401fe9533a3a815cb831ecb82b68297162def09f81a0a85622104f097ab4d300"
+        },
+        {
+          "path": "runs/grx930_28nm_baseline/report.md",
+          "media_type": "text/markdown",
+          "bytes": 5911,
+          "sha256": "8e62812b91c577a6b957285ff8c1a557bd4c338fc203ac9e66ed7396683dc6ae"
+        },
+        {
+          "path": "runs/grx930_28nm_baseline/observations.json",
+          "media_type": "application/json",
+          "bytes": 10407,
+          "sha256": "07be20bcc446fd243605e90e1ffa64ecfe2d1f66230c7d3684ad876deb31ab5e"
+        }
+      ]
+    },
+    {
+      "scenario_id": "grx930_yield_28nm",
+      "run_id": "grx930_yield_28nm-20261107T143634Z-b1acbd9d",
+      "description": "Estimate GRX930 die-per-wafer, defect-limited die yield, package assembly yield, known-good die count, and cost per good package with a seeded Monte Carlo sample. Every number is an assumption-driven planning estimate.",
+      "product": "grx930",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 1000,
+      "started_at": "2026-11-07T14:36:34+00:00",
+      "engines": [
+        {
+          "name": "yield",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "yield-assumptions@0.2.0"
+        }
+      ],
+      "observation_count": 9,
+      "evidence_classes": {
+        "assumed": 9
+      },
+      "fingerprint_sha256": "599d7f23e84ca580b0d74e2c5ef1dd619b31b2e74cde3771023c5aced998f31b",
+      "warnings": [
+        "Yield is an F1 planning estimate, not a foundry yield prediction.",
+        "Wafer, defect, critical-area, assembly and cost values are explicit assumptions; replace them with calibrated data before making commitments.",
+        "Monte Carlo reports sampling uncertainty for one wafer, not wafer-to-wafer variation."
+      ],
+      "files": [
+        {
+          "path": "runs/grx930_yield_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 4830,
+          "sha256": "d576464ec0ff1fd8a685dae36ba48d8bd0b7e5ee980cd88eae422682e6e12073"
+        },
+        {
+          "path": "runs/grx930_yield_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 1751,
+          "sha256": "3b30ca86bb73f7dcc6f3bbc1f222dc59653c457edbd80e05e89e8f458da52e95"
+        },
+        {
+          "path": "runs/grx930_yield_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 3886,
+          "sha256": "26ba4545fcdc9d1ceb830f19966cec269c56ddb892eb6607d5ef9630da478cb2"
+        },
+        {
+          "path": "runs/grx930_yield_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 3540,
+          "sha256": "daa112a65c9225a7dd7bae63bd9fe11a00a779e4b286ddd3dc0e728d618136f8"
+        }
+      ]
+    },
+    {
+      "scenario_id": "grx930_yield_sensitivity_28nm",
+      "run_id": "grx930_yield_sensitivity_28nm-20261107T143635Z-c4eb4177",
+      "description": "Sweep GRX930 die yield, good packages per wafer, and cost per good package over the planning defect-density, pad-count, and assembly-tolerance points in yields/grx930_28nm.yaml.",
+      "product": "grx930",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 100,
+      "started_at": "2026-11-07T14:36:35+00:00",
+      "engines": [
+        {
+          "name": "yield_sensitivity",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "yield-assumptions@0.2.0"
+        }
+      ],
+      "observation_count": 56,
+      "evidence_classes": {
+        "assumed": 56
+      },
+      "fingerprint_sha256": "638c3f65c9608ba15f5fc3a1b9e4914f1d2e639eb6fc2e716f4965236c1c0c5d",
+      "warnings": [
+        "Yield sensitivity is an F1 planning exercise, not a foundry process corner.",
+        "Curve points share model assumptions; they do not represent independent measured wafers.",
+        "Monte Carlo reports sampling uncertainty, not model calibration uncertainty."
+      ],
+      "files": [
+        {
+          "path": "runs/grx930_yield_sensitivity_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 4659,
+          "sha256": "1696a7f8a316e72917eb4c43ada48e8177c89b482849af6e5dda915c0a8af5d9"
+        },
+        {
+          "path": "runs/grx930_yield_sensitivity_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 12388,
+          "sha256": "020018291431235d8b1a61b2e01edc3749b41acd1be7ba49cf93e92dceb01931"
+        },
+        {
+          "path": "runs/grx930_yield_sensitivity_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 8883,
+          "sha256": "7f8459ba6b2a963db9a16e73e902299b6cebd44fe9017c88f0e2f3f2a0be3984"
+        },
+        {
+          "path": "runs/grx930_yield_sensitivity_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 24050,
+          "sha256": "2ba32c53659a0fc23326e2178dcb233ae6c480d4107a62ec05d3e4bf544405ce"
+        }
+      ]
+    },
+    {
+      "scenario_id": "grx930_yield_variation_28nm",
+      "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+      "description": "Simulate GRX930 lots with lognormal lot and wafer defect-density variation and assembly-lot ppm variation, reporting the mean die yield and both variance components.",
+      "product": "grx930",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 40,
+      "started_at": "2026-11-07T14:36:36+00:00",
+      "engines": [
+        {
+          "name": "yield_variation",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "yield-assumptions@0.2.0"
+        }
+      ],
+      "observation_count": 6,
+      "evidence_classes": {
+        "assumed": 6
+      },
+      "fingerprint_sha256": "70b07e2b338917756579ce092a17260cab9fa3ca7a5d81834ba8156d31f00b76",
+      "warnings": [
+        "Yield variation is an F1 planning exercise, not a calibrated fab or OSAT distribution.",
+        "Defect-density and assembly CVs are assumed lognormal multipliers with the nominal value as median.",
+        "Yield sigmas describe the modelled expected yield; they exclude die-sampling noise."
+      ],
+      "files": [
+        {
+          "path": "runs/grx930_yield_variation_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 4591,
+          "sha256": "6ce2824cce9986fc43633f1a3cb202a18f8e820ce8a4ca0d278f22460eb8a3a6"
+        },
+        {
+          "path": "runs/grx930_yield_variation_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 1390,
+          "sha256": "861ebf69668e12321214e09250134075eac45dce4cc74ab6a793b8c9e7e0da8b"
+        },
+        {
+          "path": "runs/grx930_yield_variation_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 3662,
+          "sha256": "d4f18a577ad9ab12dbe571edfc98c022a8e65a6905dd0d732e7e7c382cab4aa4"
+        },
+        {
+          "path": "runs/grx930_yield_variation_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 2536,
+          "sha256": "d9b3dd6bf128aac3b239bce3d4ad708231b359e3a208c05038f7075cb9cf1c41"
+        }
+      ]
+    },
+    {
+      "scenario_id": "grx930_yield_wafer_map_28nm",
+      "run_id": "grx930_yield_wafer_map_28nm-20261107T143637Z-da61d3e0",
+      "description": "Sample GRX930 die yield, edge-to-center yield ratio, radial yield slope and zone-level defect density under a planning radial, angular and clustered defect profile.",
+      "product": "grx930",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 200,
+      "started_at": "2026-11-07T14:36:37+00:00",
+      "engines": [
+        {
+          "name": "yield_wafer_map",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "yield-assumptions@0.2.0"
+        }
+      ],
+      "observation_count": 28,
+      "evidence_classes": {
+        "assumed": 28
+      },
+      "fingerprint_sha256": "9f0f65e8e70803c836b1f0dd052d5c33fa18557d0827d3bbc67fe3e85f659769",
+      "warnings": [
+        "Wafer map is an F1 planning profile, not a measured wafer map.",
+        "The radial, angular and cluster density terms are planning assumptions; they are not a measured wafer signature.",
+        "Zone yields use modelled expected yield; the wafer mean and package counts include sampling noise."
+      ],
+      "files": [
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 6930,
+          "sha256": "a075f1956233cd536ab36941937413f73ae405dc754f01a5e61caa339d9169a7"
+        },
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 5250,
+          "sha256": "c8772b0c3bdfe76565ef5890cd1d1f7dfd210ecc458f72f2d4a4417b1608554b"
+        },
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 5511,
+          "sha256": "ece0140560a14e87e73f0db7940797160804297c437ddf112ed40416f11e0f7f"
+        },
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/wafer_map.csv",
+          "media_type": "text/csv",
+          "bytes": 284079,
+          "sha256": "8c18aa1506416633696e557ce054e99065339a57885ff4f6c24dad4c6b8a25f4"
+        },
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/wafer_map.svg",
+          "media_type": "image/svg+xml",
+          "bytes": 410886,
+          "sha256": "b2e50e13670d3760b94152518306159cc885676e0183c5330e8a78ac55a61ba4"
+        },
+        {
+          "path": "runs/grx930_yield_wafer_map_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 11096,
+          "sha256": "123e2f0028ff018d352137e233b5569cb7a7d2bef4a475f379078c6d62ea3014"
+        }
+      ]
+    },
+    {
+      "scenario_id": "mes_line_replay",
+      "run_id": "mes_line_replay-20261107T143638Z-88c9d467",
+      "description": "Replay a deterministic synthetic front-end and OSAT MES event log. Cycle time, queue time, WIP, throughput and tool utilization are derived from the verified event timestamps instead of the YAML factory assumptions. The log is a synthetic fixture and is not a G100 route card or measured line performance.",
+      "product": "mes_line",
+      "process": "mes_fixture@0.1.0",
+      "seed": 20261106,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:38+00:00",
+      "engines": [
+        {
+          "name": "factory_replay",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "mes-replay@0.1.0"
+        }
+      ],
+      "observation_count": 54,
+      "evidence_classes": {
+        "assumed": 54
+      },
+      "fingerprint_sha256": "90305c46fad3ffcdb7f0902d54f6936f4f72aa160e9a437c16ab94215ff448b8",
+      "warnings": [
+        "MES replay reads event timestamps; it does not simulate dispatch, batching, failures or maintenance.",
+        "Cycle time, queue time and WIP are descriptive statistics for the manifest window, not a forecast.",
+        "The event log is synthetic (`assumed`); replay metrics describe generated events and are not measured line performance."
+      ],
+      "files": [
+        {
+          "path": "runs/mes_line_replay/run.json",
+          "media_type": "application/json",
+          "bytes": 7394,
+          "sha256": "f1409a99b16a6f71da062622fe0cda80c421cdcec5a0202c34ee5148a4f87dd5"
+        },
+        {
+          "path": "runs/mes_line_replay/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 9635,
+          "sha256": "6431a2350543f16074696b246cf4f6f354f1815158a99e6319475e60cc2cdb7b"
+        },
+        {
+          "path": "runs/mes_line_replay/report.md",
+          "media_type": "text/markdown",
+          "bytes": 8088,
+          "sha256": "d074dea2268868000928201abc41c74fbe53f64782625683ff6f30f3d93fece0"
+        },
+        {
+          "path": "runs/mes_line_replay/observations.json",
+          "media_type": "application/json",
+          "bytes": 21069,
+          "sha256": "ae441eb7bca4774eaaa3bba99841b54cff23a390284257f7639f39d3ec66aa16"
+        }
+      ]
+    },
+    {
+      "scenario_id": "pta_28nm_baseline",
+      "run_id": "pta_28nm_baseline-20261107T143638Z-28f840f3",
+      "description": "Record the PTA product envelope and MCM package contract: 4x4 MZI mesh, four input/output ports, 200 um window, 20 um lane pitch and 1550 nm operation. No insertion-loss, phase-error or tensor-error model is applied.",
+      "product": "pta",
+      "process": "grx28@0.1.0",
+      "seed": 20261105,
+      "samples": 1,
+      "started_at": "2026-11-07T14:36:38+00:00",
+      "engines": [
+        {
+          "name": "pta",
+          "version": "0.1.0",
+          "fidelity": "F0",
+          "model_version": "pta-assumptions@0.1.0"
+        }
+      ],
+      "observation_count": 8,
+      "evidence_classes": {
+        "assumed": 8
+      },
+      "fingerprint_sha256": "1962f11c16f23f351d0a9915584ca055aa6a8b4e2958123ff741a46027049dd5",
+      "warnings": [
+        "PTA baseline records topology assumptions only; optical insertion loss, phase error, thermal tuning and tensor error are not modeled in Phase 0.",
+        "No qualified silicon-photonics PDK or measured PTA data is used; these are planning assumptions."
+      ],
+      "files": [
+        {
+          "path": "runs/pta_28nm_baseline/run.json",
+          "media_type": "application/json",
+          "bytes": 4233,
+          "sha256": "b1d36c541b5a345dbcb4b4341588393f702e3e28e2b88bb05a9a807bfbe92bba"
+        },
+        {
+          "path": "runs/pta_28nm_baseline/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 1263,
+          "sha256": "337ae1f8b7672379e107cef2ff89ef0303c3a313fbe31203d28dfb49b734b459"
+        },
+        {
+          "path": "runs/pta_28nm_baseline/report.md",
+          "media_type": "text/markdown",
+          "bytes": 3576,
+          "sha256": "532d10a3ed3925535ebc65ab2376a41c194e396a79e60065856135c6b2bdd570"
+        },
+        {
+          "path": "runs/pta_28nm_baseline/observations.json",
+          "media_type": "application/json",
+          "bytes": 2861,
+          "sha256": "fed0677da4c8d8ff8dbefa17b90b66cda59df14d533a66a4c8093a20208e2607"
+        }
+      ]
+    },
+    {
+      "scenario_id": "pta_photonic_28nm",
+      "run_id": "pta_photonic_28nm-20261107T143638Z-5005f4da",
+      "description": "Propagate PTA waveguide width, etch depth, line-edge roughness, temperature and package alignment through an F1 optical and one-dimensional thermal model to insertion loss, phase error, tuning power and tensor error, then rank the dominant contributors.",
+      "product": "pta",
+      "process": "grx28@0.1.0",
+      "seed": 20261106,
+      "samples": 400,
+      "started_at": "2026-11-07T14:36:38+00:00",
+      "engines": [
+        {
+          "name": "pta_photonic",
+          "version": "0.1.0",
+          "fidelity": "F1",
+          "model_version": "pta-photonic@0.1.0"
+        }
+      ],
+      "observation_count": 15,
+      "evidence_classes": {
+        "assumed": 15
+      },
+      "fingerprint_sha256": "2e340509decad86046c8cfffcd934fc874fca45f8d60faf54215b670037955a9",
+      "warnings": [
+        "PTA photonic/thermal results are F1 planning estimates, not measured or calibrated PTA performance.",
+        "Phase error is a per-MZI analytical estimate without common-mode cancellation or tuning feedback; tensor error is phase error divided by pi, a stated proxy, not a measured inference error.",
+        "The thermal path is a one-dimensional silicon-interposer approximation that omits TIM, bump and die-level interface resistances; it is not full-chip thermal FEA and its absolute temperature rise is optimistic."
+      ],
+      "files": [
+        {
+          "path": "runs/pta_photonic_28nm/run.json",
+          "media_type": "application/json",
+          "bytes": 7275,
+          "sha256": "3ed6515e5c4f9f4424b6599e457713fedbb52d435e76ef798f54961e03e02cff"
+        },
+        {
+          "path": "runs/pta_photonic_28nm/observations.csv",
+          "media_type": "text/csv",
+          "bytes": 2795,
+          "sha256": "c4fd6c34d9d5d5e1a393caa899dc94e71e191781ecc28947cae0eb61167a6354"
+        },
+        {
+          "path": "runs/pta_photonic_28nm/report.md",
+          "media_type": "text/markdown",
+          "bytes": 4621,
+          "sha256": "560c4cd0c646be8a80a9d1069092f196b94b8e8fc9e315518183a9f11a45a3db"
+        },
+        {
+          "path": "runs/pta_photonic_28nm/observations.json",
+          "media_type": "application/json",
+          "bytes": 5864,
+          "sha256": "969948f4922e95cced79f6cb79dcd48a56c34b92248800bcb8e75fd31b7a39db"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1263,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "337ae1f8b7672379e107cef2ff89ef0303c3a313fbe31203d28dfb49b734b459"
+    },
+    {
+      "bytes": 3576,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "532d10a3ed3925535ebc65ab2376a41c194e396a79e60065856135c6b2bdd570"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F0",
+      "metadata": {
+        "chip": "PTA",
+        "kind": "photonic_tensor_accelerator",
+        "mesh": {
+          "columns": 4,
+          "input_ports": 4,
+          "lane_pitch_um": 20.0,
+          "optical_window_um": 200.0,
+          "output_ports": 4,
+          "rows": 4
+        },
+        "package": {
+          "id": "mcm_si",
+          "kind": "silicon_interposer",
+          "revision": "0.1.0"
+        },
+        "revision": "0.1.0",
+        "scope": "topology and package contract only",
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        }
+      },
+      "model_version": "pta-assumptions@0.1.0",
+      "name": "pta",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T14:36:38+00:00",
+  "inputs": [
+    {
+      "bytes": 782,
+      "path": "scenarios/pta_28nm_baseline.yaml",
+      "role": "scenario",
+      "sha256": "88b2b9dc505b920266ad4410e7a62df7ba9f7dae20ed3b79da14210372688082"
+    },
+    {
+      "bytes": 1263,
+      "path": "packages/mcm_si.yaml",
+      "role": "package",
+      "sha256": "66e840836c5a2d129c81a5dbee54afc5a2cbfb47a486e79114b2fc5a0d670b26"
+    },
+    {
+      "bytes": 1286,
+      "path": "chips/pta.yaml",
+      "role": "chip",
+      "sha256": "c80fbe2fe91def530972a92cddd924fa396443b3af48bec9cc88f8aeb1ede957"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-ar9ksehj/pta_28nm_baseline-20261107T143638Z-28f840f3/run.json",
+  "observations": {
+    "count": 8,
+    "evidence_classes": {
+      "assumed": 8
+    },
+    "fingerprint_sha256": "1962f11c16f23f351d0a9915584ca055aa6a8b4e2958123ff741a46027049dd5",
+    "metrics": [
+      "input_port_count",
+      "lane_pitch_m",
+      "mesh_columns",
+      "mesh_rows",
+      "mzi_count",
+      "optical_window_m",
+      "output_port_count",
+      "wavelength_m"
+    ],
+    "uncertainty": "not_estimated"
+  },
+  "report_path": "/tmp/fabtwin-site-ar9ksehj/pta_28nm_baseline-20261107T143638Z-28f840f3/report.md",
+  "reproduce": "python -m fabtwin run scenarios/pta_28nm_baseline.yaml --out /tmp/fabtwin-site-ar9ksehj",
+  "run_dir": "/tmp/fabtwin-site-ar9ksehj/pta_28nm_baseline-20261107T143638Z-28f840f3",
+  "run_id": "pta_28nm_baseline-20261107T143638Z-28f840f3",
+  "scenario": {
+    "factory": null,
+    "id": "pta_28nm_baseline",
+    "mes": null,
+    "outputs": [
+      "mesh_rows",
+      "mesh_columns",
+      "mzi_count",
+      "input_port_count",
+      "output_port_count",
+      "optical_window_m",
+      "lane_pitch_m",
+      "wavelength_m"
+    ],
+    "package": "packages/mcm_si.yaml",
+    "path": "scenarios/pta_28nm_baseline.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "pta",
+    "samples": 1,
+    "seed": 20261105,
+    "sha256": "88b2b9dc505b920266ad4410e7a62df7ba9f7dae20ed3b79da14210372688082",
+    "yield": null
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T14:36:38+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-ar9ksehj/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "PTA baseline records topology assumptions only; optical insertion loss, phase error, thermal tuning and tensor error are not modeled in Phase 0.",
+    "No qualified silicon-photonics PDK or measured PTA data is used; these are planning assumptions."
+  ]
+}

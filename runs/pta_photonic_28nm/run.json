@@ -1,0 +1,239 @@
+{
+  "artifacts": [
+    {
+      "bytes": 2795,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "c4fd6c34d9d5d5e1a393caa899dc94e71e191781ecc28947cae0eb61167a6354"
+    },
+    {
+      "bytes": 4621,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "560c4cd0c646be8a80a9d1069092f196b94b8e8fc9e315518183a9f11a45a3db"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F1",
+      "metadata": {
+        "calibration": null,
+        "chip": "PTA",
+        "dominant_loss_parameter": "alignment_um",
+        "dominant_phase_parameter": "width_nm",
+        "mesh": {
+          "columns": 4,
+          "mzi_count": 16,
+          "optical_window_um": 200.0,
+          "rows": 4,
+          "stages": 7,
+          "wavelength_nm": 1550.0
+        },
+        "optical": {
+          "base_loss_db_per_cm": 1.0,
+          "coupling_loss_db": 1.0,
+          "effective_index": 2.4,
+          "etch_sensitivity_per_nm": 0.00025,
+          "nominal_etch_depth_nm": 220.0,
+          "nominal_width_nm": 450.0,
+          "thermo_optic_per_k": 0.000186,
+          "width_sensitivity_per_nm": 0.0005
+        },
+        "package": {
+          "id": "mcm_si",
+          "kind": "silicon_interposer",
+          "revision": "0.1.0"
+        },
+        "sensitivity": {
+          "insertion_loss_db": [
+            {
+              "parameter": "alignment_um",
+              "swing": 0.44999999999999973
+            },
+            {
+              "parameter": "ler_nm",
+              "swing": 0.09030000000000005
+            },
+            {
+              "parameter": "width_nm",
+              "swing": 0.0
+            },
+            {
+              "parameter": "etch_depth_nm",
+              "swing": 0.0
+            },
+            {
+              "parameter": "ambient_c",
+              "swing": 0.0
+            }
+          ],
+          "phase_error_rad": [
+            {
+              "parameter": "width_nm",
+              "swing": 1.2161003820347105
+            },
+            {
+              "parameter": "etch_depth_nm",
+              "swing": 1.0134169850289254
+            },
+            {
+              "parameter": "ambient_c",
+              "swing": 0.12594781356574458
+            },
+            {
+              "parameter": "ler_nm",
+              "swing": 0.0
+            },
+            {
+              "parameter": "alignment_um",
+              "swing": 0.0
+            }
+          ]
+        },
+        "simulation": {
+          "samples": 400,
+          "scope": "F1 per-MZI phase, loss and one-dimensional interposer thermal path; not a full MZI transfer matrix, SiPh PDK or full-chip FEA",
+          "seed": 20261106
+        },
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        },
+        "thermal": {
+          "contact_width_mm": 5.0,
+          "distance_mm": 0.25,
+          "electronic_heat_w": 2.0,
+          "interposer_thickness_um": 100.0,
+          "local_temperature_rise_k": 6.7651006711409405,
+          "resistance_basis": "geometry",
+          "resistance_k_per_w": 3.3825503355704702,
+          "trench_count": 0,
+          "trench_width_um": 0.0
+        },
+        "variation": {
+          "alignment_um": {
+            "mean": 0.0,
+            "sigma": 0.15
+          },
+          "ambient_c": {
+            "mean": 25.0,
+            "sigma": 5.0
+          },
+          "etch_depth_nm": {
+            "mean": 220.0,
+            "sigma": 5.0
+          },
+          "ler_nm": {
+            "mean": 2.0,
+            "sigma": 0.3
+          },
+          "width_nm": {
+            "mean": 450.0,
+            "sigma": 3.0
+          }
+        }
+      },
+      "model_version": "pta-photonic@0.1.0",
+      "name": "pta_photonic",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T14:36:38+00:00",
+  "inputs": [
+    {
+      "bytes": 842,
+      "path": "scenarios/pta_photonic_28nm.yaml",
+      "role": "scenario",
+      "sha256": "d38643e42fbe79400768e5fe9fc345de8aa9b429f14a00bf3d545488f7e44a37"
+    },
+    {
+      "bytes": 1263,
+      "path": "packages/mcm_si.yaml",
+      "role": "package",
+      "sha256": "66e840836c5a2d129c81a5dbee54afc5a2cbfb47a486e79114b2fc5a0d670b26"
+    },
+    {
+      "bytes": 1776,
+      "path": "photonic/pta_siph_28nm.yaml",
+      "role": "photonic",
+      "sha256": "8d896882a544ac8ebf38159554959a8e009c8c87f25709a29b5e6e3236e089bd"
+    },
+    {
+      "bytes": 1286,
+      "path": "chips/pta.yaml",
+      "role": "chip",
+      "sha256": "c80fbe2fe91def530972a92cddd924fa396443b3af48bec9cc88f8aeb1ede957"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-ar9ksehj/pta_photonic_28nm-20261107T143638Z-5005f4da/run.json",
+  "observations": {
+    "count": 15,
+    "evidence_classes": {
+      "assumed": 15
+    },
+    "fingerprint_sha256": "2e340509decad86046c8cfffcd934fc874fca45f8d60faf54215b670037955a9",
+    "metrics": [
+      "insertion_loss_db",
+      "insertion_loss_swing",
+      "phase_error_rad",
+      "phase_error_swing",
+      "temperature_rise_k",
+      "tensor_error",
+      "tuning_power_w"
+    ],
+    "uncertainty": "mixed"
+  },
+  "report_path": "/tmp/fabtwin-site-ar9ksehj/pta_photonic_28nm-20261107T143638Z-5005f4da/report.md",
+  "reproduce": "python -m fabtwin run scenarios/pta_photonic_28nm.yaml --out /tmp/fabtwin-site-ar9ksehj",
+  "run_dir": "/tmp/fabtwin-site-ar9ksehj/pta_photonic_28nm-20261107T143638Z-5005f4da",
+  "run_id": "pta_photonic_28nm-20261107T143638Z-5005f4da",
+  "scenario": {
+    "factory": null,
+    "id": "pta_photonic_28nm",
+    "mes": null,
+    "outputs": [
+      "insertion_loss_db",
+      "phase_error_rad",
+      "tuning_power_w",
+      "tensor_error",
+      "temperature_rise_k"
+    ],
+    "package": "packages/mcm_si.yaml",
+    "path": "scenarios/pta_photonic_28nm.yaml",
+    "photonic": "photonic/pta_siph_28nm.yaml",
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "pta",
+    "samples": 400,
+    "seed": 20261106,
+    "sha256": "d38643e42fbe79400768e5fe9fc345de8aa9b429f14a00bf3d545488f7e44a37",
+    "yield": null
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T14:36:38+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-ar9ksehj/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "PTA photonic/thermal results are F1 planning estimates, not measured or calibrated PTA performance.",
+    "Phase error is a per-MZI analytical estimate without common-mode cancellation or tuning feedback; tensor error is phase error divided by pi, a stated proxy, not a measured inference error.",
+    "The thermal path is a one-dimensional silicon-interposer approximation that omits TIM, bump and die-level interface resistances; it is not full-chip thermal FEA and its absolute temperature rise is optimistic."
+  ]
+}

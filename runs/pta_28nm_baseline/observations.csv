@@ -1,0 +1,9 @@
+observation_id,run_id,entity_type,entity_id,metric,value,unit,uncertainty,evidence_class,source_artifact,model_version
+obs-66f79d12eedf33fa,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,mesh_rows,4,1,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-b9cd3047389097a9,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,mesh_columns,4,1,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-0b5422a6801d7b2d,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,mzi_count,16,1,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-4792aacaf7570c43,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,input_port_count,4,1,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-940e3de092efacf5,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,output_port_count,4,1,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-4cac72cdba07e80d,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,optical_window_m,0.0002,m,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-242c07b6aaf7a002,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,lane_pitch_m,2e-05,m,,assumed,chips/pta.yaml,pta-assumptions@0.1.0
+obs-d5054953241b8f9d,pta_28nm_baseline-20261107T143638Z-28f840f3,product,pta,wavelength_m,1.55e-06,m,,assumed,chips/pta.yaml,pta-assumptions@0.1.0

@@ -1,0 +1,157 @@
+{
+  "artifacts": [
+    {
+      "bytes": 12388,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "020018291431235d8b1a61b2e01edc3749b41acd1be7ba49cf93e92dceb01931"
+    },
+    {
+      "bytes": 8883,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "7f8459ba6b2a963db9a16e73e902299b6cebd44fe9017c88f0e2f3f2a0be3984"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F1",
+      "metadata": {
+        "chip": "GRX930",
+        "curves": {
+          "assembly_per_pad_ppm": [
+            2.0,
+            5.0,
+            8.0,
+            12.0,
+            20.0
+          ],
+          "defect_density_per_cm2": [
+            0.02,
+            0.05,
+            0.08,
+            0.12,
+            0.2
+          ],
+          "pad_counts": [
+            57,
+            112,
+            178,
+            220
+          ]
+        },
+        "die_area_mm2": 12.992420250000004,
+        "package": {
+          "kind": "TFBGA",
+          "name": "TFBGA-196",
+          "pads": 196
+        },
+        "pad_count": 178,
+        "simulation": {
+          "samples_per_point": 100,
+          "scope": "die and assembly sampling uncertainty, not wafer-to-wafer process variation",
+          "seed": 20261106
+        },
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        }
+      },
+      "model_version": "yield-assumptions@0.2.0",
+      "name": "yield_sensitivity",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T14:36:36+00:00",
+  "inputs": [
+    {
+      "bytes": 792,
+      "path": "scenarios/grx930_yield_sensitivity_28nm.yaml",
+      "role": "scenario",
+      "sha256": "7c3d2c2a5e4d569cf03abe77378b885a06de4c52048c15595d36bf566a769b23"
+    },
+    {
+      "bytes": 2279,
+      "path": "yields/grx930_28nm.yaml",
+      "role": "yield",
+      "sha256": "3ebfeb60d2096a28e5066c091201870b2c7ca4acdfcc07bd0ad4444aa5a72a56"
+    },
+    {
+      "bytes": 4763,
+      "path": "chips/grx930.yaml",
+      "role": "chip",
+      "sha256": "3d2a312cd4196c527e8b75fc0a82327746cd59f77d38eb03d96a832cf4f6cbba"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_sensitivity_28nm-20261107T143635Z-c4eb4177/run.json",
+  "observations": {
+    "count": 56,
+    "evidence_classes": {
+      "assumed": 56
+    },
+    "fingerprint_sha256": "638c3f65c9608ba15f5fc3a1b9e4914f1d2e639eb6fc2e716f4965236c1c0c5d",
+    "metrics": [
+      "assembly_per_pad_ppm",
+      "cost_per_good_package_usd",
+      "defect_density_per_cm2",
+      "die_yield",
+      "good_packages_per_wafer",
+      "pad_count"
+    ],
+    "uncertainty": "mixed"
+  },
+  "report_path": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_sensitivity_28nm-20261107T143635Z-c4eb4177/report.md",
+  "reproduce": "python -m fabtwin run scenarios/grx930_yield_sensitivity_28nm.yaml --out /tmp/fabtwin-site-ar9ksehj",
+  "run_dir": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_sensitivity_28nm-20261107T143635Z-c4eb4177",
+  "run_id": "grx930_yield_sensitivity_28nm-20261107T143635Z-c4eb4177",
+  "scenario": {
+    "factory": null,
+    "id": "grx930_yield_sensitivity_28nm",
+    "mes": null,
+    "outputs": [
+      "defect_density_per_cm2",
+      "pad_count",
+      "assembly_per_pad_ppm",
+      "die_yield",
+      "good_packages_per_wafer",
+      "cost_per_good_package_usd"
+    ],
+    "package": null,
+    "path": "scenarios/grx930_yield_sensitivity_28nm.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "grx930",
+    "samples": 100,
+    "seed": 20261106,
+    "sha256": "7c3d2c2a5e4d569cf03abe77378b885a06de4c52048c15595d36bf566a769b23",
+    "yield": "yields/grx930_28nm.yaml"
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T14:36:35+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-ar9ksehj/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "Yield sensitivity is an F1 planning exercise, not a foundry process corner.",
+    "Curve points share model assumptions; they do not represent independent measured wafers.",
+    "Monte Carlo reports sampling uncertainty, not model calibration uncertainty."
+  ]
+}

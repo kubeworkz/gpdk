@@ -1,0 +1,7 @@
+observation_id,run_id,entity_type,entity_id,metric,value,unit,uncertainty,evidence_class,source_artifact,model_version
+obs-18cbd5590df95d0c,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,die_yield_mean,0.996325912985576,1,9.70873905274227e-05,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-651b5c79d6336a3f,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,wafer_to_wafer_die_yield_sigma,0.000363353444047331,1,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-048b4fcb8c3ff23d,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,lot_to_lot_die_yield_sigma,0.000614034572297824,1,,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-38c30b9f52240235,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,assembly_yield_mean,0.99355293669805,1,2.27995214817556e-05,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-5d393794fb29c076,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,good_packages_per_wafer_mean,4815.566,1,0.562586608716996,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0
+obs-2b587e6cbe0950be,grx930_yield_variation_28nm-20261107T143636Z-64b333fc,lot_simulation,grx930,cost_per_good_package_usd_mean,2.54640472716073,USD,0.000185753861486686,assumed,yields/grx930_28nm.yaml,yield-assumptions@0.2.0

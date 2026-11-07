@@ -1,0 +1,214 @@
+{
+  "artifacts": [
+    {
+      "bytes": 9635,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "6431a2350543f16074696b246cf4f6f354f1815158a99e6319475e60cc2cdb7b"
+    },
+    {
+      "bytes": 8088,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "d074dea2268868000928201abc41c74fbe53f64782625683ff6f30f3d93fece0"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F1",
+      "metadata": {
+        "mes": {
+          "basis": "event timestamps; tool utilization is setup plus productive state time divided by the window",
+          "completed_lots": 3,
+          "completed_wafers": 50,
+          "cycle_time_hours": 33.80555555555556,
+          "equipment": {
+            "path": "factory/mes_smoke/mes_equipment_events.csv",
+            "rows": 188,
+            "sha256": "aae9016f01f2ce659fa7c2d5193ce2656dbdc2f2fd8d422e02f6950b4b6c786c"
+          },
+          "evidence_class": "assumed",
+          "generator": "fabtwin.mes",
+          "generator_version": "0.1",
+          "lots": 7,
+          "manifest": "factory/mes_smoke/manifest.json",
+          "manifest_sha256": "f175dab2b93593f96d290a8433eeab1515d8fc2d29c0261cfeae509f52fbf73a",
+          "open_lots": 0,
+          "peak_wip_lots": 3,
+          "queue_time_hours": 2.3,
+          "route": {
+            "path": "factory/mes_smoke/mes_route_events.csv",
+            "rows": 180,
+            "sha256": "36af736ab9e90d93619041a9be89a22f273281e4592ae5d91a24f6995f13ef2f"
+          },
+          "step_queue_hours": {
+            "ANNEAL_1": 0.0,
+            "CMP_1": 0.0,
+            "DEPOSITION_1": 0.0,
+            "DIE_ATTACH": 0.5,
+            "ETCH_1": 0.0,
+            "ETCH_2": 0.0,
+            "ETCH_3": 0.0,
+            "FINAL_TEST": 0.0,
+            "IMPLANT_1": 0.0,
+            "LITHO_1": 0.0,
+            "LITHO_2": 0.0,
+            "LITHO_3": 0.0,
+            "METROLOGY_CD": 1.0666666666666667,
+            "MOLD": 0.5666666666666667,
+            "OXIDE_GROW": 0.0,
+            "WAFER_SORT": 0.0,
+            "WIRE_BOND": 0.0
+          },
+          "synthetic": true,
+          "throughput_wafers_per_week": 58.333333333333336,
+          "tool_group_utilization": {
+            "CMP_CELL": 0.006481481481481481,
+            "DEP_CELL": 0.01724537037037037,
+            "DIE_ATTACH_CELL": 0.022916666666666665,
+            "ETCH_CELL": 0.013252314814814814,
+            "FURNACE_A": 0.021238425925925924,
+            "IMPLANT_CELL": 0.016550925925925927,
+            "LITHO_CELL": 0.01730324074074074,
+            "METRO_CELL": 0.0032407407407407406,
+            "MOLD_CELL": 0.027199074074074073,
+            "SORT_CELL": 0.00787037037037037,
+            "TEST_CELL": 0.01423611111111111,
+            "WIRE_BOND_CELL": 0.009432870370370371
+          },
+          "tool_utilization": {
+            "CMP_01": 0.006481481481481481,
+            "DA_01": 0.022916666666666665,
+            "DEP_01": 0.01724537037037037,
+            "ETCH_01": 0.014814814814814815,
+            "ETCH_02": 0.011689814814814814,
+            "FURN_A_01": 0.02349537037037037,
+            "FURN_A_02": 0.01898148148148148,
+            "IMPLANT_01": 0.016550925925925927,
+            "LITHO_01": 0.02060185185185185,
+            "LITHO_02": 0.014004629629629629,
+            "METRO_01": 0.0032407407407407406,
+            "MOLD_01": 0.027199074074074073,
+            "SORT_01": 0.00787037037037037,
+            "TEST_01": 0.01423611111111111,
+            "WB_01": 0.009953703703703704,
+            "WB_02": 0.008912037037037038
+          },
+          "window": {
+            "end_utc": "2026-11-07T00:00:00+00:00",
+            "hours": 144.0,
+            "start_utc": "2026-11-01T00:00:00+00:00"
+          },
+          "wip_lots": 0.6109953703703703
+        }
+      },
+      "model_version": "mes-replay@0.1.0",
+      "name": "factory_replay",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T14:36:38+00:00",
+  "inputs": [
+    {
+      "bytes": 920,
+      "path": "scenarios/mes_line_replay.yaml",
+      "role": "scenario",
+      "sha256": "afda9c865ee7105dcb48670a4706279bac4c617a956d0ec69e2818c73b1b01da"
+    },
+    {
+      "bytes": 1006,
+      "path": "factory/mes_smoke/manifest.json",
+      "role": "mes",
+      "sha256": "f175dab2b93593f96d290a8433eeab1515d8fc2d29c0261cfeae509f52fbf73a"
+    },
+    {
+      "bytes": 27988,
+      "path": "factory/mes_smoke/mes_route_events.csv",
+      "role": "mes_route",
+      "sha256": "36af736ab9e90d93619041a9be89a22f273281e4592ae5d91a24f6995f13ef2f"
+    },
+    {
+      "bytes": 19198,
+      "path": "factory/mes_smoke/mes_equipment_events.csv",
+      "role": "mes_equipment",
+      "sha256": "aae9016f01f2ce659fa7c2d5193ce2656dbdc2f2fd8d422e02f6950b4b6c786c"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-ar9ksehj/mes_line_replay-20261107T143638Z-88c9d467/run.json",
+  "observations": {
+    "count": 54,
+    "evidence_classes": {
+      "assumed": 54
+    },
+    "fingerprint_sha256": "90305c46fad3ffcdb7f0902d54f6936f4f72aa160e9a437c16ab94215ff448b8",
+    "metrics": [
+      "completed_lots",
+      "completed_wafers",
+      "cycle_time_s",
+      "observation_window_s",
+      "open_lots",
+      "peak_wip_lots",
+      "queue_time_s",
+      "step_queue_time_s",
+      "throughput_wafers_per_s",
+      "tool_group_utilization",
+      "tool_utilization",
+      "wip_lots"
+    ],
+    "uncertainty": "not_estimated"
+  },
+  "report_path": "/tmp/fabtwin-site-ar9ksehj/mes_line_replay-20261107T143638Z-88c9d467/report.md",
+  "reproduce": "python -m fabtwin run scenarios/mes_line_replay.yaml --out /tmp/fabtwin-site-ar9ksehj",
+  "run_dir": "/tmp/fabtwin-site-ar9ksehj/mes_line_replay-20261107T143638Z-88c9d467",
+  "run_id": "mes_line_replay-20261107T143638Z-88c9d467",
+  "scenario": {
+    "factory": null,
+    "id": "mes_line_replay",
+    "mes": "factory/mes_smoke/manifest.json",
+    "outputs": [
+      "cycle_time_s",
+      "queue_time_s",
+      "wip_lots",
+      "peak_wip_lots",
+      "throughput_wafers_per_s",
+      "completed_lots",
+      "completed_wafers",
+      "open_lots",
+      "observation_window_s",
+      "step_queue_time_s",
+      "tool_utilization",
+      "tool_group_utilization"
+    ],
+    "package": null,
+    "path": "scenarios/mes_line_replay.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "mes_fixture@0.1.0",
+    "product": "mes_line",
+    "samples": 1,
+    "seed": 20261106,
+    "sha256": "afda9c865ee7105dcb48670a4706279bac4c617a956d0ec69e2818c73b1b01da",
+    "yield": null
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T14:36:38+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-ar9ksehj/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "MES replay reads event timestamps; it does not simulate dispatch, batching, failures or maintenance.",
+    "Cycle time, queue time and WIP are descriptive statistics for the manifest window, not a forecast.",
+    "The event log is synthetic (`assumed`); replay metrics describe generated events and are not measured line performance."
+  ]
+}

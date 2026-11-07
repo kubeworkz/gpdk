@@ -1,0 +1,158 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1751,
+      "media_type": "text/csv",
+      "path": "observations.csv",
+      "sha256": "3b30ca86bb73f7dcc6f3bbc1f222dc59653c457edbd80e05e89e8f458da52e95"
+    },
+    {
+      "bytes": 3886,
+      "media_type": "text/markdown",
+      "path": "report.md",
+      "sha256": "26ba4545fcdc9d1ceb830f19966cec269c56ddb892eb6607d5ef9630da478cb2"
+    }
+  ],
+  "claim": "scenario estimate; not foundry sign-off",
+  "engines": [
+    {
+      "fidelity": "F1",
+      "metadata": {
+        "assembly": {
+          "base_yield": 0.995,
+          "package_cost_usd": 1.2,
+          "per_pad_defect_ppm": 8.0,
+          "test_cost_usd": 0.4
+        },
+        "chip": "GRX930",
+        "defects": {
+          "critical_area_fraction": 0.35,
+          "density_per_cm2": 0.08
+        },
+        "die_area_mm2": 12.992420250000004,
+        "package": {
+          "body_mm": 12.0,
+          "kind": "TFBGA",
+          "name": "TFBGA-196",
+          "pads": 196
+        },
+        "pad_count": 178,
+        "simulation": {
+          "samples": 1000,
+          "scope": "die and assembly sampling uncertainty, not wafer-to-wafer process variation",
+          "seed": 20261106
+        },
+        "tech": {
+          "name": "GRX28",
+          "revision": "0.1.0"
+        },
+        "wafer": {
+          "cost_usd": 4500.0,
+          "diameter_mm": 300.0,
+          "edge_exclusion_mm": 3.0,
+          "scribe_lane_um": 80.0
+        }
+      },
+      "model_version": "yield-assumptions@0.2.0",
+      "name": "yield",
+      "version": "0.1.0"
+    }
+  ],
+  "finished_at": "2026-11-07T14:36:35+00:00",
+  "inputs": [
+    {
+      "bytes": 946,
+      "path": "scenarios/grx930_yield_28nm.yaml",
+      "role": "scenario",
+      "sha256": "9551afbe7de7bed28be5be6e9cad0cb3e6c97298657c9d9dacdb899c9387b0e3"
+    },
+    {
+      "bytes": 2279,
+      "path": "yields/grx930_28nm.yaml",
+      "role": "yield",
+      "sha256": "3ebfeb60d2096a28e5066c091201870b2c7ca4acdfcc07bd0ad4444aa5a72a56"
+    },
+    {
+      "bytes": 4763,
+      "path": "chips/grx930.yaml",
+      "role": "chip",
+      "sha256": "3d2a312cd4196c527e8b75fc0a82327746cd59f77d38eb03d96a832cf4f6cbba"
+    },
+    {
+      "bytes": 5982,
+      "path": "tech/grx28.yaml",
+      "role": "tech",
+      "sha256": "fec22f0374bcdbf825c44bd6f13821b3ba1caf4dac363eebd040f4741a3530a4"
+    }
+  ],
+  "manifest_path": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_28nm-20261107T143634Z-b1acbd9d/run.json",
+  "observations": {
+    "count": 9,
+    "evidence_classes": {
+      "assumed": 9
+    },
+    "fingerprint_sha256": "599d7f23e84ca580b0d74e2c5ef1dd619b31b2e74cde3771023c5aced998f31b",
+    "metrics": [
+      "assembly_yield",
+      "cost_per_good_package_usd",
+      "cost_per_known_good_die_usd",
+      "critical_area_m2",
+      "die_area_m2",
+      "die_yield",
+      "good_packages_per_wafer",
+      "gross_dies_per_wafer",
+      "known_good_dies_per_wafer"
+    ],
+    "uncertainty": "mixed"
+  },
+  "report_path": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_28nm-20261107T143634Z-b1acbd9d/report.md",
+  "reproduce": "python -m fabtwin run scenarios/grx930_yield_28nm.yaml --out /tmp/fabtwin-site-ar9ksehj",
+  "run_dir": "/tmp/fabtwin-site-ar9ksehj/grx930_yield_28nm-20261107T143634Z-b1acbd9d",
+  "run_id": "grx930_yield_28nm-20261107T143634Z-b1acbd9d",
+  "scenario": {
+    "factory": null,
+    "id": "grx930_yield_28nm",
+    "mes": null,
+    "outputs": [
+      "die_area_m2",
+      "critical_area_m2",
+      "gross_dies_per_wafer",
+      "die_yield",
+      "assembly_yield",
+      "known_good_dies_per_wafer",
+      "good_packages_per_wafer",
+      "cost_per_known_good_die_usd",
+      "cost_per_good_package_usd"
+    ],
+    "package": null,
+    "path": "scenarios/grx930_yield_28nm.yaml",
+    "photonic": null,
+    "photonic_calibration": null,
+    "process": "grx28@0.1.0",
+    "product": "grx930",
+    "samples": 1000,
+    "seed": 20261106,
+    "sha256": "9551afbe7de7bed28be5be6e9cad0cb3e6c97298657c9d9dacdb899c9387b0e3",
+    "yield": "yields/grx930_28nm.yaml"
+  },
+  "schema_version": "0.1",
+  "started_at": "2026-11-07T14:36:34+00:00",
+  "status": "succeeded",
+  "store": {
+    "kind": "sqlite",
+    "path": "/tmp/fabtwin-site-ar9ksehj/fabtwin.db",
+    "schema_version": "2"
+  },
+  "toolchain": {
+    "fabtwin_version": "0.1.0",
+    "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+    "python": "3.12.16",
+    "pyyaml": "6.0.3",
+    "source_tree_sha256": "941907d043997a1dc6f622713710e1d84b98af6acbdec4ef849a4a35ca7b9208"
+  },
+  "warnings": [
+    "Yield is an F1 planning estimate, not a foundry yield prediction.",
+    "Wafer, defect, critical-area, assembly and cost values are explicit assumptions; replace them with calibrated data before making commitments.",
+    "Monte Carlo reports sampling uncertainty for one wafer, not wafer-to-wafer variation."
+  ]
+}

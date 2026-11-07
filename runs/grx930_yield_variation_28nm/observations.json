@@ -1,0 +1,80 @@
+[
+ {
+  "observation_id": "obs-18cbd5590df95d0c",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "die_yield_mean",
+  "value": 0.996325912985576,
+  "unit": "1",
+  "uncertainty": 9.70873905274227e-05,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ },
+ {
+  "observation_id": "obs-651b5c79d6336a3f",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "wafer_to_wafer_die_yield_sigma",
+  "value": 0.000363353444047331,
+  "unit": "1",
+  "uncertainty": null,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ },
+ {
+  "observation_id": "obs-048b4fcb8c3ff23d",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "lot_to_lot_die_yield_sigma",
+  "value": 0.000614034572297824,
+  "unit": "1",
+  "uncertainty": null,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ },
+ {
+  "observation_id": "obs-38c30b9f52240235",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "assembly_yield_mean",
+  "value": 0.99355293669805,
+  "unit": "1",
+  "uncertainty": 2.27995214817556e-05,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ },
+ {
+  "observation_id": "obs-5d393794fb29c076",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "good_packages_per_wafer_mean",
+  "value": 4815.566,
+  "unit": "1",
+  "uncertainty": 0.562586608716996,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ },
+ {
+  "observation_id": "obs-2b587e6cbe0950be",
+  "run_id": "grx930_yield_variation_28nm-20261107T143636Z-64b333fc",
+  "entity_type": "lot_simulation",
+  "entity_id": "grx930",
+  "metric": "cost_per_good_package_usd_mean",
+  "value": 2.54640472716073,
+  "unit": "USD",
+  "uncertainty": 0.000185753861486686,
+  "evidence_class": "assumed",
+  "source_artifact": "yields/grx930_28nm.yaml",
+  "model_version": "yield-assumptions@0.2.0"
+ }
+]

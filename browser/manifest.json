@@ -1,0 +1,42 @@
+{
+  "schema_version": "1",
+  "entry": "fabtwin.browser:run_scenario",
+  "root": "/gpdk",
+  "source": {
+    "path": "browser/gpdk-src.zip",
+    "media_type": "application/zip",
+    "bytes": 189639,
+    "sha256": "ed28ae8868469519dc8d8cf5cbc8f46101f4b3825c02273ee35e24ffa5392100",
+    "files": 77
+  },
+  "wheels": [
+    {
+      "path": "browser/simpy-4.1.2-py3-none-any.whl",
+      "media_type": "application/zip",
+      "bytes": 27375,
+      "sha256": "43071f84b6512c9b4fcb33ef057f240ccb1d1f3b263f9b4f9229d072e310b372"
+    }
+  ],
+  "pyodide_packages": [
+    "pyyaml"
+  ],
+  "inputs": {
+    "path": "browser/inputs.json",
+    "media_type": "application/json",
+    "bytes": 21970,
+    "sha256": "b0209a4dff3f787c9eda6e48737445acee67d0354398a7be29841373df0b77ea"
+  },
+  "scenarios": {
+    "g100_28nm_baseline": "scenarios/g100_28nm_baseline.yaml",
+    "g100_factory_28nm": "scenarios/g100_factory_28nm.yaml",
+    "g100_mcm_28nm": "scenarios/g100_mcm_28nm.yaml",
+    "grx930_28nm_baseline": "scenarios/grx930_28nm_baseline.yaml",
+    "grx930_yield_28nm": "scenarios/grx930_yield_28nm.yaml",
+    "grx930_yield_sensitivity_28nm": "scenarios/grx930_yield_sensitivity_28nm.yaml",
+    "grx930_yield_variation_28nm": "scenarios/grx930_yield_variation_28nm.yaml",
+    "grx930_yield_wafer_map_28nm": "scenarios/grx930_yield_wafer_map_28nm.yaml",
+    "mes_line_replay": "scenarios/mes_line_replay.yaml",
+    "pta_28nm_baseline": "scenarios/pta_28nm_baseline.yaml",
+    "pta_photonic_28nm": "scenarios/pta_photonic_28nm.yaml"
+  }
+}
