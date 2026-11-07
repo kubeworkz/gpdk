@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -127,10 +128,20 @@ class ObservationStore:
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
 
+    @contextmanager
+    def _connection(self) -> Iterator[sqlite3.Connection]:
+        """Commit or roll back the transaction, then close the connection."""
+        connection = self._connect()
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
     def initialize(self) -> None:
         """Create the schema if needed; safe to call before every operation."""
         try:
-            with self._connect() as connection:
+            with self._connection() as connection:
                 connection.executescript(_SCHEMA)
         except sqlite3.Error as exc:
             raise StoreError(f"cannot initialize {self.path}: {exc}") from exc
@@ -197,7 +208,7 @@ class ObservationStore:
 
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 connection.execute(
                     """
                     INSERT INTO runs (
@@ -292,7 +303,7 @@ class ObservationStore:
 
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 connection.execute(
                     """
                     INSERT INTO comparison_artifacts (
@@ -379,7 +390,7 @@ class ObservationStore:
         parameters.append(limit)
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 return [
                     dict(row)
                     for row in connection.execute(query, parameters)
@@ -391,7 +402,7 @@ class ObservationStore:
         """Return one run's metadata or raise a clear store error."""
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 row = connection.execute(
                     "SELECT * FROM runs WHERE run_id = ?", (run_id,)
                 ).fetchone()
@@ -419,7 +430,7 @@ class ObservationStore:
         """
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 source_rows = [
                     dict(row)
                     for row in connection.execute(query, parameters)
@@ -512,7 +523,7 @@ class ObservationStore:
         """
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 return [
                     dict(row)
                     for row in connection.execute(query, (limit,))
@@ -542,7 +553,7 @@ class ObservationStore:
         parameters.append(limit)
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 return [
                     dict(row)
                     for row in connection.execute(query, parameters)
@@ -573,7 +584,7 @@ class ObservationStore:
         """
         try:
             self.initialize()
-            with self._connect() as connection:
+            with self._connection() as connection:
                 run_rows = [
                     dict(row) for row in connection.execute(run_query)
                 ]
